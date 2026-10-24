@@ -66,7 +66,7 @@ export function App() {
 
   useEffect(() => {
     const label = ROUTES.find((r) => r.id === route)!.label;
-    document.title = route === "overview" ? "FairWatt MA Energy" : `${label} · FairWatt MA Energy`;
+    document.title = route === "overview" ? "Watt If MA Energy" : `${label} · Watt If MA Energy`;
     window.scrollTo({ top: 0 });
   }, [route]);
 
@@ -80,7 +80,7 @@ export function App() {
           <div className="brand-row">
             <a className="brand" href="#/overview" style={{ color: "inherit", textDecoration: "none" }}>
               <Logo />
-              <span className="brand-name">FairWatt</span>
+              <span className="brand-name">Watt If</span>
             </a>
             <button type="button" className="theme-toggle" onClick={() => setThemeChoice(NEXT_THEME[choice])} aria-label={`Theme: ${THEME_LABEL[choice]}. Switch to ${THEME_LABEL[NEXT_THEME[choice]]}.`}>
               <ThemeIcon choice={choice} />

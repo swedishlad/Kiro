@@ -413,7 +413,7 @@ function Suggestions({ items }: { items: Suggestion[] }) {
       </div>
       <div style={{ marginTop: 16 }}>
         <Callout>
-          FairWatt doesn't sell energy or get paid for referrals. Rebates, credits and program rules change; check the linked sites for what
+          Watt If doesn't sell energy or get paid for referrals. Rebates, credits and program rules change; check the linked sites for what
           applies to you now.
         </Callout>
       </div>
