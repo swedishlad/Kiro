@@ -9,6 +9,7 @@ const Prices = lazy(() => import("./sections/Prices.tsx"));
 const Grid = lazy(() => import("./sections/Grid.tsx"));
 const Towns = lazy(() => import("./sections/Towns.tsx"));
 const Sources = lazy(() => import("./sections/Sources.tsx"));
+const About = lazy(() => import("./sections/About.tsx"));
 
 const ROUTES = [
   { id: "overview", label: "Overview" },
@@ -17,6 +18,7 @@ const ROUTES = [
   { id: "grid", label: "Regimes & forecast" },
   { id: "towns", label: "Towns" },
   { id: "sources", label: "Data & methods" },
+  { id: "about", label: "About" },
 ] as const;
 
 type RouteId = (typeof ROUTES)[number]["id"];
@@ -100,6 +102,7 @@ export function App() {
           {route === "grid" && <Grid />}
           {route === "towns" && <Towns />}
           {route === "sources" && <Sources />}
+          {route === "about" && <About />}
         </Suspense>
       </main>
       <footer className="footer">

@@ -33,6 +33,7 @@ const PAGES: Record<string, string> = {
   grid: "Regimes & forecast",
   towns: "Towns",
   sources: "Data & methods",
+  about: "About",
 };
 
 const INSTRUCTIONS = `You are the assistant on FairWatt, a public website about Massachusetts residential electricity. Visitors are mostly Massachusetts residents trying to understand their electricity use and prices, whether basic service or a competitive supplier is the better deal for them, and what the site's charts mean. Answer the way a knowledgeable, plain-spoken guide to this site would.
