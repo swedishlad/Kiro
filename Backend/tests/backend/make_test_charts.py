@@ -425,6 +425,61 @@ def example_nowcast(doc, area):
         save_to(fig, EX, f"regime_nowcast_{area}.png")
 
 
+SEQ_BLUE = ["#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef", "#6da7ec", "#5598e7", "#3987e5", "#2a78d6", "#256abf",
+            "#1c5cab", "#184f95", "#104281", "#0d366b"]
+
+
+def example_town_forecast():
+    """Map of all 351 towns: colour strength = each town's 6-month forecast (median, log scale, one blue ramp)."""
+    path, geo_path = build_path("towns_metrics.json"), os.path.join("data", "raw", "mass-municipalities.geojson")
+    if not (os.path.exists(path) and os.path.exists(geo_path)):
+        print("skip town forecast map: needs towns_metrics.json and data/raw/mass-municipalities.geojson")
+        return
+    from matplotlib.collections import PolyCollection
+    from matplotlib.colors import LinearSegmentedColormap, LogNorm
+    doc = json.load(open(path))
+    by_id = {t["townId"]: t for t in doc["towns"]}
+    vals = [t["forecast6mMWh"]["p50"] / 1e3 for t in doc["towns"]]
+    cmap = LinearSegmentedColormap.from_list("seq_blue", SEQ_BLUE)
+    norm = LogNorm(vmin=max(min(vals), 0.1), vmax=max(vals))
+    polys, cols = [], []
+    for f in json.load(open(geo_path))["features"]:
+        t = by_id.get(f["properties"]["massgis_town_id"])
+        g = f["geometry"]
+        rings = [g["coordinates"][0]] if g["type"] == "Polygon" else [q[0] for q in g["coordinates"]]
+        for ring in rings:
+            polys.append(np.array(ring)[:, :2])
+            cols.append(cmap(norm(t["forecast6mMWh"]["p50"] / 1e3)) if t else "#cccccc")
+    fig = plt.figure(figsize=(12, 6.8))
+    ax = fig.add_axes([0.0, 0.08, 0.86, 0.84])
+    ax.add_collection(PolyCollection(polys, facecolors=cols, edgecolors=SURF, linewidths=0.3))
+    ax.autoscale()
+    ax.set_aspect(1 / np.cos(np.radians(42.2)))
+    ax.set_axis_off()
+    for name, (lon, lat), (tx, ty) in [("Boston", (-71.06, 42.33), (-70.55, 42.62)),
+                                       ("Worcester", (-71.80, 42.27), (-72.05, 42.80)),
+                                       ("Springfield", (-72.55, 42.11), (-72.95, 41.95))]:
+        t = next(x for x in doc["towns"] if x["name"] == name)
+        f_ = t["forecast6mMWh"]
+        ax.annotate(f"{name}: {f_['p50'] / 1e3:,.0f} GWh (80% {f_['p10'] / 1e3:,.0f}–{f_['p90'] / 1e3:,.0f})", (lon, lat),
+                    xytext=(tx, ty), fontsize=8.5, color=INK, arrowprops={"arrowstyle": "-", "color": INK2},
+                    bbox={"boxstyle": "round,pad=0.25", "fc": SURF, "ec": GRID})
+    chg = {z: next(x for x in doc["towns"] if x["zone"] == z)["changeVsLastYearPct"] for z in ("NEMA", "SEMA", "WCMA")}
+    ax.text(0.04, 0.16, "vs the same months last year (zone level):\n" + " · ".join(f"{z} {c:+.1f}%" for z, c in chg.items()),
+            transform=ax.transAxes, fontsize=8.5, color=INK2)
+    cax = fig.add_axes([0.05, 0.36, 0.26, 0.022])
+    cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, orientation="horizontal")
+    cb.set_ticks([t for t in (1, 10, 100, 1000) if norm.vmin <= t <= norm.vmax])
+    cb.set_ticklabels([f"{t:,}" for t in (1, 10, 100, 1000) if norm.vmin <= t <= norm.vmax])
+    cb.outline.set_visible(False)
+    cax.set_title("6-month forecast, median (GWh, log scale)", fontsize=8.5, color=INK2, loc="left")
+    h = doc["horizon"]
+    fig.suptitle(f"Example output: forecast for all 351 towns, {h[0]} to {h[-1]} · darker = more energy forecast\n"
+                 "modeled: population share of each zone's Monte Carlo forecast (towns_metrics.json); zones approximate by county",
+                 x=0.01, ha="left", fontsize=10, fontweight="bold")
+    save_to(fig, EX, "example_town_forecast.png")
+
+
 def save_to(fig, folder, name):
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, name)
@@ -447,3 +502,4 @@ if __name__ == "__main__":
     example_map(reg)
     for area in ("MA_RES", "MA"):
         example_nowcast(reg, area)
+    example_town_forecast()

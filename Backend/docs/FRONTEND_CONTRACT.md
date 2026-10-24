@@ -1,37 +1,33 @@
-# Frontend contract (for TC's friend, who builds the web design)
+# Frontend contract: what the backend ships and what the site reads
 
-**You build the UI; we deliver numbers.** Everything below is in the GitHub repo. Types: `contracts/types.ts` (v2.0.0). JSON Schemas: `contracts/*.schema.json`. You never compute a number yourself: read a field, or call a function.
+Everything is committed under `Backend/`. The site (`Frontend/`) bundles `Backend/data/build/*` and `Backend/data/snapshot/*` at build time (no server, no runtime calls). `Frontend/src/data/data.test.ts` pins the site to these files: **regenerate the backend, then run `npm test` in `Frontend/`**; a failing test means the two have drifted.
 
-## How to get the data
-- Static JSON at `/data/<file>.json` (release copies `data/build/*.json` into `public/data/`). **Until the real files land (~13:00–15:30), schema-valid fixtures with the same names are in `public/data/`**, so you can build from 11:30.
-- Load with `loadAll()` from `src/data/load.ts` (zod-validated, typed). On any error show "Couldn't load data" and no numbers.
-- Interactive fields are pure TypeScript functions in `src/engine/` (instant, no network).
+## Files the site reads today
 
-## Screen elements → source
+| File | Built by | What it holds | Used in (Frontend) |
+|---|---|---|---|
+| `data/build/consumption_stats.json` | `src/backend/build_stats.py` | Typical home, RECS distribution, "a home like yours" bands | Overview, Usage |
+| `data/build/savings_model.json` | `src/backend/build_savings.py` | Money you could have saved vs the basic-service rate (worked examples) | Overview, Prices & savings |
+| `data/build/map_consumption.json` | `src/backend/build_map.py` | Per-town map classes (RECS terciles, modeled) | Usage, Towns |
+| `data/build/hmm_regimes.json` | `src/hmm/hmm_build.py` | **Level** model: Low / Mid / High use per month (raw kWh per account; follows the seasons by design) | Usage (labelled "level") |
+| `data/build/regimes.json` | `backend/regimes/build.py` | **Range** model: Below / Within / Above the usual range (avg ± 1 sd of the same period in the previous 5 years); daily zones 2020–2023, homes monthly to 2026-08; filtered states, `probs`, `outlook`, homes `forecast` | Overview, Regimes & forecast |
+| `data/build/mc_forecast.json` | `backend/forecast/mc.py` | 6-month Monte Carlo (Nov 2026 – Apr 2027) per zone + MA, with its walk-forward test | Overview, Regimes & forecast |
+| `data/build/eia_ma_monthly.csv`, `eia_ma_total_monthly.csv`, `ma_towns.csv`, `recs_ma.csv` | `reference/ingest_usage.py`, `reference/build_towns.py` | Verified inputs (G-DATA-3, G-DATA-5) | several tabs |
+| `data/snapshot/*_residential_cents_2026-07-02.csv` | Mass.gov snapshot (G-DATA-1) | Basic-service rates 2005 – Jan 2027 | Prices & savings |
+| `Frontend/src/geo/ma-towns.topo.json` | the frontend | Town shapes for the map | Towns |
 
-| UI element | Source | Fields | Unit | Must show |
-|---|---|---|---|---|
-| **Region stats cards** (NEMA, SEMA, WCMA, MA) | `stats.json` → `areas[]` | `meanDailyGWh`, `annualGWh[]`, `peakDay`, `peakHourMW`, `yoyChangePct`, `loadFactor`, `weekendVsWeekdayPct` | GWh, MW, % | "All customers (homes + businesses), 2017–2023" |
-| Seasonal profile chart | `stats.json` → `areas[].monthlyProfileGWh` | 12 values Jan..Dec | GWh/month | — |
-| Weather sensitivity | `stats.json` → `areas[].temperature` | `gwhPerHDD`, `gwhPerCDD`, `r2` | GWh per degree-day | "Temperature explains R² of daily use" |
-| "Cost of weather" | `stats.json` → `areas[].weatherCostGWh2023` | one number | GWh | "vs normal temperatures" |
-| **Typical home** | `stats.json` → `household` | `typicalAnnualKwh`, `typicalMonthlyKwh`, `medianBySqft`, `medianByHeat`, `allInPrice` | kWh, ¢/kWh | "estimated" |
-| **Money you could have saved** | `savedVsBasic({utility, userCents, months})` in `src/engine/household/` | `totalDollars`, `label`, `months[]` | $ | both directions: "could have saved" / "saved"; "supply portion" |
-| **A home like yours** (inputs → 12 months) | `estimate(home, model)` + `estimate_model.json` | `UsageEstimate` | kWh | "estimated for a home like yours" until ≥ 3 typed months |
-| **Next 6 bills (Monte Carlo)** | `simulateBills(...)` | `months[]` (p5…p95), `total`, `histogram` | $ | fan chart; Feb 1 reset marked; "supply portion" |
-| **Region 6-month forecast (Monte Carlo)** | `mc_forecast.json` → `areas[]` | `months[]` quantiles, `total`, `samplePaths` (20), `sameMonthsLastObservedGWh` | GWh | `calibration.cov80` + `nMonths` as the honesty badge |
-| **Regime light** 🟢⚪🔴 | `regimes.json` → `areas[]` (use `MA_RES` for "now": monthly to 2026-08; zones are daily to 2023-12-31) → `current` | `color`, `pctVsAverage`, `bandPct`, `date` | % | "red = above the historical average range (average ± 1 sd of the same period in the previous 5 years)"; show the date |
-| **Regime nowcast** (2 panels) | `regimes.json` → `areas[].timeline` | top: `pctVsAverage ÷ bandPct` (sd from avg) as a line with points coloured by `color` + three lines at `states[].meanSdFromAverage`; bottom: stacked `probs` [green, grey, red] 0–100% | sd, probability | "filtered: past data only"; header "now: COLOR (p%)" from `current` |
-| Regime outlook | `regimes.json` → `areas[].outlook` | `days`, `probs` | probability | — |
-| **Map** (351 towns) | `towns.json` (SVG paths, join `id`) + `towns_metrics.json` (join `townId`) | `modeledAnnualMWh`, `perCapitaKwh`, `regimeColor`, `zone` | MWh, kWh | "**Modeled** from population and regional load; zone boundaries approximate" |
-| **City forecast** (any town) | `towns_metrics.json` → `towns[].forecast6mMWh`, `changeVsLastYearPct` | quantiles | MWh | "Modeled" |
+## New since the site was written (ready to wire in)
 
-## Colors
-`RegimeColor` is a string: `"green"` = good (below the historical average range), `"grey"` = within the range, `"red"` = too much (above the range). Pick your own hex values; keep the meaning and **always add the text label**: green vs red measured ΔE 4.1 for red-green colour blindness (floor 8), so colour alone fails.
+| File / field | What to show | Must show |
+|---|---|---|
+| `data/build/towns_metrics.json` (`backend/towns/build.py`, gate G-CITY) | **Forecast for every town**: `towns[].forecast6mMWh` (p5…p95, Nov–Apr), `forecastMonthlyP50MWh` (6 months), `changeVsLastYearPct`, `modeledAnnualMWh`, `modeledResidentialMWh`, `perCapitaKwh`, `regimeColor`; join on `townId` = the map's town id | "**Modeled** from population share of zone; zones approximate by county" |
+| `regimes.json` → `areas[MA_RES].forecast` | Next 6 months: `date`, `probs` [below, within, above], `color`, `method`, `skillVsLongRunMix` | Months with `method: "long-run-mix"` are not a forecast: label them "long-run odds" |
+| `regimes.json` → `areas[].outlook[].method / skillVsLongRunMix / n` | Same outlook bars as now; add the method and skill as the honesty badge | "beat history by N% in M tests" only where `method = "ar1-gap"` |
 
-## Rules for the UI (they are judged and verified)
-1. No hard-coded numbers; every number comes from a field above.
-2. Show the honesty labels in the "Must show" column.
-3. No runtime calls to outside services.
-4. Commit only `app/**`, `src/ui/**`, `public/**` (not `public/data/**`), `tests/ui/**`, with subjects starting `friend:` (or `ui-builder:` if your Kiro agent commits).
-5. Need a field that isn't here? Ask TC (the orchestrator): contracts change only through him.
+## Field notes
+- `regimes.json` timeline point: `pctVsAverage` (% vs the historical average), `bandPct` (half-width of the usual range, %), so the sd value is `pctVsAverage ÷ bandPct`; `probs` = filtered [P(below), P(within), P(above)]. States are anchored at −1.5 / 0 / +1.5 sd.
+- Grid zones end 2023-12-31 (ISO-NE files for 2024+ are not published at the source we use); homes (`MA_RES`) are current to the latest EIA month.
+- Colours always travel with a word and a shape (▼ ● ▲): green vs red fails colour-blind separation (ΔE 4.1).
+
+## Specified but not built (not needed by the site)
+`stats.json`, `estimate_model.json`, `usage_forecast.json`, `rates.json`, `forecast.json`, `towns.json` and the TypeScript functions `estimate()` / `savedVsBasic()` / `simulateBills()` in `docs/specs/` were planned before the team split; the site computes its estimator and savings calculator itself from the files above (parity-tested). Treat those specs as history.
