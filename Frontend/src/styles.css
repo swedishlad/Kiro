@@ -2576,3 +2576,8 @@ table.data tbody th {
   height: 10px;
   border-radius: 5px;
 }
+
+.member-photo {
+  object-fit: cover;
+  background: var(--surface-2);
+}
