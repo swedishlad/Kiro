@@ -1,0 +1,361 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "fairwatt/regimes.schema.json",
+ "title": "RegimesFile (data/build/regimes.json)",
+ "type": "object",
+ "required": [
+  "asOf",
+  "method",
+  "series",
+  "areas",
+  "leakageTest",
+  "notes"
+ ],
+ "properties": {
+  "asOf": {
+   "type": "string",
+   "format": "date"
+  },
+  "method": {
+   "type": "string",
+   "minLength": 20
+  },
+  "series": {
+   "const": "weather-adjusted daily load (% vs expected)"
+  },
+  "leakageTest": {
+   "const": "pass"
+  },
+  "notes": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "areas": {
+   "type": "array",
+   "minItems": 3,
+   "items": {
+    "type": "object",
+    "required": [
+     "area",
+     "states",
+     "transition",
+     "current",
+     "timeline",
+     "monthly",
+     "outlook"
+    ],
+    "properties": {
+     "area": {
+      "enum": [
+       "NEMA",
+       "SEMA",
+       "WCMA",
+       "MA"
+      ]
+     },
+     "states": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+       {
+        "allOf": [
+         {
+          "type": "object",
+          "required": [
+           "color",
+           "label",
+           "meanResidualPct",
+           "sdResidualPct",
+           "expectedDurationDays",
+           "shareOfDays"
+          ],
+          "properties": {
+           "color": {
+            "enum": [
+             "green",
+             "grey",
+             "red"
+            ]
+           },
+           "label": {
+            "enum": [
+             "good",
+             "mid",
+             "too much"
+            ]
+           },
+           "meanResidualPct": {
+            "type": "number"
+           },
+           "sdResidualPct": {
+            "type": "number",
+            "exclusiveMinimum": 0
+           },
+           "expectedDurationDays": {
+            "type": "number",
+            "minimum": 1
+           },
+           "shareOfDays": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+           }
+          }
+         },
+         {
+          "properties": {
+           "color": {
+            "const": "green"
+           }
+          }
+         }
+        ]
+       },
+       {
+        "allOf": [
+         {
+          "type": "object",
+          "required": [
+           "color",
+           "label",
+           "meanResidualPct",
+           "sdResidualPct",
+           "expectedDurationDays",
+           "shareOfDays"
+          ],
+          "properties": {
+           "color": {
+            "enum": [
+             "green",
+             "grey",
+             "red"
+            ]
+           },
+           "label": {
+            "enum": [
+             "good",
+             "mid",
+             "too much"
+            ]
+           },
+           "meanResidualPct": {
+            "type": "number"
+           },
+           "sdResidualPct": {
+            "type": "number",
+            "exclusiveMinimum": 0
+           },
+           "expectedDurationDays": {
+            "type": "number",
+            "minimum": 1
+           },
+           "shareOfDays": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+           }
+          }
+         },
+         {
+          "properties": {
+           "color": {
+            "const": "grey"
+           }
+          }
+         }
+        ]
+       },
+       {
+        "allOf": [
+         {
+          "type": "object",
+          "required": [
+           "color",
+           "label",
+           "meanResidualPct",
+           "sdResidualPct",
+           "expectedDurationDays",
+           "shareOfDays"
+          ],
+          "properties": {
+           "color": {
+            "enum": [
+             "green",
+             "grey",
+             "red"
+            ]
+           },
+           "label": {
+            "enum": [
+             "good",
+             "mid",
+             "too much"
+            ]
+           },
+           "meanResidualPct": {
+            "type": "number"
+           },
+           "sdResidualPct": {
+            "type": "number",
+            "exclusiveMinimum": 0
+           },
+           "expectedDurationDays": {
+            "type": "number",
+            "minimum": 1
+           },
+           "shareOfDays": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+           }
+          }
+         },
+         {
+          "properties": {
+           "color": {
+            "const": "red"
+           }
+          }
+         }
+        ]
+       }
+      ]
+     },
+     "transition": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+       "type": "array",
+       "minItems": 3,
+       "maxItems": 3,
+       "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     },
+     "current": {
+      "type": "object",
+      "required": [
+       "date",
+       "probs",
+       "color"
+      ],
+      "properties": {
+       "date": {
+        "type": "string",
+        "format": "date"
+       },
+       "probs": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "color": {
+        "enum": [
+         "green",
+         "grey",
+         "red"
+        ]
+       }
+      }
+     },
+     "timeline": {
+      "type": "array",
+      "minItems": 30,
+      "items": {
+       "type": "object",
+       "required": [
+        "date",
+        "color",
+        "pRed"
+       ],
+       "properties": {
+        "date": {
+         "type": "string",
+         "format": "date"
+        },
+        "color": {
+         "enum": [
+          "green",
+          "grey",
+          "red"
+         ]
+        },
+        "pRed": {
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      }
+     },
+     "monthly": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "ym",
+        "green",
+        "grey",
+        "red"
+       ],
+       "properties": {
+        "ym": {
+         "type": "string",
+         "pattern": "^(19|20)\\d\\d-(0[1-9]|1[0-2])$"
+        },
+        "green": {
+         "type": "number"
+        },
+        "grey": {
+         "type": "number"
+        },
+        "red": {
+         "type": "number"
+        }
+       }
+      }
+     },
+     "outlook": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+       "type": "object",
+       "required": [
+        "days",
+        "probs"
+       ],
+       "properties": {
+        "days": {
+         "type": "integer",
+         "minimum": 1
+        },
+        "probs": {
+         "type": "array",
+         "minItems": 3,
+         "maxItems": 3,
+         "items": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}
