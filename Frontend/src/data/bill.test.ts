@@ -5,8 +5,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { billMonth, parseBillText } from "./bill.ts";
-import { compareBill, suggestionsFor, type Reference } from "./billCompare.ts";
+import { billMonth, inferBillMonth, parseBillText } from "./bill.ts";
+import { buildReport, compareBill, suggestionsFor, type Reference } from "./billCompare.ts";
+import { textLines } from "./pdf.ts";
 import { parseEia, parseFixedRates, parseRecs, type ConsumptionStats } from "./model.ts";
 import { termSpans } from "./savings.ts";
 
@@ -67,6 +68,8 @@ test("reads a National Grid bill", () => {
   assert.equal(fields.periodStart, "2026-01-05");
   assert.equal(fields.periodEnd, "2026-02-04");
   assert.equal(fields.days, 30);
+  assert.equal(fields.supplyDollars, 115.47);
+  assert.equal(fields.deliveryDollars, 118.2);
   assert.match(evidence.kwh ?? "", /Total Energy Used/);
   assert.equal(billMonth(fields.periodStart, fields.periodEnd), "2026-01");
 });
@@ -79,6 +82,7 @@ test("reads an Eversource bill with a competitive supplier in cents", () => {
   assert.equal(fields.supplyCents, 14.99);
   assert.equal(fields.periodStart, "2026-07-09");
   assert.equal(fields.days, 32);
+  assert.equal(fields.statementDate, "2026-08-12");
   assert.equal(billMonth(fields.periodStart, fields.periodEnd), "2026-07");
 });
 
@@ -94,7 +98,48 @@ test("reads a Unitil bill with two-digit years", () => {
 
 test("returns nulls rather than guesses for unreadable text", () => {
   const { fields } = parseBillText("blurry photo\n$ 12 3\nthank you");
-  assert.deepEqual(fields, { utility: null, kwh: null, totalDollars: null, supplyCents: null, periodStart: null, periodEnd: null, days: null });
+  assert.deepEqual(fields, {
+    utility: null,
+    kwh: null,
+    totalDollars: null,
+    supplyCents: null,
+    periodStart: null,
+    periodEnd: null,
+    days: null,
+    statementDate: null,
+    supplyDollars: null,
+    deliveryDollars: null,
+  });
+});
+
+test("dates a bill by its statement date when no service period was read", () => {
+  const { fields } = parseBillText("Eversource\nBill date: Mar 4, 2026\nTotal kWh 702\nAmount due $210.00");
+  assert.equal(fields.periodStart, null);
+  assert.equal(fields.statementDate, "2026-03-04");
+  // Read a few days before the bill goes out, so the period mostly falls in February.
+  assert.deepEqual(inferBillMonth(fields), { ym: "2026-02", from: "statement" });
+  assert.deepEqual(inferBillMonth(parseBillText(NATIONAL_GRID).fields), { ym: "2026-01", from: "period" });
+  assert.equal(inferBillMonth({ periodStart: null, periodEnd: null, days: null, statementDate: null }), null);
+});
+
+test("rebuilds PDF text runs into lines in reading order", () => {
+  // PDF.js gives positioned runs, not lines: a label and its amount are separate runs on one baseline,
+  // and runs arrive in content order, not reading order.
+  const runs = [
+    { str: "$233.67", x: 480, y: 600.4, width: 40, height: 10 },
+    { str: "Amount Due", x: 72, y: 600, width: 60, height: 10 },
+    { str: "Total Energy Used ", x: 72, y: 640, width: 90, height: 10 },
+    { str: "610", x: 162, y: 640, width: 15, height: 10 },
+    { str: " kWh", x: 177, y: 640, width: 20, height: 10 },
+    { str: "national", x: 72, y: 700, width: 40, height: 12 },
+    { str: "grid", x: 112, y: 700, width: 20, height: 12 },
+    { str: "   ", x: 300, y: 650, width: 10, height: 10 },
+  ];
+  assert.equal(textLines(runs), "nationalgrid\nTotal Energy Used 610 kWh\nAmount Due $233.67");
+  const { fields } = parseBillText(textLines(runs));
+  assert.equal(fields.utility, "NG");
+  assert.equal(fields.kwh, 610);
+  assert.equal(fields.totalDollars, 233.67);
 });
 
 test("takes the supply rate from the supply total when no per-kWh rate is printed", () => {
@@ -134,4 +179,31 @@ test("falls back to the latest twelve months when EIA has no data for the bill's
   assert.equal(c.avgPriceIsSameMonth, false);
   assert.equal(c.avgPriceYm, ref.eia[ref.eia.length - 1].ym);
   assert.equal(c.basicCents, null);
+});
+
+test("builds the full report: a year of use, its cost, and where the bill's money goes", () => {
+  const bill = { utility: "NG" as const, kwh: 610, totalDollars: 233.67, supplyCents: 18.93, billYm: "2026-01", days: 30, supplyDollars: 115.47, deliveryDollars: 118.2 };
+  const r = buildReport(bill, ref);
+  assert.equal(r.year.length, 12);
+  const yearKwh = r.year.reduce((s, m) => s + m.yourKwh, 0);
+  assert.ok(Math.abs(yearKwh - r.comparison.annualKwh) < 1e-6, "the months add up to the year");
+  assert.ok(Math.abs(r.year[0].yourKwh - r.comparison.monthKwh) < 1e-9, "the bill's own month is the bill");
+  assert.ok(r.annualPriceIsYours);
+  assert.ok(Math.abs(r.annualDollars - (r.comparison.annualKwh * r.comparison.yourPriceCents!) / 100) < 1e-9);
+  assert.deepEqual(r.breakdown, { supply: 115.47, delivery: 118.2, other: 0 });
+  const withTaxes = buildReport({ ...bill, totalDollars: 250 }, ref);
+  assert.ok(Math.abs(withTaxes.breakdown!.other - 16.33) < 1e-9);
+  assert.equal(buildReport({ ...bill, deliveryDollars: null }, ref).breakdown, null);
+  for (const s of r.suggestions) assert.doesNotMatch(`${s.why} ${s.how} ${s.estimate ?? ""}`, /NaN|undefined|Infinity/);
+  assert.ok(r.suggestions.find((s) => s.id === "rooftop-solar")?.estimate);
+});
+
+test("a bill without one of the four utilities still gets usage and cost, with no basic-service comparison", () => {
+  const bill = { utility: null, kwh: 900, totalDollars: 200, supplyCents: 12, billYm: "2026-07", days: null };
+  const r = buildReport(bill, ref);
+  assert.equal(r.comparison.basicCents, null);
+  assert.equal(r.comparison.supplyGapYearDollars, null);
+  const ids = r.suggestions.map((s) => s.id);
+  assert.ok(!ids.includes("switch-supply") && !ids.includes("supplier-ok"));
+  for (const s of r.suggestions) assert.doesNotMatch(`${s.why} ${s.how}`, /NaN|undefined|null/);
 });

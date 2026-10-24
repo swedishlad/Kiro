@@ -3,7 +3,8 @@
 // What "average" means here, honestly: usage and price are published for Massachusetts as a whole
 // (EIA-861M, RECS 2020), not per town, so usage is compared with the statewide typical account for
 // the same calendar month; the supply rate is compared with the bill's own utility's basic-service
-// rate for that month, which is the one figure that really is local.
+// rate for that month, which is the one figure that really is local. Town-run light plants have no
+// basic service, so a bill without one of the four utilities gets the usage and cost comparison only.
 
 import { fmtCents, fmtNum, fmtPct, ymIndex, ymLabel } from "./format.ts";
 import type { EiaMonth, RecsHome, UtilityId } from "./model.ts";
@@ -16,14 +17,21 @@ export const MONTH_DAYS = 30.44;
 /** Rule of thumb for Massachusetts rooftop solar: about 1,200 kWh a year per kW of panels. */
 export const SOLAR_KWH_PER_KW_YEAR = 1200;
 
+/** Panels that would make a year's use, to the nearest half kW (at least 1 kW). */
+export const solarKw = (annualKwh: number): number => Math.max(1, Math.round((annualKwh / SOLAR_KWH_PER_KW_YEAR) * 2) / 2);
+
 export interface BillInput {
-  utility: UtilityId;
+  /** null for a town-run light plant, or when the bill named no utility */
+  utility: UtilityId | null;
   kwh: number;
   totalDollars: number | null;
   supplyCents: number | null;
   /** YYYY-MM the billing period mostly falls in */
   billYm: string;
   days: number | null;
+  /** This period's supply and delivery section totals, when the bill printed them */
+  supplyDollars?: number | null;
+  deliveryDollars?: number | null;
 }
 
 export interface Reference {
@@ -92,7 +100,7 @@ export function compareBill(bill: BillInput, ref: Reference): Comparison {
     bill.totalDollars !== null && bill.totalDollars > 0 ? (bill.days && bill.days > 0 ? (bill.totalDollars / bill.days) * MONTH_DAYS : bill.totalDollars) : null;
   const typicalMonthDollars = (typicalKwh * avgPriceCents) / 100;
 
-  const basicCents = basicServiceCents(ref.spans, bill.utility, bill.billYm);
+  const basicCents = bill.utility ? basicServiceCents(ref.spans, bill.utility, bill.billYm) : null;
   const supplyGapCents = bill.supplyCents !== null && basicCents !== null ? bill.supplyCents - basicCents : null;
   const supplyGapYearDollars = supplyGapCents !== null ? (supplyGapCents * annualKwh) / 100 : null;
 
@@ -127,11 +135,13 @@ export interface Suggestion {
   why: string;
   /** What to do */
   how: string;
+  /** A rough yearly dollar figure for this step, e.g. "≈ $140 a year" */
+  estimate?: string;
   link?: { href: string; label: string };
 }
 
 /** Yearly estimates rest on one bill, so they are rounded to $10 rather than shown to the cent. */
-const roughDollars = (v: number): string => `$${fmtNum(Math.round(Math.abs(v) / 10) * 10)}`;
+export const roughDollars = (v: number): string => `$${fmtNum(Math.round(Math.abs(v) / 10) * 10)}`;
 
 const SUMMER = [6, 7, 8, 9];
 const WINTER = [12, 1, 2, 3];
@@ -139,7 +149,8 @@ const WINTER = [12, 1, 2, 3];
 /** Ordered: money you can save by changing nothing at home first, then using less, then alternatives. */
 export function suggestionsFor(bill: BillInput, c: Comparison): Suggestion[] {
   const out: Suggestion[] = [];
-  const u = utilityById(bill.utility).name;
+  const u = bill.utility ? utilityById(bill.utility).name : "your utility";
+  const priceCents = c.yourPriceCents ?? c.avgPriceCents;
   const month = (ymIndex(c.billYm) % 12) + 1;
   const monthName = ymLabel(c.billYm).split(" ")[0];
   const high = c.usageRatio >= 1.2 || c.shareOfHomesBelow >= 0.67;
@@ -154,6 +165,7 @@ export function suggestionsFor(bill: BillInput, c: Comparison): Suggestion[] {
         title: "Switch your supply back to basic service",
         why: `Your supply rate is ${fmtCents(bill.supplyCents, 2)} per kWh; ${u}'s basic service was ${fmtCents(c.basicCents, 2)} for ${ymLabel(c.billYm)}. At your use that is about ${roughDollars(c.supplyGapYearDollars ?? 0)} a year extra.`,
         how: `Call ${u} or your supplier to return to basic service; only the supply line changes, your delivery service stays the same. Check your supplier contract for an early-termination fee first, and compare offers on the state's Energy Switch site.`,
+        estimate: `≈ ${roughDollars(c.supplyGapYearDollars ?? 0)} a year`,
         link: { href: "https://www.energyswitchma.gov/", label: "Energy Switch Massachusetts" },
       });
     } else if (c.supplyGapCents < -0.25) {
@@ -176,6 +188,7 @@ export function suggestionsFor(bill: BillInput, c: Comparison): Suggestion[] {
       title: "Book a no-cost Mass Save home energy assessment",
       why: `You used ${fmtNum(c.monthKwh)} kWh in a typical-length ${monthName}, ${fmtNum(c.usageRatio, 1)}× the ${fmtNum(c.typicalKwh)} kWh of an average Massachusetts account, and more than ${fmtPct(c.shareOfHomesBelow)} of homes over a year.`,
       how: "An energy specialist visits for free, installs some efficiency items at no cost, and tells you which rebates (insulation, air sealing, heat pumps, appliances) you qualify for.",
+      estimate: `Each 10% less ≈ ${roughDollars((0.1 * c.annualKwh * priceCents) / 100)} a year`,
       link: { href: "https://www.masssave.com/", label: "Mass Save" },
     });
     out.push(
@@ -222,13 +235,14 @@ export function suggestionsFor(bill: BillInput, c: Comparison): Suggestion[] {
     how: "You subscribe to part of a local solar farm; its output appears as credits on your utility bill, usually sold to you below their face value, so each month's bill goes down.",
     link: { href: "https://www.masscec.com/", label: "Massachusetts Clean Energy Center" },
   });
-  const kw = Math.max(1, Math.round((c.annualKwh / SOLAR_KWH_PER_KW_YEAR) * 2) / 2);
+  const kw = solarKw(c.annualKwh);
   out.push({
     id: "rooftop-solar",
     kind: "alternative",
     title: `Rooftop solar: about ${fmtNum(kw, 1)} kW would cover your use`,
     why: `At ${fmtNum(c.annualKwh)} kWh a year and roughly ${fmtNum(SOLAR_KWH_PER_KW_YEAR)} kWh per kW of panels in Massachusetts, a ${fmtNum(kw, 1)} kW system would make about as much as you use, worth around ${roughDollars((c.annualKwh * c.avgPriceCents) / 100)} a year at today's average price.`,
     how: "Get two or three quotes for your roof's real orientation and shade. Net metering credits what you send to the grid, and the state's SMART program and a state income tax credit help pay for it.",
+    estimate: `≈ ${roughDollars((c.annualKwh * c.avgPriceCents) / 100)} a year of power`,
     link: { href: "https://www.masscec.com/", label: "Massachusetts Clean Energy Center" },
   });
   if (!SUMMER.includes(month) || high) {
@@ -242,4 +256,47 @@ export function suggestionsFor(bill: BillInput, c: Comparison): Suggestion[] {
     });
   }
   return out;
+}
+
+// ----------------------------------------------------------------------------- report
+
+export interface ReportMonth {
+  /** 1..12 */
+  month: number;
+  /** This home's use that month, carried from the bill with the statewide seasonal pattern */
+  yourKwh: number;
+  typicalKwh: number;
+}
+
+export interface BillReport {
+  comparison: Comparison;
+  suggestions: Suggestion[];
+  /** Jan..Dec */
+  year: ReportMonth[];
+  /** A year of use at this bill's all-in price, or at the state average when the total is unknown */
+  annualDollars: number;
+  annualPriceIsYours: boolean;
+  /** This period's charges by section; other = the rest of the total (taxes, fees, balances) */
+  breakdown: { supply: number; delivery: number; other: number } | null;
+}
+
+/** Everything the bill report shows, from one bill. */
+export function buildReport(bill: BillInput, ref: Reference): BillReport {
+  const comparison = compareBill(bill, ref);
+  const priceIsYours = comparison.yourPriceCents !== null;
+  const year = ref.seasonalShares.map((share, i) => ({ month: i + 1, yourKwh: comparison.annualKwh * share, typicalKwh: ref.typicalMonthlyKwh[i] }));
+  let breakdown: BillReport["breakdown"] = null;
+  if (bill.supplyDollars && bill.deliveryDollars) {
+    const rest = bill.totalDollars !== null ? bill.totalDollars - bill.supplyDollars - bill.deliveryDollars : 0;
+    // A total smaller than its sections includes a credit or payment; show the sections alone then.
+    breakdown = { supply: bill.supplyDollars, delivery: bill.deliveryDollars, other: rest >= 0.5 ? rest : 0 };
+  }
+  return {
+    comparison,
+    suggestions: suggestionsFor(bill, comparison),
+    year,
+    annualDollars: (comparison.annualKwh * (comparison.yourPriceCents ?? comparison.avgPriceCents)) / 100,
+    annualPriceIsYours: priceIsYours,
+    breakdown,
+  };
 }

@@ -84,7 +84,7 @@ them and scroll to the section; `#/overview` opens Bill check. A browser's first
 | Tab | What it shows | Backend inputs |
 |---|---|---|
 | Welcome (first visit) | The onboarding page: what Watt If is, the questions it answers, an example Bill check result (a made-up bill against the real typical home and basic-service rate), checking a bill in three steps, a tour of every tab, the assistant's prompt box, the site's promises and a short FAQ | `consumption_stats.json`, `savings_model.json`, `ma_towns.csv` |
-| Bill check (home page) | Upload a photo of an electric bill (or paste a PDF's text): it is read in the browser with Tesseract.js, the viewer checks the fields, and the bill is compared with the typical Massachusetts account for that month, the average price and their utility's basic-service rate, followed by suggestions (switching supply, using less, community and rooftop solar, heat pumps) | `consumption_stats.json`, `eia_ma_monthly.csv`, `recs_ma.csv`, `snapshot/fixed_residential_cents_*.csv` |
+| Bill check (home page) | Add an electric bill (photo, screenshot or PDF, several pages at once; chosen, dropped anywhere on the page or pasted) and a full report appears: the bill against the typical Massachusetts account for that month, the average price and the utility's basic-service rate, the year estimated month by month, a year's kWh and cost, supply vs delivery, and suggestions with rough yearly dollars (switching supply, using less, community and rooftop solar, heat pumps). The details read sit under the report for correction; "Save as PDF" prints it | `consumption_stats.json`, `eia_ma_monthly.csv`, `recs_ma.csv`, `snapshot/fixed_residential_cents_*.csv` |
 | Energy data → Usage | Monthly use per account since 2010 with HMM regimes, year-over-year sales, regime explainer, “a home like yours” estimator, RECS distribution and breakdowns | `eia_ma_monthly.csv`, `hmm_regimes.json`, `recs_ma.csv`, `consumption_stats.json`, `map_consumption.json` |
 | Energy data → Prices & savings | Basic-service monthly rates by utility, all-in price vs supply rate, fixed terms, savings calculator | `snapshot/monthly_residential_cents_*.csv`, `snapshot/fixed_residential_cents_*.csv`, `savings_model.json` |
 | Energy data → Regimes & forecast | Homes (monthly) and ISO-NE zones (daily) vs the same period in the previous 5 years, outlook, transition matrix; six-month Monte Carlo forecast with its walk-forward test | `regimes.json`, `mc_forecast.json` |
@@ -142,15 +142,33 @@ The Climate section (Energy data tab, `#/climate`) shows the backend's Climate A
 - Types mirror the API's Pydantic models (`src/data/model.ts` ↔ `Backend/backend/climate/schemas.py`,
   `Backend/contracts/climate_dashboard.schema.json`); helpers are in `src/data/climate.ts`.
 
-## Bill reader (OCR)
+## Bill reader
 
-- `npm run dev` and `npm run build` first run `scripts/copy-ocr-assets.mjs`, which copies the
-  Tesseract.js worker, its WebAssembly core and the English model from `node_modules` into
-  `public/ocr/` (git-ignored). The page loads them from this site only, so no CDN is contacted and
-  the bill photo never leaves the browser. About 7 MB is downloaded once, only on the Bill check tab.
-- `src/data/bill.ts` turns bill text into fields (utility, kWh, total, supply rate, billing period),
-  keeping the line each came from; `src/data/billCompare.ts` does the comparison and picks the
-  suggestions. Both are pure and covered by `src/data/bill.test.ts`.
+One step: the visitor adds the bill and the report appears. Nothing is uploaded and no third-party
+server is contacted.
+
+- **Input:** photos, screenshots and PDFs, several files or pages at once, from the file picker, by
+  dropping them anywhere on the page, or by pasting (⌘V / Ctrl+V) a screenshot or a PDF's copied text.
+  A "paste the text" box and "type the numbers" remain as fallbacks.
+- **Reading** (`src/data/readBill.ts`): a PDF's text layer is read directly with PDF.js
+  (`src/data/pdf.ts` rebuilds its positioned text runs into lines), which is instant and exact. Photos,
+  and PDF pages with no text layer (scans), are read with Tesseract.js (`src/data/ocr.ts`, one worker
+  for every page, single-column page segmentation so boxed fields and label–amount pairs survive).
+  The OCR engine loads only when an image needs it.
+- **Assets:** `npm run dev` and `npm run build` first run `scripts/copy-reader-assets.mjs`, which copies
+  the Tesseract.js worker, its WebAssembly core and the English model into `public/ocr/`, and the PDF.js
+  worker, fonts, character maps and image decoders into `public/pdf/` (both git-ignored). The page
+  loads them from this site only. About 7 MB is downloaded once for the first photo; PDF.js is a
+  130 KB (gzip) chunk plus its worker, loaded only for a PDF.
+- **Fields** (`src/data/bill.ts`): utility, kWh, total, supply rate, billing period, statement date,
+  and the supply and delivery section totals, each keeping the line it came from. Only kWh and the
+  bill month are required; the month comes from the service period or, failing that, the statement
+  date. Without one of the four utilities (a town-run light plant) the report covers usage and cost.
+- **Report** (`src/data/billCompare.ts`, `buildReport`): the comparison, the year carried month by
+  month with the statewide seasonal pattern, a year's kWh and cost, the bill's supply / delivery /
+  other split, and the suggestions with rough yearly dollars. Pure and covered by
+  `src/data/bill.test.ts`. "Save as PDF" uses the browser's print, with a print stylesheet that keeps
+  the report in the light palette.
 - Usage and price are only published statewide, so the comparison is with the typical Massachusetts
   account and the bill's own utility's basic-service rate, and the page says so.
 

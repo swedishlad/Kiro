@@ -41,15 +41,15 @@ const BENEFITS = [
 const STEPS = [
   {
     title: "Grab your bill",
-    text: "A photo of a paper bill, or a screenshot of the page with your usage and charges. No bill handy? You can type the numbers in.",
+    text: "A photo, a screenshot or the PDF from your utility's website; several pages at once is fine. No bill handy? You can type the numbers in.",
   },
   {
     title: "Add it on Bill check",
-    text: "We read it right in your browser in a few seconds. Check what we found and fix anything that looks off.",
+    text: "Choose it, drop it anywhere on the page or paste it. We read it right in your browser, and your report appears straight away.",
   },
   {
     title: "See where you stand",
-    text: "Your use, cost and rate next to Massachusetts homes, plus ways to save picked for that bill.",
+    text: "Your use, cost and rate next to Massachusetts homes, plus ways to save picked for that bill. Spot a misread number? Fix it under the report.",
   },
 ];
 
@@ -72,7 +72,7 @@ const FEATURES: Feature[] = [
     color: "var(--accent)",
     name: "Bill check",
     kicker: "Start here",
-    text: "Add a photo of your bill to compare it with homes across Massachusetts and get ways to lower it.",
+    text: "Add your bill (a photo, screenshot or PDF) to compare it with homes across Massachusetts and get ways to lower it.",
     links: [{ href: "#/bill", label: "Check my bill" }],
   },
   {
@@ -130,7 +130,7 @@ const PROMISES: { icon: Icon; title: string; text: ReactNode }[] = [
   {
     icon: "lock",
     title: "Your bill stays with you",
-    text: "The photo is read in your browser and never uploaded. (Questions for the assistant do go to Google's Gemini, so leave out account numbers.)",
+    text: "Your bill is read in your browser and never uploaded. (Questions for the assistant do go to Google's Gemini, so leave out account numbers.)",
   },
   { icon: "shield", title: "No sales pitch", text: "We don't sell electricity, sign anyone up or get paid for referrals. The choice is always yours." },
   {
@@ -154,8 +154,8 @@ const FAQ: { q: string; a: ReactNode }[] = [
     a: "National Grid, Eversource and Unitil. If a town-run electric company (a municipal light plant, such as Braintree or Concord) serves you, you'll get the usage comparison; those utilities have no basic service to compare your rate with.",
   },
   {
-    q: "What happens to my bill photo?",
-    a: "A text reader running in your browser reads it, and the photo never leaves your device. The first time, your browser downloads that reader (about 7 MB); after that it's quick.",
+    q: "What happens to my bill?",
+    a: "It's read right in your browser and never leaves your device. A PDF is read instantly; for a photo, your browser downloads a text reader the first time (about 7 MB), and after that it's quick.",
   },
   {
     q: "What is “basic service”?",
@@ -205,10 +205,10 @@ export default function Welcome() {
             home compares, whether you're paying a fair price, and what could bring the bill down.
           </p>
           <div className="welcome-actions">
-            <a className="btn btn-primary" href="#/bill">
+            <a className="btn btn-primary btn-large" href="#/bill">
               Check my bill
             </a>
-            <a className="btn btn-secondary" href="#/data">
+            <a className="btn btn-large" href="#/data">
               Explore the data
             </a>
           </div>
@@ -243,7 +243,7 @@ export default function Welcome() {
       </section>
 
       <section className="welcome-section" aria-labelledby="welcome-steps">
-        <SectionHead id="welcome-steps" title="Check your bill in three steps" lede="It takes a minute or two, and you can stop at any point." />
+        <SectionHead id="welcome-steps" title="Check your bill in three steps" lede="It takes about a minute, and nothing gets uploaded." />
         <ol className="welcome-steps">
           {STEPS.map((s, i) => (
             <li className="card step" key={s.title}>
@@ -329,10 +329,10 @@ export default function Welcome() {
         </h2>
         <p className="welcome-section-lede">Grab your latest bill and see how it stacks up. We'll be right here if you have questions.</p>
         <div className="welcome-actions">
-          <a className="btn btn-primary" href="#/bill">
+          <a className="btn btn-primary btn-large" href="#/bill">
             Check my bill
           </a>
-          <a className="btn btn-secondary" href="#/data">
+          <a className="btn btn-large" href="#/data">
             Explore the data
           </a>
         </div>
