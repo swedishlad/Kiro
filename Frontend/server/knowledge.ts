@@ -16,7 +16,7 @@ The site has four tabs: Bill check, Energy data, Map and About. Energy data hold
 - [Prices & savings](#/prices): basic-service monthly rates by utility since 2005, the all-in average price vs the supply rate, fixed-option terms, and the "Did your supplier save you money?" calculator with a month-by-month breakdown.
 - [Regimes & forecast](#/grid): a regime nowcast, a dark panel for the series picked under Series (homes, monthly; the Massachusetts grid or one zone, daily). It shows the value against its usual range (homes: monthly use per account; grid: daily load), the change vs a year earlier (homes: residential sales; grid: 7-day load), use vs the same period in the previous 5 years in standard deviations with the model's call on each point (red above / grey within / green below the usual range), and the filtered probability of each regime; homes also show the next six months (hatched where only the long-run odds are known). Then the outlook, how the three regimes behave, and the six-month grid load forecast: actual monthly load, then the Monte Carlo median, 50% and 90% ranges and 20 simulated paths, with its walk-forward test.
 - [Climate](#/climate): a modeled household's CO₂ from electricity on the New England grid. Pick monthly use, flexible use a day and a home battery; it shows yearly emissions, how much moving use to cleaner hours cuts, the cost per ton of steps like weatherization, a 20-year emissions range as the grid gets cleaner, and whether solar or a battery is worth buying now or later.
-- [Map](#/towns): a map and searchable table of all 351 cities and towns with county, ISO-NE load zone, 2020 and 2024 population and growth.
+- [Map](#/towns): a map of all 351 cities and towns coloured by each town's modeled 6-month electricity forecast, with a searchable table showing that forecast plus county, ISO-NE load zone and 2020/2024 population. The forecast is modeled (each town is its population share of its ISO-NE zone; no public town-level metered data exists), not a live feed.
 - [About](#/about): what Watt If is and the team that builds it: Tae, Johan, Yuan and Lin.
 - [Data & methods](#/sources) (on the About tab): sources, how each number is made, limits, and how to rebuild.
 
@@ -434,369 +434,370 @@ Solar and battery timing, default home:
 
 ## Cities and towns (Map tab)
 
-- What differs by town on the site: the ISO-NE load zone (which decides which zone's grid regime and forecast apply) and population. Zone assignment is approximate (by county in the backend; for example Brookline is counted in SEMA).
-- Why the map isn't coloured by usage: there is no verified per-town electricity-use source (RECS 2020 has no town field and EIA-861M is statewide), so the backend gives every town the same modeled level, 5,990 kWh a year (the statewide RECS median, class Mid), and the site doesn't paint differences that aren't in the data. For a household, use [A home like yours](#/usage).
-- Which utility serves a town is not in the data.
+- The map colours all 351 towns by each town's **modeled 6-month electricity forecast** (Nov 2026 – Apr 2027, median total MWh on a log scale; darker blue = more). The searchable table lists that forecast plus county, ISO-NE load zone and 2020/2024 population; click a town on the map or in the table to pin its forecast median and 80% range (p10–p90).
+- The forecast is **modeled, not metered** (modeled: population share of zone): each town gets its population share of its ISO-NE zone's Monte Carlo forecast, because no public town-level electricity data exists. All-customer load includes businesses, so commercial centres (downtown Boston) are understated and suburbs overstated. For a single household, use [A home like yours](#/usage).
+- Zone assignment is approximate (approximate by county; for example Brookline is counted in SEMA) and decides which zone's grid regime and forecast apply to a town. Which utility serves a town is not in the data.
+- This is a dated snapshot (as of 2026-10-24), not a live feed.
 
-| Zone | Towns | Population 2024 | Change since 2020 |
-|---|---|---|---|
-| NEMA (Northeast MA & Boston) | 92 | 3,286,038 | +1.7% |
-| SEMA (Southeast MA) | 98 | 2,139,738 | +2.3% |
-| WCMA (West & Central MA) | 161 | 1,710,395 | +2.4% |
+| Zone | Towns | 6-mo forecast | Population 2024 | Change since 2020 |
+|---|---|---|---|---|
+| NEMA (Northeast MA & Boston) | 92 | 24,125.4 GWh | 3,286,038 | +1.7% |
+| SEMA (Southeast MA) | 98 | 14,310.0 GWh | 2,139,738 | +2.3% |
+| WCMA (West & Central MA) | 161 | 16,017.6 GWh | 1,710,395 | +2.4% |
 
-| Town | County | Zone | Pop. 2020 | Pop. 2024 | Change |
+| Town | County | Zone | 6-mo forecast | Pop. 2024 | Change since 2020 |
 |---|---|---|---|---|---|
-| Abington | Plymouth | SEMA | 17,054 | 17,090 | +0.2% |
-| Acton | Middlesex | NEMA | 23,964 | 24,539 | +2.4% |
-| Acushnet | Bristol | SEMA | 10,553 | 10,700 | +1.4% |
-| Adams | Berkshire | WCMA | 8,146 | 7,992 | −1.9% |
-| Agawam Town | Hampden | WCMA | 28,627 | 28,749 | +0.4% |
-| Alford | Berkshire | WCMA | 488 | 483 | −1.0% |
-| Amesbury Town | Essex | NEMA | 17,338 | 17,617 | +1.6% |
-| Amherst | Hampshire | WCMA | 27,806 | 40,989 | +47.4% |
-| Andover | Essex | NEMA | 36,552 | 36,927 | +1.0% |
-| Aquinnah | Dukes | SEMA | 443 | 451 | +1.8% |
-| Arlington | Middlesex | NEMA | 46,202 | 47,112 | +2.0% |
-| Ashburnham | Worcester | WCMA | 6,312 | 6,522 | +3.3% |
-| Ashby | Middlesex | NEMA | 3,184 | 3,270 | +2.7% |
-| Ashfield | Franklin | WCMA | 1,686 | 1,685 | −0.1% |
-| Ashland | Middlesex | NEMA | 18,836 | 19,391 | +2.9% |
-| Athol | Worcester | WCMA | 11,930 | 12,105 | +1.5% |
-| Attleboro | Bristol | SEMA | 46,478 | 47,085 | +1.3% |
-| Auburn | Worcester | WCMA | 16,864 | 17,323 | +2.7% |
-| Avon | Norfolk | SEMA | 4,773 | 4,801 | +0.6% |
-| Ayer | Middlesex | NEMA | 8,481 | 9,010 | +6.2% |
-| Barnstable Town | Barnstable | SEMA | 48,872 | 49,831 | +2.0% |
-| Barre | Worcester | WCMA | 5,523 | 5,631 | +2.0% |
-| Becket | Berkshire | WCMA | 1,931 | 1,922 | −0.5% |
-| Bedford | Middlesex | NEMA | 14,675 | 14,955 | +1.9% |
-| Belchertown | Hampshire | WCMA | 15,339 | 15,372 | +0.2% |
-| Bellingham | Norfolk | SEMA | 16,951 | 17,998 | +6.2% |
-| Belmont | Middlesex | NEMA | 27,235 | 27,442 | +0.8% |
-| Berkley | Bristol | SEMA | 6,771 | 6,892 | +1.8% |
-| Berlin | Worcester | WCMA | 3,271 | 3,479 | +6.4% |
-| Bernardston | Franklin | WCMA | 2,097 | 2,109 | +0.6% |
-| Beverly | Essex | NEMA | 42,571 | 43,223 | +1.5% |
-| Billerica | Middlesex | NEMA | 41,842 | 42,978 | +2.7% |
-| Blackstone | Worcester | WCMA | 9,191 | 9,374 | +2.0% |
-| Blandford | Hampden | WCMA | 1,211 | 1,209 | −0.2% |
-| Bolton | Worcester | WCMA | 5,668 | 5,809 | +2.5% |
-| Boston | Suffolk | NEMA | 675,522 | 673,458 | −0.3% |
-| Bourne | Barnstable | SEMA | 19,604 | 20,508 | +4.6% |
-| Boxborough | Middlesex | NEMA | 5,495 | 5,565 | +1.3% |
-| Boxford | Essex | NEMA | 8,189 | 8,334 | +1.8% |
-| Boylston | Worcester | WCMA | 4,855 | 5,064 | +4.3% |
-| Braintree Town | Norfolk | SEMA | 39,075 | 39,134 | +0.2% |
-| Brewster | Barnstable | SEMA | 10,318 | 10,447 | +1.3% |
-| Bridgewater Town | Plymouth | SEMA | 26,788 | 29,167 | +8.9% |
-| Brimfield | Hampden | WCMA | 3,689 | 3,733 | +1.2% |
-| Brockton | Plymouth | SEMA | 105,485 | 105,788 | +0.3% |
-| Brookfield | Worcester | WCMA | 3,438 | 3,500 | +1.8% |
-| Brookline | Norfolk | SEMA | 63,022 | 63,925 | +1.4% |
-| Buckland | Franklin | WCMA | 1,811 | 1,818 | +0.4% |
-| Burlington | Middlesex | NEMA | 26,002 | 26,977 | +3.7% |
-| Cambridge | Middlesex | NEMA | 118,204 | 121,186 | +2.5% |
-| Canton | Norfolk | SEMA | 24,397 | 25,163 | +3.1% |
-| Carlisle | Middlesex | NEMA | 5,233 | 5,317 | +1.6% |
-| Carver | Plymouth | SEMA | 11,632 | 11,817 | +1.6% |
-| Charlemont | Franklin | WCMA | 1,186 | 1,179 | −0.6% |
-| Charlton | Worcester | WCMA | 13,304 | 13,606 | +2.3% |
-| Chatham | Barnstable | SEMA | 6,593 | 6,711 | +1.8% |
-| Chelmsford | Middlesex | NEMA | 36,383 | 36,953 | +1.6% |
-| Chelsea | Suffolk | NEMA | 40,549 | 40,245 | −0.7% |
-| Cheshire | Berkshire | WCMA | 3,253 | 3,190 | −1.9% |
-| Chester | Hampden | WCMA | 1,225 | 1,221 | −0.3% |
-| Chesterfield | Hampshire | WCMA | 1,186 | 1,174 | −1.0% |
-| Chicopee | Hampden | WCMA | 55,444 | 55,381 | −0.1% |
-| Chilmark | Dukes | SEMA | 1,214 | 1,249 | +2.9% |
-| Clarksburg | Berkshire | WCMA | 1,656 | 1,637 | −1.1% |
-| Clinton | Worcester | WCMA | 15,412 | 15,740 | +2.1% |
-| Cohasset | Norfolk | SEMA | 8,379 | 8,532 | +1.8% |
-| Colrain | Franklin | WCMA | 1,605 | 1,643 | +2.4% |
-| Concord | Middlesex | NEMA | 18,364 | 18,092 | −1.5% |
-| Conway | Franklin | WCMA | 1,765 | 1,754 | −0.6% |
-| Cummington | Hampshire | WCMA | 827 | 819 | −1.0% |
-| Dalton | Berkshire | WCMA | 6,325 | 6,198 | −2.0% |
-| Danvers | Essex | NEMA | 28,053 | 28,590 | +1.9% |
-| Dartmouth | Bristol | SEMA | 31,463 | 34,139 | +8.5% |
-| Dedham | Norfolk | SEMA | 25,217 | 25,485 | +1.1% |
-| Deerfield | Franklin | WCMA | 5,093 | 5,177 | +1.6% |
-| Dennis | Barnstable | SEMA | 14,676 | 14,862 | +1.3% |
-| Dighton | Bristol | SEMA | 8,124 | 8,275 | +1.9% |
-| Douglas | Worcester | WCMA | 8,997 | 9,452 | +5.1% |
-| Dover | Norfolk | SEMA | 5,918 | 6,057 | +2.3% |
-| Dracut | Middlesex | NEMA | 32,529 | 32,972 | +1.4% |
-| Dudley | Worcester | WCMA | 11,907 | 11,984 | +0.6% |
-| Dunstable | Middlesex | NEMA | 3,362 | 3,500 | +4.1% |
-| Duxbury | Plymouth | SEMA | 16,075 | 16,377 | +1.9% |
-| East Bridgewater | Plymouth | SEMA | 14,429 | 14,519 | +0.6% |
-| East Brookfield | Worcester | WCMA | 2,222 | 2,237 | +0.7% |
-| East Longmeadow | Hampden | WCMA | 16,408 | 16,515 | +0.7% |
-| Eastham | Barnstable | SEMA | 5,746 | 5,824 | +1.4% |
-| Easthampton Town | Hampshire | WCMA | 16,172 | 16,020 | −0.9% |
-| Easton | Bristol | SEMA | 25,070 | 25,568 | +2.0% |
-| Edgartown | Dukes | SEMA | 5,171 | 5,328 | +3.0% |
-| Egremont | Berkshire | WCMA | 1,371 | 1,375 | +0.3% |
-| Erving | Franklin | WCMA | 1,659 | 1,661 | +0.1% |
-| Essex | Essex | NEMA | 3,678 | 3,760 | +2.2% |
-| Everett | Middlesex | NEMA | 48,957 | 51,825 | +5.9% |
-| Fairhaven | Bristol | SEMA | 15,911 | 16,005 | +0.6% |
-| Fall River | Bristol | SEMA | 93,918 | 94,689 | +0.8% |
-| Falmouth | Barnstable | SEMA | 32,541 | 33,227 | +2.1% |
-| Fitchburg | Worcester | WCMA | 41,672 | 42,145 | +1.1% |
-| Florida | Berkshire | WCMA | 690 | 673 | −2.5% |
-| Foxborough | Norfolk | SEMA | 18,600 | 18,791 | +1.0% |
-| Framingham | Middlesex | NEMA | 72,129 | 73,361 | +1.7% |
-| Franklin Town | Norfolk | SEMA | 32,324 | 33,742 | +4.4% |
-| Freetown | Bristol | SEMA | 9,203 | 9,380 | +1.9% |
-| Gardner | Worcester | WCMA | 21,222 | 21,381 | +0.7% |
-| Georgetown | Essex | NEMA | 8,464 | 8,558 | +1.1% |
-| Gill | Franklin | WCMA | 1,547 | 1,553 | +0.4% |
-| Gloucester | Essex | NEMA | 29,747 | 30,491 | +2.5% |
-| Goshen | Hampshire | WCMA | 960 | 942 | −1.9% |
-| Gosnold | Dukes | SEMA | 62 | 62 | 0.0% |
-| Grafton | Worcester | WCMA | 19,654 | 20,352 | +3.6% |
-| Granby | Hampshire | WCMA | 6,099 | 6,064 | −0.6% |
-| Granville | Hampden | WCMA | 1,538 | 1,540 | +0.1% |
-| Great Barrington | Berkshire | WCMA | 7,174 | 7,245 | +1.0% |
-| Greenfield Town | Franklin | WCMA | 17,712 | 17,633 | −0.4% |
-| Groton | Middlesex | NEMA | 11,324 | 11,580 | +2.3% |
-| Groveland | Essex | NEMA | 6,746 | 6,849 | +1.5% |
-| Hadley | Hampshire | WCMA | 5,317 | 5,284 | −0.6% |
-| Halifax | Plymouth | SEMA | 7,743 | 7,786 | +0.6% |
-| Hamilton | Essex | NEMA | 7,558 | 7,670 | +1.5% |
-| Hampden | Hampden | WCMA | 4,956 | 4,964 | +0.2% |
-| Hancock | Berkshire | WCMA | 747 | 740 | −0.9% |
-| Hanover | Plymouth | SEMA | 14,819 | 14,887 | +0.5% |
-| Hanson | Plymouth | SEMA | 10,628 | 10,719 | +0.9% |
-| Hardwick | Worcester | WCMA | 2,664 | 2,722 | +2.2% |
-| Harvard | Worcester | WCMA | 6,846 | 7,004 | +2.3% |
-| Harwich | Barnstable | SEMA | 13,430 | 13,620 | +1.4% |
-| Hatfield | Hampshire | WCMA | 3,338 | 3,321 | −0.5% |
-| Haverhill | Essex | NEMA | 67,636 | 68,291 | +1.0% |
-| Hawley | Franklin | WCMA | 352 | 352 | 0.0% |
-| Heath | Franklin | WCMA | 721 | 717 | −0.6% |
-| Hingham | Plymouth | SEMA | 24,260 | 24,414 | +0.6% |
-| Hinsdale | Berkshire | WCMA | 1,906 | 1,890 | −0.8% |
-| Holbrook | Norfolk | SEMA | 11,384 | 11,475 | +0.8% |
-| Holden | Worcester | WCMA | 19,903 | 20,326 | +2.1% |
-| Holland | Hampden | WCMA | 2,596 | 2,581 | −0.6% |
-| Holliston | Middlesex | NEMA | 14,988 | 15,347 | +2.4% |
-| Holyoke | Hampden | WCMA | 38,139 | 37,838 | −0.8% |
-| Hopedale | Worcester | WCMA | 6,007 | 6,063 | +0.9% |
-| Hopkinton | Middlesex | NEMA | 18,762 | 19,971 | +6.4% |
-| Hubbardston | Worcester | WCMA | 4,318 | 4,433 | +2.7% |
-| Hudson | Middlesex | NEMA | 20,029 | 20,364 | +1.7% |
-| Hull | Plymouth | SEMA | 10,069 | 10,278 | +2.1% |
-| Huntington | Hampshire | WCMA | 2,095 | 2,071 | −1.1% |
-| Ipswich | Essex | NEMA | 13,765 | 14,110 | +2.5% |
-| Kingston | Plymouth | SEMA | 13,716 | 14,462 | +5.4% |
-| Lakeville | Plymouth | SEMA | 11,543 | 12,262 | +6.2% |
-| Lancaster | Worcester | WCMA | 8,424 | 8,993 | +6.8% |
-| Lanesborough | Berkshire | WCMA | 3,038 | 3,004 | −1.1% |
-| Lawrence | Essex | NEMA | 88,878 | 89,332 | +0.5% |
-| Lee | Berkshire | WCMA | 5,777 | 5,682 | −1.6% |
-| Leicester | Worcester | WCMA | 11,064 | 11,224 | +1.4% |
-| Lenox | Berkshire | WCMA | 5,091 | 5,072 | −0.4% |
-| Leominster | Worcester | WCMA | 43,755 | 44,209 | +1.0% |
-| Leverett | Franklin | WCMA | 1,861 | 1,863 | +0.1% |
-| Lexington | Middlesex | NEMA | 34,413 | 34,743 | +1.0% |
-| Leyden | Franklin | WCMA | 734 | 735 | +0.1% |
-| Lincoln | Middlesex | NEMA | 6,977 | 6,996 | +0.3% |
-| Littleton | Middlesex | NEMA | 10,131 | 10,495 | +3.6% |
-| Longmeadow | Hampden | WCMA | 15,813 | 15,712 | −0.6% |
-| Lowell | Middlesex | NEMA | 115,834 | 120,418 | +4.0% |
-| Ludlow | Hampden | WCMA | 20,763 | 21,118 | +1.7% |
-| Lunenburg | Worcester | WCMA | 11,792 | 12,007 | +1.8% |
-| Lynn | Essex | NEMA | 101,073 | 103,489 | +2.4% |
-| Lynnfield | Essex | NEMA | 12,981 | 13,230 | +1.9% |
-| Malden | Middlesex | NEMA | 66,086 | 66,693 | +0.9% |
-| Manchester-by-the-Sea | Essex | NEMA | 5,385 | 5,467 | +1.5% |
-| Mansfield | Bristol | SEMA | 23,848 | 24,077 | +1.0% |
-| Marblehead | Essex | NEMA | 20,402 | 20,576 | +0.9% |
-| Marion | Plymouth | SEMA | 5,335 | 5,341 | +0.1% |
-| Marlborough | Middlesex | NEMA | 41,685 | 42,169 | +1.2% |
-| Marshfield | Plymouth | SEMA | 25,798 | 26,043 | +0.9% |
-| Mashpee | Barnstable | SEMA | 15,068 | 15,482 | +2.7% |
-| Mattapoisett | Plymouth | SEMA | 6,511 | 6,763 | +3.9% |
-| Maynard | Middlesex | NEMA | 10,729 | 10,820 | +0.8% |
-| Medfield | Norfolk | SEMA | 12,803 | 13,334 | +4.1% |
-| Medford | Middlesex | NEMA | 59,520 | 59,898 | +0.6% |
-| Medway | Norfolk | SEMA | 13,086 | 13,836 | +5.7% |
-| Melrose | Middlesex | NEMA | 29,740 | 29,938 | +0.7% |
-| Mendon | Worcester | WCMA | 6,224 | 6,441 | +3.5% |
-| Merrimac | Essex | NEMA | 6,719 | 6,810 | +1.4% |
-| Methuen Town | Essex | NEMA | 52,974 | 54,272 | +2.5% |
-| Middleborough | Plymouth | SEMA | 24,260 | 24,847 | +2.4% |
-| Middlefield | Hampshire | WCMA | 389 | 397 | +2.1% |
-| Middleton | Essex | NEMA | 9,613 | 9,959 | +3.6% |
-| Milford | Worcester | WCMA | 30,341 | 30,640 | +1.0% |
-| Millbury | Worcester | WCMA | 13,813 | 14,173 | +2.6% |
-| Millis | Norfolk | SEMA | 8,501 | 9,338 | +9.8% |
-| Millville | Worcester | WCMA | 3,166 | 3,187 | +0.7% |
-| Milton | Norfolk | SEMA | 28,596 | 28,811 | +0.8% |
-| Monroe | Franklin | WCMA | 116 | 115 | −0.9% |
-| Monson | Hampden | WCMA | 8,133 | 8,164 | +0.4% |
-| Montague | Franklin | WCMA | 8,568 | 8,437 | −1.5% |
-| Monterey | Berkshire | WCMA | 1,090 | 1,085 | −0.5% |
-| Montgomery | Hampden | WCMA | 819 | 837 | +2.2% |
-| Mount Washington | Berkshire | WCMA | 160 | 157 | −1.9% |
-| Nahant | Essex | NEMA | 3,331 | 3,338 | +0.2% |
-| Nantucket | Nantucket | SEMA | 14,239 | 14,670 | +3.0% |
-| Natick | Middlesex | NEMA | 36,924 | 37,316 | +1.1% |
-| Needham | Norfolk | SEMA | 32,238 | 32,931 | +2.1% |
-| New Ashford | Berkshire | WCMA | 248 | 249 | +0.4% |
-| New Bedford | Bristol | SEMA | 100,946 | 101,318 | +0.4% |
-| New Braintree | Worcester | WCMA | 992 | 1,010 | +1.8% |
-| New Marlborough | Berkshire | WCMA | 1,528 | 1,503 | −1.6% |
-| New Salem | Franklin | WCMA | 982 | 1,023 | +4.2% |
-| Newbury | Essex | NEMA | 6,717 | 6,880 | +2.4% |
-| Newburyport | Essex | NEMA | 18,300 | 19,163 | +4.7% |
-| Newton | Middlesex | NEMA | 88,853 | 90,700 | +2.1% |
-| Norfolk | Norfolk | SEMA | 11,562 | 11,962 | +3.5% |
-| North Adams | Berkshire | WCMA | 12,754 | 12,492 | −2.1% |
-| North Andover | Essex | NEMA | 30,992 | 32,135 | +3.7% |
-| North Attleborough | Bristol | SEMA | 30,810 | 31,210 | +1.3% |
-| North Brookfield | Worcester | WCMA | 4,750 | 4,797 | +1.0% |
-| North Reading | Middlesex | NEMA | 15,512 | 16,379 | +5.6% |
-| Northampton | Hampshire | WCMA | 29,279 | 31,315 | +7.0% |
-| Northborough | Worcester | WCMA | 15,710 | 15,867 | +1.0% |
-| Northbridge | Worcester | WCMA | 16,320 | 16,719 | +2.4% |
-| Northfield | Franklin | WCMA | 2,865 | 2,880 | +0.5% |
-| Norton | Bristol | SEMA | 19,220 | 19,392 | +0.9% |
-| Norwell | Plymouth | SEMA | 11,339 | 11,477 | +1.2% |
-| Norwood | Norfolk | SEMA | 31,574 | 31,764 | +0.6% |
-| Oak Bluffs | Dukes | SEMA | 5,332 | 5,407 | +1.4% |
-| Oakham | Worcester | WCMA | 1,851 | 1,914 | +3.4% |
-| Orange | Franklin | WCMA | 7,566 | 7,583 | +0.2% |
-| Orleans | Barnstable | SEMA | 6,306 | 6,485 | +2.8% |
-| Otis | Berkshire | WCMA | 1,634 | 1,619 | −0.9% |
-| Oxford | Worcester | WCMA | 13,335 | 13,503 | +1.3% |
-| Palmer Town | Hampden | WCMA | 12,419 | 12,388 | −0.2% |
-| Paxton | Worcester | WCMA | 4,947 | 5,043 | +1.9% |
-| Peabody | Essex | NEMA | 54,402 | 55,418 | +1.9% |
-| Pelham | Hampshire | WCMA | 1,281 | 1,343 | +4.8% |
-| Pembroke | Plymouth | SEMA | 18,343 | 18,428 | +0.5% |
-| Pepperell | Middlesex | NEMA | 11,571 | 11,877 | +2.6% |
-| Peru | Berkshire | WCMA | 808 | 798 | −1.2% |
-| Petersham | Worcester | WCMA | 1,196 | 1,246 | +4.2% |
-| Phillipston | Worcester | WCMA | 1,724 | 1,759 | +2.0% |
-| Pittsfield | Berkshire | WCMA | 43,836 | 43,121 | −1.6% |
-| Plainfield | Hampshire | WCMA | 630 | 649 | +3.0% |
-| Plainville | Norfolk | SEMA | 9,931 | 10,067 | +1.4% |
-| Plymouth | Plymouth | SEMA | 61,022 | 66,663 | +9.2% |
-| Plympton | Plymouth | SEMA | 2,927 | 2,964 | +1.3% |
-| Princeton | Worcester | WCMA | 3,493 | 3,597 | +3.0% |
-| Provincetown | Barnstable | SEMA | 3,658 | 3,729 | +1.9% |
-| Quincy | Norfolk | SEMA | 101,492 | 103,434 | +1.9% |
-| Randolph Town | Norfolk | SEMA | 34,971 | 35,114 | +0.4% |
-| Raynham | Bristol | SEMA | 15,186 | 15,861 | +4.4% |
-| Reading | Middlesex | NEMA | 25,536 | 26,041 | +2.0% |
-| Rehoboth | Bristol | SEMA | 12,523 | 13,537 | +8.1% |
-| Revere | Suffolk | NEMA | 61,911 | 60,702 | −2.0% |
-| Richmond | Berkshire | WCMA | 1,411 | 1,405 | −0.4% |
-| Rochester | Plymouth | SEMA | 5,723 | 5,936 | +3.7% |
-| Rockland | Plymouth | SEMA | 17,774 | 17,708 | −0.4% |
-| Rockport | Essex | NEMA | 6,988 | 7,091 | +1.5% |
-| Rowe | Franklin | WCMA | 422 | 419 | −0.7% |
-| Rowley | Essex | NEMA | 6,159 | 6,334 | +2.8% |
-| Royalston | Worcester | WCMA | 1,253 | 1,291 | +3.0% |
-| Russell | Hampden | WCMA | 1,639 | 1,640 | +0.1% |
-| Rutland | Worcester | WCMA | 9,085 | 9,637 | +6.1% |
-| Salem | Essex | NEMA | 43,670 | 45,677 | +4.6% |
-| Salisbury | Essex | NEMA | 9,216 | 9,415 | +2.2% |
-| Sandisfield | Berkshire | WCMA | 986 | 984 | −0.2% |
-| Sandwich | Barnstable | SEMA | 20,254 | 20,507 | +1.2% |
-| Saugus | Essex | NEMA | 28,605 | 29,029 | +1.5% |
-| Savoy | Berkshire | WCMA | 645 | 655 | +1.6% |
-| Scituate | Plymouth | SEMA | 19,071 | 19,598 | +2.8% |
-| Seekonk | Bristol | SEMA | 15,534 | 15,912 | +2.4% |
-| Sharon | Norfolk | SEMA | 18,547 | 18,762 | +1.2% |
-| Sheffield | Berkshire | WCMA | 3,324 | 3,324 | 0.0% |
-| Shelburne | Franklin | WCMA | 1,884 | 1,874 | −0.5% |
-| Sherborn | Middlesex | NEMA | 4,394 | 4,485 | +2.1% |
-| Shirley | Middlesex | NEMA | 7,233 | 7,042 | −2.6% |
-| Shrewsbury | Worcester | WCMA | 38,269 | 39,620 | +3.5% |
-| Shutesbury | Franklin | WCMA | 1,720 | 1,717 | −0.2% |
-| Somerset | Bristol | SEMA | 18,291 | 18,375 | +0.5% |
-| Somerville | Middlesex | NEMA | 80,901 | 82,149 | +1.5% |
-| South Hadley | Hampshire | WCMA | 16,306 | 18,031 | +10.6% |
-| Southampton | Hampshire | WCMA | 6,221 | 6,181 | −0.6% |
-| Southborough | Worcester | WCMA | 10,447 | 10,569 | +1.2% |
-| Southbridge Town | Worcester | WCMA | 17,704 | 18,106 | +2.3% |
-| Southwick | Hampden | WCMA | 9,217 | 9,277 | +0.7% |
-| Spencer | Worcester | WCMA | 11,963 | 12,090 | +1.1% |
-| Springfield | Hampden | WCMA | 155,258 | 154,888 | −0.2% |
-| Sterling | Worcester | WCMA | 7,977 | 8,310 | +4.2% |
-| Stockbridge | Berkshire | WCMA | 1,999 | 1,986 | −0.7% |
-| Stoneham | Middlesex | NEMA | 23,187 | 24,550 | +5.9% |
-| Stoughton | Norfolk | SEMA | 29,251 | 29,457 | +0.7% |
-| Stow | Middlesex | NEMA | 7,157 | 7,335 | +2.5% |
-| Sturbridge | Worcester | WCMA | 9,865 | 10,097 | +2.4% |
-| Sudbury | Middlesex | NEMA | 18,876 | 19,805 | +4.9% |
-| Sunderland | Franklin | WCMA | 3,655 | 3,628 | −0.7% |
-| Sutton | Worcester | WCMA | 9,353 | 9,599 | +2.6% |
-| Swampscott | Essex | NEMA | 15,085 | 15,658 | +3.8% |
-| Swansea | Bristol | SEMA | 17,174 | 17,537 | +2.1% |
-| Taunton | Bristol | SEMA | 59,408 | 61,936 | +4.3% |
-| Templeton | Worcester | WCMA | 8,143 | 8,387 | +3.0% |
-| Tewksbury | Middlesex | NEMA | 31,132 | 31,796 | +2.1% |
-| Tisbury | Dukes | SEMA | 4,813 | 4,927 | +2.4% |
-| Tolland | Hampden | WCMA | 470 | 474 | +0.9% |
-| Topsfield | Essex | NEMA | 6,555 | 6,620 | +1.0% |
-| Townsend | Middlesex | NEMA | 9,107 | 9,220 | +1.2% |
-| Truro | Barnstable | SEMA | 2,439 | 2,484 | +1.8% |
-| Tyngsborough | Middlesex | NEMA | 12,400 | 12,779 | +3.1% |
-| Tyringham | Berkshire | WCMA | 426 | 419 | −1.6% |
-| Upton | Worcester | WCMA | 8,004 | 8,475 | +5.9% |
-| Uxbridge | Worcester | WCMA | 14,197 | 14,703 | +3.6% |
-| Wakefield | Middlesex | NEMA | 27,070 | 29,216 | +7.9% |
-| Wales | Hampden | WCMA | 1,830 | 1,828 | −0.1% |
-| Walpole | Norfolk | SEMA | 26,519 | 26,391 | −0.5% |
-| Waltham | Middlesex | NEMA | 64,238 | 65,849 | +2.5% |
-| Ware | Hampshire | WCMA | 10,037 | 10,142 | +1.0% |
-| Wareham | Plymouth | SEMA | 23,274 | 23,526 | +1.1% |
-| Warren | Worcester | WCMA | 4,967 | 5,086 | +2.4% |
-| Warwick | Franklin | WCMA | 782 | 774 | −1.0% |
-| Washington | Berkshire | WCMA | 492 | 497 | +1.0% |
-| Watertown Town | Middlesex | NEMA | 35,369 | 35,985 | +1.7% |
-| Wayland | Middlesex | NEMA | 13,926 | 14,054 | +0.9% |
-| Webster | Worcester | WCMA | 17,738 | 17,817 | +0.4% |
-| Wellesley | Norfolk | SEMA | 28,774 | 31,242 | +8.6% |
-| Wellfleet | Barnstable | SEMA | 3,565 | 3,645 | +2.2% |
-| Wendell | Franklin | WCMA | 927 | 916 | −1.2% |
-| Wenham | Essex | NEMA | 4,934 | 4,945 | +0.2% |
-| West Boylston | Worcester | WCMA | 7,638 | 7,938 | +3.9% |
-| West Bridgewater | Plymouth | SEMA | 7,711 | 7,771 | +0.8% |
-| West Brookfield | Worcester | WCMA | 3,829 | 3,917 | +2.3% |
-| West Newbury | Essex | NEMA | 4,505 | 4,680 | +3.9% |
-| West Springfield Town | Hampden | WCMA | 28,767 | 29,028 | +0.9% |
-| West Stockbridge | Berkshire | WCMA | 1,336 | 1,323 | −1.0% |
-| West Tisbury | Dukes | SEMA | 3,545 | 3,637 | +2.6% |
-| Westborough | Worcester | WCMA | 21,534 | 22,643 | +5.1% |
-| Westfield | Hampden | WCMA | 40,169 | 40,403 | +0.6% |
-| Westford | Middlesex | NEMA | 24,698 | 25,024 | +1.3% |
-| Westhampton | Hampshire | WCMA | 1,615 | 1,629 | +0.9% |
-| Westminster | Worcester | WCMA | 8,230 | 8,509 | +3.4% |
-| Weston | Middlesex | NEMA | 11,141 | 11,827 | +6.2% |
-| Westport | Bristol | SEMA | 16,345 | 16,705 | +2.2% |
-| Westwood | Norfolk | SEMA | 16,229 | 16,533 | +1.9% |
-| Weymouth Town | Norfolk | SEMA | 57,471 | 60,159 | +4.7% |
-| Whately | Franklin | WCMA | 1,618 | 1,626 | +0.5% |
-| Whitman | Plymouth | SEMA | 15,125 | 15,459 | +2.2% |
-| Wilbraham | Hampden | WCMA | 14,584 | 14,663 | +0.5% |
-| Williamsburg | Hampshire | WCMA | 2,500 | 2,475 | −1.0% |
-| Williamstown | Berkshire | WCMA | 8,717 | 9,189 | +5.4% |
-| Wilmington | Middlesex | NEMA | 23,302 | 23,802 | +2.1% |
-| Winchendon | Worcester | WCMA | 10,344 | 10,587 | +2.3% |
-| Winchester | Middlesex | NEMA | 22,929 | 23,953 | +4.5% |
-| Windsor | Berkshire | WCMA | 825 | 817 | −1.0% |
-| Winthrop Town | Suffolk | NEMA | 19,257 | 18,739 | −2.7% |
-| Woburn | Middlesex | NEMA | 40,827 | 43,895 | +7.5% |
-| Worcester | Worcester | WCMA | 202,475 | 211,286 | +4.4% |
-| Worthington | Hampshire | WCMA | 1,192 | 1,181 | −0.9% |
-| Wrentham | Norfolk | SEMA | 12,165 | 12,516 | +2.9% |
-| Yarmouth | Barnstable | SEMA | 24,990 | 25,208 | +0.9% |
+| Abington | Plymouth | SEMA | 54.9 GWh | 17,090 | +0.2% |
+| Acton | Middlesex | NEMA | 87.7 GWh | 24,539 | +2.4% |
+| Acushnet | Bristol | SEMA | 34.4 GWh | 10,700 | +1.4% |
+| Adams | Berkshire | WCMA | 37.4 GWh | 7,992 | −1.9% |
+| Agawam Town | Hampden | WCMA | 134.5 GWh | 28,749 | +0.4% |
+| Alford | Berkshire | WCMA | 2.3 GWh | 483 | −1.0% |
+| Amesbury Town | Essex | NEMA | 63.0 GWh | 17,617 | +1.6% |
+| Amherst | Hampshire | WCMA | 191.8 GWh | 40,989 | +47.4% |
+| Andover | Essex | NEMA | 132.0 GWh | 36,927 | +1.0% |
+| Aquinnah | Dukes | SEMA | 1.4 GWh | 451 | +1.8% |
+| Arlington | Middlesex | NEMA | 168.4 GWh | 47,112 | +2.0% |
+| Ashburnham | Worcester | WCMA | 30.5 GWh | 6,522 | +3.3% |
+| Ashby | Middlesex | NEMA | 11.7 GWh | 3,270 | +2.7% |
+| Ashfield | Franklin | WCMA | 7.9 GWh | 1,685 | −0.1% |
+| Ashland | Middlesex | NEMA | 69.3 GWh | 19,391 | +2.9% |
+| Athol | Worcester | WCMA | 56.6 GWh | 12,105 | +1.5% |
+| Attleboro | Bristol | SEMA | 151.3 GWh | 47,085 | +1.3% |
+| Auburn | Worcester | WCMA | 81.0 GWh | 17,323 | +2.7% |
+| Avon | Norfolk | SEMA | 15.4 GWh | 4,801 | +0.6% |
+| Ayer | Middlesex | NEMA | 32.2 GWh | 9,010 | +6.2% |
+| Barnstable Town | Barnstable | SEMA | 160.1 GWh | 49,831 | +2.0% |
+| Barre | Worcester | WCMA | 26.3 GWh | 5,631 | +2.0% |
+| Becket | Berkshire | WCMA | 9.0 GWh | 1,922 | −0.5% |
+| Bedford | Middlesex | NEMA | 53.4 GWh | 14,955 | +1.9% |
+| Belchertown | Hampshire | WCMA | 71.9 GWh | 15,372 | +0.2% |
+| Bellingham | Norfolk | SEMA | 57.8 GWh | 17,998 | +6.2% |
+| Belmont | Middlesex | NEMA | 98.1 GWh | 27,442 | +0.8% |
+| Berkley | Bristol | SEMA | 22.1 GWh | 6,892 | +1.8% |
+| Berlin | Worcester | WCMA | 16.3 GWh | 3,479 | +6.4% |
+| Bernardston | Franklin | WCMA | 9.9 GWh | 2,109 | +0.6% |
+| Beverly | Essex | NEMA | 154.5 GWh | 43,223 | +1.5% |
+| Billerica | Middlesex | NEMA | 153.6 GWh | 42,978 | +2.7% |
+| Blackstone | Worcester | WCMA | 43.9 GWh | 9,374 | +2.0% |
+| Blandford | Hampden | WCMA | 5.7 GWh | 1,209 | −0.2% |
+| Bolton | Worcester | WCMA | 27.2 GWh | 5,809 | +2.5% |
+| Boston | Suffolk | NEMA | 2,406.9 GWh | 673,458 | −0.3% |
+| Bourne | Barnstable | SEMA | 65.9 GWh | 20,508 | +4.6% |
+| Boxborough | Middlesex | NEMA | 19.9 GWh | 5,565 | +1.3% |
+| Boxford | Essex | NEMA | 29.8 GWh | 8,334 | +1.8% |
+| Boylston | Worcester | WCMA | 23.7 GWh | 5,064 | +4.3% |
+| Braintree Town | Norfolk | SEMA | 125.8 GWh | 39,134 | +0.2% |
+| Brewster | Barnstable | SEMA | 33.6 GWh | 10,447 | +1.3% |
+| Bridgewater Town | Plymouth | SEMA | 93.7 GWh | 29,167 | +8.9% |
+| Brimfield | Hampden | WCMA | 17.5 GWh | 3,733 | +1.2% |
+| Brockton | Plymouth | SEMA | 340.0 GWh | 105,788 | +0.3% |
+| Brookfield | Worcester | WCMA | 16.4 GWh | 3,500 | +1.8% |
+| Brookline | Norfolk | SEMA | 205.4 GWh | 63,925 | +1.4% |
+| Buckland | Franklin | WCMA | 8.5 GWh | 1,818 | +0.4% |
+| Burlington | Middlesex | NEMA | 96.4 GWh | 26,977 | +3.7% |
+| Cambridge | Middlesex | NEMA | 433.1 GWh | 121,186 | +2.5% |
+| Canton | Norfolk | SEMA | 80.9 GWh | 25,163 | +3.1% |
+| Carlisle | Middlesex | NEMA | 19.0 GWh | 5,317 | +1.6% |
+| Carver | Plymouth | SEMA | 38.0 GWh | 11,817 | +1.6% |
+| Charlemont | Franklin | WCMA | 5.5 GWh | 1,179 | −0.6% |
+| Charlton | Worcester | WCMA | 63.7 GWh | 13,606 | +2.3% |
+| Chatham | Barnstable | SEMA | 21.6 GWh | 6,711 | +1.8% |
+| Chelmsford | Middlesex | NEMA | 132.1 GWh | 36,953 | +1.6% |
+| Chelsea | Suffolk | NEMA | 143.8 GWh | 40,245 | −0.7% |
+| Cheshire | Berkshire | WCMA | 14.9 GWh | 3,190 | −1.9% |
+| Chester | Hampden | WCMA | 5.7 GWh | 1,221 | −0.3% |
+| Chesterfield | Hampshire | WCMA | 5.5 GWh | 1,174 | −1.0% |
+| Chicopee | Hampden | WCMA | 259.1 GWh | 55,381 | −0.1% |
+| Chilmark | Dukes | SEMA | 4.0 GWh | 1,249 | +2.9% |
+| Clarksburg | Berkshire | WCMA | 7.7 GWh | 1,637 | −1.1% |
+| Clinton | Worcester | WCMA | 73.6 GWh | 15,740 | +2.1% |
+| Cohasset | Norfolk | SEMA | 27.4 GWh | 8,532 | +1.8% |
+| Colrain | Franklin | WCMA | 7.7 GWh | 1,643 | +2.4% |
+| Concord | Middlesex | NEMA | 64.7 GWh | 18,092 | −1.5% |
+| Conway | Franklin | WCMA | 8.2 GWh | 1,754 | −0.6% |
+| Cummington | Hampshire | WCMA | 3.8 GWh | 819 | −1.0% |
+| Dalton | Berkshire | WCMA | 29.0 GWh | 6,198 | −2.0% |
+| Danvers | Essex | NEMA | 102.2 GWh | 28,590 | +1.9% |
+| Dartmouth | Bristol | SEMA | 109.7 GWh | 34,139 | +8.5% |
+| Dedham | Norfolk | SEMA | 81.9 GWh | 25,485 | +1.1% |
+| Deerfield | Franklin | WCMA | 24.2 GWh | 5,177 | +1.6% |
+| Dennis | Barnstable | SEMA | 47.8 GWh | 14,862 | +1.3% |
+| Dighton | Bristol | SEMA | 26.6 GWh | 8,275 | +1.9% |
+| Douglas | Worcester | WCMA | 44.2 GWh | 9,452 | +5.1% |
+| Dover | Norfolk | SEMA | 19.5 GWh | 6,057 | +2.3% |
+| Dracut | Middlesex | NEMA | 117.8 GWh | 32,972 | +1.4% |
+| Dudley | Worcester | WCMA | 56.1 GWh | 11,984 | +0.6% |
+| Dunstable | Middlesex | NEMA | 12.5 GWh | 3,500 | +4.1% |
+| Duxbury | Plymouth | SEMA | 52.6 GWh | 16,377 | +1.9% |
+| East Bridgewater | Plymouth | SEMA | 46.7 GWh | 14,519 | +0.6% |
+| East Brookfield | Worcester | WCMA | 10.5 GWh | 2,237 | +0.7% |
+| East Longmeadow | Hampden | WCMA | 77.3 GWh | 16,515 | +0.7% |
+| Eastham | Barnstable | SEMA | 18.7 GWh | 5,824 | +1.4% |
+| Easthampton Town | Hampshire | WCMA | 74.9 GWh | 16,020 | −0.9% |
+| Easton | Bristol | SEMA | 82.2 GWh | 25,568 | +2.0% |
+| Edgartown | Dukes | SEMA | 17.1 GWh | 5,328 | +3.0% |
+| Egremont | Berkshire | WCMA | 6.4 GWh | 1,375 | +0.3% |
+| Erving | Franklin | WCMA | 7.8 GWh | 1,661 | +0.1% |
+| Essex | Essex | NEMA | 13.4 GWh | 3,760 | +2.2% |
+| Everett | Middlesex | NEMA | 185.2 GWh | 51,825 | +5.9% |
+| Fairhaven | Bristol | SEMA | 51.4 GWh | 16,005 | +0.6% |
+| Fall River | Bristol | SEMA | 304.3 GWh | 94,689 | +0.8% |
+| Falmouth | Barnstable | SEMA | 106.8 GWh | 33,227 | +2.1% |
+| Fitchburg | Worcester | WCMA | 197.2 GWh | 42,145 | +1.1% |
+| Florida | Berkshire | WCMA | 3.1 GWh | 673 | −2.5% |
+| Foxborough | Norfolk | SEMA | 60.4 GWh | 18,791 | +1.0% |
+| Framingham | Middlesex | NEMA | 262.2 GWh | 73,361 | +1.7% |
+| Franklin Town | Norfolk | SEMA | 108.4 GWh | 33,742 | +4.4% |
+| Freetown | Bristol | SEMA | 30.1 GWh | 9,380 | +1.9% |
+| Gardner | Worcester | WCMA | 100.0 GWh | 21,381 | +0.7% |
+| Georgetown | Essex | NEMA | 30.6 GWh | 8,558 | +1.1% |
+| Gill | Franklin | WCMA | 7.3 GWh | 1,553 | +0.4% |
+| Gloucester | Essex | NEMA | 109.0 GWh | 30,491 | +2.5% |
+| Goshen | Hampshire | WCMA | 4.4 GWh | 942 | −1.9% |
+| Gosnold | Dukes | SEMA | 199 MWh | 62 | 0.0% |
+| Grafton | Worcester | WCMA | 95.2 GWh | 20,352 | +3.6% |
+| Granby | Hampshire | WCMA | 28.4 GWh | 6,064 | −0.6% |
+| Granville | Hampden | WCMA | 7.2 GWh | 1,540 | +0.1% |
+| Great Barrington | Berkshire | WCMA | 33.9 GWh | 7,245 | +1.0% |
+| Greenfield Town | Franklin | WCMA | 82.5 GWh | 17,633 | −0.4% |
+| Groton | Middlesex | NEMA | 41.4 GWh | 11,580 | +2.3% |
+| Groveland | Essex | NEMA | 24.5 GWh | 6,849 | +1.5% |
+| Hadley | Hampshire | WCMA | 24.7 GWh | 5,284 | −0.6% |
+| Halifax | Plymouth | SEMA | 25.0 GWh | 7,786 | +0.6% |
+| Hamilton | Essex | NEMA | 27.4 GWh | 7,670 | +1.5% |
+| Hampden | Hampden | WCMA | 23.2 GWh | 4,964 | +0.2% |
+| Hancock | Berkshire | WCMA | 3.5 GWh | 740 | −0.9% |
+| Hanover | Plymouth | SEMA | 47.8 GWh | 14,887 | +0.5% |
+| Hanson | Plymouth | SEMA | 34.4 GWh | 10,719 | +0.9% |
+| Hardwick | Worcester | WCMA | 12.7 GWh | 2,722 | +2.2% |
+| Harvard | Worcester | WCMA | 32.8 GWh | 7,004 | +2.3% |
+| Harwich | Barnstable | SEMA | 43.8 GWh | 13,620 | +1.4% |
+| Hatfield | Hampshire | WCMA | 15.5 GWh | 3,321 | −0.5% |
+| Haverhill | Essex | NEMA | 244.1 GWh | 68,291 | +1.0% |
+| Hawley | Franklin | WCMA | 1.6 GWh | 352 | 0.0% |
+| Heath | Franklin | WCMA | 3.4 GWh | 717 | −0.6% |
+| Hingham | Plymouth | SEMA | 78.5 GWh | 24,414 | +0.6% |
+| Hinsdale | Berkshire | WCMA | 8.8 GWh | 1,890 | −0.8% |
+| Holbrook | Norfolk | SEMA | 36.9 GWh | 11,475 | +0.8% |
+| Holden | Worcester | WCMA | 95.1 GWh | 20,326 | +2.1% |
+| Holland | Hampden | WCMA | 12.1 GWh | 2,581 | −0.6% |
+| Holliston | Middlesex | NEMA | 54.9 GWh | 15,347 | +2.4% |
+| Holyoke | Hampden | WCMA | 177.0 GWh | 37,838 | −0.8% |
+| Hopedale | Worcester | WCMA | 28.4 GWh | 6,063 | +0.9% |
+| Hopkinton | Middlesex | NEMA | 71.4 GWh | 19,971 | +6.4% |
+| Hubbardston | Worcester | WCMA | 20.7 GWh | 4,433 | +2.7% |
+| Hudson | Middlesex | NEMA | 72.8 GWh | 20,364 | +1.7% |
+| Hull | Plymouth | SEMA | 33.0 GWh | 10,278 | +2.1% |
+| Huntington | Hampshire | WCMA | 9.7 GWh | 2,071 | −1.1% |
+| Ipswich | Essex | NEMA | 50.4 GWh | 14,110 | +2.5% |
+| Kingston | Plymouth | SEMA | 46.5 GWh | 14,462 | +5.4% |
+| Lakeville | Plymouth | SEMA | 39.4 GWh | 12,262 | +6.2% |
+| Lancaster | Worcester | WCMA | 42.1 GWh | 8,993 | +6.8% |
+| Lanesborough | Berkshire | WCMA | 14.1 GWh | 3,004 | −1.1% |
+| Lawrence | Essex | NEMA | 319.3 GWh | 89,332 | +0.5% |
+| Lee | Berkshire | WCMA | 26.6 GWh | 5,682 | −1.6% |
+| Leicester | Worcester | WCMA | 52.5 GWh | 11,224 | +1.4% |
+| Lenox | Berkshire | WCMA | 23.7 GWh | 5,072 | −0.4% |
+| Leominster | Worcester | WCMA | 206.8 GWh | 44,209 | +1.0% |
+| Leverett | Franklin | WCMA | 8.7 GWh | 1,863 | +0.1% |
+| Lexington | Middlesex | NEMA | 124.2 GWh | 34,743 | +1.0% |
+| Leyden | Franklin | WCMA | 3.4 GWh | 735 | +0.1% |
+| Lincoln | Middlesex | NEMA | 25.0 GWh | 6,996 | +0.3% |
+| Littleton | Middlesex | NEMA | 37.5 GWh | 10,495 | +3.6% |
+| Longmeadow | Hampden | WCMA | 73.5 GWh | 15,712 | −0.6% |
+| Lowell | Middlesex | NEMA | 430.4 GWh | 120,418 | +4.0% |
+| Ludlow | Hampden | WCMA | 98.8 GWh | 21,118 | +1.7% |
+| Lunenburg | Worcester | WCMA | 56.2 GWh | 12,007 | +1.8% |
+| Lynn | Essex | NEMA | 369.9 GWh | 103,489 | +2.4% |
+| Lynnfield | Essex | NEMA | 47.3 GWh | 13,230 | +1.9% |
+| Malden | Middlesex | NEMA | 238.4 GWh | 66,693 | +0.9% |
+| Manchester-by-the-Sea | Essex | NEMA | 19.5 GWh | 5,467 | +1.5% |
+| Mansfield | Bristol | SEMA | 77.4 GWh | 24,077 | +1.0% |
+| Marblehead | Essex | NEMA | 73.5 GWh | 20,576 | +0.9% |
+| Marion | Plymouth | SEMA | 17.2 GWh | 5,341 | +0.1% |
+| Marlborough | Middlesex | NEMA | 150.7 GWh | 42,169 | +1.2% |
+| Marshfield | Plymouth | SEMA | 83.7 GWh | 26,043 | +0.9% |
+| Mashpee | Barnstable | SEMA | 49.8 GWh | 15,482 | +2.7% |
+| Mattapoisett | Plymouth | SEMA | 21.7 GWh | 6,763 | +3.9% |
+| Maynard | Middlesex | NEMA | 38.7 GWh | 10,820 | +0.8% |
+| Medfield | Norfolk | SEMA | 42.9 GWh | 13,334 | +4.1% |
+| Medford | Middlesex | NEMA | 214.1 GWh | 59,898 | +0.6% |
+| Medway | Norfolk | SEMA | 44.5 GWh | 13,836 | +5.7% |
+| Melrose | Middlesex | NEMA | 107.0 GWh | 29,938 | +0.7% |
+| Mendon | Worcester | WCMA | 30.1 GWh | 6,441 | +3.5% |
+| Merrimac | Essex | NEMA | 24.3 GWh | 6,810 | +1.4% |
+| Methuen Town | Essex | NEMA | 194.0 GWh | 54,272 | +2.5% |
+| Middleborough | Plymouth | SEMA | 79.9 GWh | 24,847 | +2.4% |
+| Middlefield | Hampshire | WCMA | 1.9 GWh | 397 | +2.1% |
+| Middleton | Essex | NEMA | 35.6 GWh | 9,959 | +3.6% |
+| Milford | Worcester | WCMA | 143.3 GWh | 30,640 | +1.0% |
+| Millbury | Worcester | WCMA | 66.3 GWh | 14,173 | +2.6% |
+| Millis | Norfolk | SEMA | 30.0 GWh | 9,338 | +9.8% |
+| Millville | Worcester | WCMA | 14.9 GWh | 3,187 | +0.7% |
+| Milton | Norfolk | SEMA | 92.6 GWh | 28,811 | +0.8% |
+| Monroe | Franklin | WCMA | 538 MWh | 115 | −0.9% |
+| Monson | Hampden | WCMA | 38.2 GWh | 8,164 | +0.4% |
+| Montague | Franklin | WCMA | 39.5 GWh | 8,437 | −1.5% |
+| Monterey | Berkshire | WCMA | 5.1 GWh | 1,085 | −0.5% |
+| Montgomery | Hampden | WCMA | 3.9 GWh | 837 | +2.2% |
+| Mount Washington | Berkshire | WCMA | 735 MWh | 157 | −1.9% |
+| Nahant | Essex | NEMA | 11.9 GWh | 3,338 | +0.2% |
+| Nantucket | Nantucket | SEMA | 47.1 GWh | 14,670 | +3.0% |
+| Natick | Middlesex | NEMA | 133.4 GWh | 37,316 | +1.1% |
+| Needham | Norfolk | SEMA | 105.8 GWh | 32,931 | +2.1% |
+| New Ashford | Berkshire | WCMA | 1.2 GWh | 249 | +0.4% |
+| New Bedford | Bristol | SEMA | 325.6 GWh | 101,318 | +0.4% |
+| New Braintree | Worcester | WCMA | 4.7 GWh | 1,010 | +1.8% |
+| New Marlborough | Berkshire | WCMA | 7.0 GWh | 1,503 | −1.6% |
+| New Salem | Franklin | WCMA | 4.8 GWh | 1,023 | +4.2% |
+| Newbury | Essex | NEMA | 24.6 GWh | 6,880 | +2.4% |
+| Newburyport | Essex | NEMA | 68.5 GWh | 19,163 | +4.7% |
+| Newton | Middlesex | NEMA | 324.2 GWh | 90,700 | +2.1% |
+| Norfolk | Norfolk | SEMA | 38.4 GWh | 11,962 | +3.5% |
+| North Adams | Berkshire | WCMA | 58.4 GWh | 12,492 | −2.1% |
+| North Andover | Essex | NEMA | 114.9 GWh | 32,135 | +3.7% |
+| North Attleborough | Bristol | SEMA | 100.3 GWh | 31,210 | +1.3% |
+| North Brookfield | Worcester | WCMA | 22.4 GWh | 4,797 | +1.0% |
+| North Reading | Middlesex | NEMA | 58.5 GWh | 16,379 | +5.6% |
+| Northampton | Hampshire | WCMA | 146.5 GWh | 31,315 | +7.0% |
+| Northborough | Worcester | WCMA | 74.2 GWh | 15,867 | +1.0% |
+| Northbridge | Worcester | WCMA | 78.2 GWh | 16,719 | +2.4% |
+| Northfield | Franklin | WCMA | 13.5 GWh | 2,880 | +0.5% |
+| Norton | Bristol | SEMA | 62.3 GWh | 19,392 | +0.9% |
+| Norwell | Plymouth | SEMA | 36.9 GWh | 11,477 | +1.2% |
+| Norwood | Norfolk | SEMA | 102.1 GWh | 31,764 | +0.6% |
+| Oak Bluffs | Dukes | SEMA | 17.4 GWh | 5,407 | +1.4% |
+| Oakham | Worcester | WCMA | 9.0 GWh | 1,914 | +3.4% |
+| Orange | Franklin | WCMA | 35.5 GWh | 7,583 | +0.2% |
+| Orleans | Barnstable | SEMA | 20.8 GWh | 6,485 | +2.8% |
+| Otis | Berkshire | WCMA | 7.6 GWh | 1,619 | −0.9% |
+| Oxford | Worcester | WCMA | 63.2 GWh | 13,503 | +1.3% |
+| Palmer Town | Hampden | WCMA | 58.0 GWh | 12,388 | −0.2% |
+| Paxton | Worcester | WCMA | 23.6 GWh | 5,043 | +1.9% |
+| Peabody | Essex | NEMA | 198.1 GWh | 55,418 | +1.9% |
+| Pelham | Hampshire | WCMA | 6.3 GWh | 1,343 | +4.8% |
+| Pembroke | Plymouth | SEMA | 59.2 GWh | 18,428 | +0.5% |
+| Pepperell | Middlesex | NEMA | 42.4 GWh | 11,877 | +2.6% |
+| Peru | Berkshire | WCMA | 3.7 GWh | 798 | −1.2% |
+| Petersham | Worcester | WCMA | 5.8 GWh | 1,246 | +4.2% |
+| Phillipston | Worcester | WCMA | 8.2 GWh | 1,759 | +2.0% |
+| Pittsfield | Berkshire | WCMA | 201.7 GWh | 43,121 | −1.6% |
+| Plainfield | Hampshire | WCMA | 3.0 GWh | 649 | +3.0% |
+| Plainville | Norfolk | SEMA | 32.4 GWh | 10,067 | +1.4% |
+| Plymouth | Plymouth | SEMA | 214.2 GWh | 66,663 | +9.2% |
+| Plympton | Plymouth | SEMA | 9.5 GWh | 2,964 | +1.3% |
+| Princeton | Worcester | WCMA | 16.8 GWh | 3,597 | +3.0% |
+| Provincetown | Barnstable | SEMA | 12.0 GWh | 3,729 | +1.9% |
+| Quincy | Norfolk | SEMA | 332.4 GWh | 103,434 | +1.9% |
+| Randolph Town | Norfolk | SEMA | 112.8 GWh | 35,114 | +0.4% |
+| Raynham | Bristol | SEMA | 51.0 GWh | 15,861 | +4.4% |
+| Reading | Middlesex | NEMA | 93.1 GWh | 26,041 | +2.0% |
+| Rehoboth | Bristol | SEMA | 43.5 GWh | 13,537 | +8.1% |
+| Revere | Suffolk | NEMA | 216.9 GWh | 60,702 | −2.0% |
+| Richmond | Berkshire | WCMA | 6.6 GWh | 1,405 | −0.4% |
+| Rochester | Plymouth | SEMA | 19.1 GWh | 5,936 | +3.7% |
+| Rockland | Plymouth | SEMA | 56.9 GWh | 17,708 | −0.4% |
+| Rockport | Essex | NEMA | 25.3 GWh | 7,091 | +1.5% |
+| Rowe | Franklin | WCMA | 2.0 GWh | 419 | −0.7% |
+| Rowley | Essex | NEMA | 22.6 GWh | 6,334 | +2.8% |
+| Royalston | Worcester | WCMA | 6.0 GWh | 1,291 | +3.0% |
+| Russell | Hampden | WCMA | 7.7 GWh | 1,640 | +0.1% |
+| Rutland | Worcester | WCMA | 45.1 GWh | 9,637 | +6.1% |
+| Salem | Essex | NEMA | 163.2 GWh | 45,677 | +4.6% |
+| Salisbury | Essex | NEMA | 33.6 GWh | 9,415 | +2.2% |
+| Sandisfield | Berkshire | WCMA | 4.6 GWh | 984 | −0.2% |
+| Sandwich | Barnstable | SEMA | 65.9 GWh | 20,507 | +1.2% |
+| Saugus | Essex | NEMA | 103.7 GWh | 29,029 | +1.5% |
+| Savoy | Berkshire | WCMA | 3.1 GWh | 655 | +1.6% |
+| Scituate | Plymouth | SEMA | 63.0 GWh | 19,598 | +2.8% |
+| Seekonk | Bristol | SEMA | 51.1 GWh | 15,912 | +2.4% |
+| Sharon | Norfolk | SEMA | 60.3 GWh | 18,762 | +1.2% |
+| Sheffield | Berkshire | WCMA | 15.6 GWh | 3,324 | 0.0% |
+| Shelburne | Franklin | WCMA | 8.8 GWh | 1,874 | −0.5% |
+| Sherborn | Middlesex | NEMA | 16.0 GWh | 4,485 | +2.1% |
+| Shirley | Middlesex | NEMA | 25.2 GWh | 7,042 | −2.6% |
+| Shrewsbury | Worcester | WCMA | 185.3 GWh | 39,620 | +3.5% |
+| Shutesbury | Franklin | WCMA | 8.0 GWh | 1,717 | −0.2% |
+| Somerset | Bristol | SEMA | 59.1 GWh | 18,375 | +0.5% |
+| Somerville | Middlesex | NEMA | 293.6 GWh | 82,149 | +1.5% |
+| South Hadley | Hampshire | WCMA | 84.4 GWh | 18,031 | +10.6% |
+| Southampton | Hampshire | WCMA | 28.9 GWh | 6,181 | −0.6% |
+| Southborough | Worcester | WCMA | 49.4 GWh | 10,569 | +1.2% |
+| Southbridge Town | Worcester | WCMA | 84.7 GWh | 18,106 | +2.3% |
+| Southwick | Hampden | WCMA | 43.4 GWh | 9,277 | +0.7% |
+| Spencer | Worcester | WCMA | 56.6 GWh | 12,090 | +1.1% |
+| Springfield | Hampden | WCMA | 724.6 GWh | 154,888 | −0.2% |
+| Sterling | Worcester | WCMA | 38.9 GWh | 8,310 | +4.2% |
+| Stockbridge | Berkshire | WCMA | 9.3 GWh | 1,986 | −0.7% |
+| Stoneham | Middlesex | NEMA | 87.7 GWh | 24,550 | +5.9% |
+| Stoughton | Norfolk | SEMA | 94.7 GWh | 29,457 | +0.7% |
+| Stow | Middlesex | NEMA | 26.2 GWh | 7,335 | +2.5% |
+| Sturbridge | Worcester | WCMA | 47.2 GWh | 10,097 | +2.4% |
+| Sudbury | Middlesex | NEMA | 70.8 GWh | 19,805 | +4.9% |
+| Sunderland | Franklin | WCMA | 17.0 GWh | 3,628 | −0.7% |
+| Sutton | Worcester | WCMA | 44.9 GWh | 9,599 | +2.6% |
+| Swampscott | Essex | NEMA | 56.0 GWh | 15,658 | +3.8% |
+| Swansea | Bristol | SEMA | 56.4 GWh | 17,537 | +2.1% |
+| Taunton | Bristol | SEMA | 199.0 GWh | 61,936 | +4.3% |
+| Templeton | Worcester | WCMA | 39.2 GWh | 8,387 | +3.0% |
+| Tewksbury | Middlesex | NEMA | 113.6 GWh | 31,796 | +2.1% |
+| Tisbury | Dukes | SEMA | 15.8 GWh | 4,927 | +2.4% |
+| Tolland | Hampden | WCMA | 2.2 GWh | 474 | +0.9% |
+| Topsfield | Essex | NEMA | 23.7 GWh | 6,620 | +1.0% |
+| Townsend | Middlesex | NEMA | 33.0 GWh | 9,220 | +1.2% |
+| Truro | Barnstable | SEMA | 8.0 GWh | 2,484 | +1.8% |
+| Tyngsborough | Middlesex | NEMA | 45.7 GWh | 12,779 | +3.1% |
+| Tyringham | Berkshire | WCMA | 2.0 GWh | 419 | −1.6% |
+| Upton | Worcester | WCMA | 39.6 GWh | 8,475 | +5.9% |
+| Uxbridge | Worcester | WCMA | 68.8 GWh | 14,703 | +3.6% |
+| Wakefield | Middlesex | NEMA | 104.4 GWh | 29,216 | +7.9% |
+| Wales | Hampden | WCMA | 8.6 GWh | 1,828 | −0.1% |
+| Walpole | Norfolk | SEMA | 84.8 GWh | 26,391 | −0.5% |
+| Waltham | Middlesex | NEMA | 235.3 GWh | 65,849 | +2.5% |
+| Ware | Hampshire | WCMA | 47.4 GWh | 10,142 | +1.0% |
+| Wareham | Plymouth | SEMA | 75.6 GWh | 23,526 | +1.1% |
+| Warren | Worcester | WCMA | 23.8 GWh | 5,086 | +2.4% |
+| Warwick | Franklin | WCMA | 3.6 GWh | 774 | −1.0% |
+| Washington | Berkshire | WCMA | 2.3 GWh | 497 | +1.0% |
+| Watertown Town | Middlesex | NEMA | 128.6 GWh | 35,985 | +1.7% |
+| Wayland | Middlesex | NEMA | 50.2 GWh | 14,054 | +0.9% |
+| Webster | Worcester | WCMA | 83.3 GWh | 17,817 | +0.4% |
+| Wellesley | Norfolk | SEMA | 100.4 GWh | 31,242 | +8.6% |
+| Wellfleet | Barnstable | SEMA | 11.7 GWh | 3,645 | +2.2% |
+| Wendell | Franklin | WCMA | 4.3 GWh | 916 | −1.2% |
+| Wenham | Essex | NEMA | 17.7 GWh | 4,945 | +0.2% |
+| West Boylston | Worcester | WCMA | 37.1 GWh | 7,938 | +3.9% |
+| West Bridgewater | Plymouth | SEMA | 25.0 GWh | 7,771 | +0.8% |
+| West Brookfield | Worcester | WCMA | 18.3 GWh | 3,917 | +2.3% |
+| West Newbury | Essex | NEMA | 16.7 GWh | 4,680 | +3.9% |
+| West Springfield Town | Hampden | WCMA | 135.8 GWh | 29,028 | +0.9% |
+| West Stockbridge | Berkshire | WCMA | 6.2 GWh | 1,323 | −1.0% |
+| West Tisbury | Dukes | SEMA | 11.7 GWh | 3,637 | +2.6% |
+| Westborough | Worcester | WCMA | 105.9 GWh | 22,643 | +5.1% |
+| Westfield | Hampden | WCMA | 189.0 GWh | 40,403 | +0.6% |
+| Westford | Middlesex | NEMA | 89.4 GWh | 25,024 | +1.3% |
+| Westhampton | Hampshire | WCMA | 7.6 GWh | 1,629 | +0.9% |
+| Westminster | Worcester | WCMA | 39.8 GWh | 8,509 | +3.4% |
+| Weston | Middlesex | NEMA | 42.3 GWh | 11,827 | +6.2% |
+| Westport | Bristol | SEMA | 53.7 GWh | 16,705 | +2.2% |
+| Westwood | Norfolk | SEMA | 53.1 GWh | 16,533 | +1.9% |
+| Weymouth Town | Norfolk | SEMA | 193.3 GWh | 60,159 | +4.7% |
+| Whately | Franklin | WCMA | 7.6 GWh | 1,626 | +0.5% |
+| Whitman | Plymouth | SEMA | 49.7 GWh | 15,459 | +2.2% |
+| Wilbraham | Hampden | WCMA | 68.6 GWh | 14,663 | +0.5% |
+| Williamsburg | Hampshire | WCMA | 11.6 GWh | 2,475 | −1.0% |
+| Williamstown | Berkshire | WCMA | 43.0 GWh | 9,189 | +5.4% |
+| Wilmington | Middlesex | NEMA | 85.1 GWh | 23,802 | +2.1% |
+| Winchendon | Worcester | WCMA | 49.5 GWh | 10,587 | +2.3% |
+| Winchester | Middlesex | NEMA | 85.6 GWh | 23,953 | +4.5% |
+| Windsor | Berkshire | WCMA | 3.8 GWh | 817 | −1.0% |
+| Winthrop Town | Suffolk | NEMA | 67.0 GWh | 18,739 | −2.7% |
+| Woburn | Middlesex | NEMA | 156.9 GWh | 43,895 | +7.5% |
+| Worcester | Worcester | WCMA | 988.4 GWh | 211,286 | +4.4% |
+| Worthington | Hampshire | WCMA | 5.5 GWh | 1,181 | −0.9% |
+| Wrentham | Norfolk | SEMA | 40.2 GWh | 12,516 | +2.9% |
+| Yarmouth | Barnstable | SEMA | 81.0 GWh | 25,208 | +0.9% |
 
 ## Sources and limits (Data & methods tab)
 
@@ -810,7 +811,7 @@ Sources:
 Limits worth knowing:
 - RECS 2020 is one COVID-year survey of 552 homes; its bands are wide on purpose.
 - EIA revises preliminary months (all of 2026 so far), so recent values can change.
-- There is no verified per-town usage data, so towns are never coloured by consumption.
+- There is no verified per-town usage data, so the Map tab's town forecast is modeled (each town's population share of its ISO-NE zone), not metered.
 - Grid load includes businesses as well as homes, and EIA publishes it about 10 days late.
 - Usual-range regimes don't remove weather: a heat wave above the range counts as Above.
 - The forecast simulates zones independently, so the statewide band is probably too narrow.
