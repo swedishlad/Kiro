@@ -1,0 +1,5 @@
+{
+  "verdict": "APPROVED",
+  "findings": [],
+  "summary": "All checks pass: constants recomputed from data/snapshot match ground-truth, supply-only signed savings correct, 3 JSON artifacts match the doc, per-town map is modeled:true with the P33/P66 tercile rule, and tests/backend = 32 passed."
+}

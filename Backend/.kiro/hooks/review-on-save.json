@@ -1,0 +1,20 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Review and test on save",
+      "trigger": "PostFileSave",
+      "matcher": "\\.(ts|tsx|py)$",
+      "action": { "type": "command", "command": "python3 .kiro/hooks/review_on_save.py", "timeout": 90 }
+    },
+    {
+      "name": "Agent bug review on save",
+      "trigger": "PostFileSave",
+      "matcher": "\\.(ts|tsx|py)$",
+      "action": {
+        "type": "agent",
+        "prompt": "A source file was just saved. Read it and review it for likely bugs WITHOUT editing anything; report findings inline and concisely. Look for: off-by-one and boundary errors; null/undefined/empty handling; async/promise mistakes (missing await, unhandled rejection, floating promises); and FairWatt data invariants where relevant — band ordering p10 <= p50 <= p90, the 12 monthly shares summing to 1 (+/- 0.001), and factor months covering 1..12. If the file looks correct, say so in one line. Do not modify the file; leave fixes to the author unless they ask."
+      }
+    }
+  ]
+}

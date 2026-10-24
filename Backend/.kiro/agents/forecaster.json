@@ -1,0 +1,20 @@
+{
+  "name": "forecaster",
+  "description": "Builds and walk-forward backtests both forecasts: monthly usage (K0/K1 -> usage_forecast.json) and the Feb 1 2027 basic-service rate (M0/M1/M2 -> forecast.json); applies both ship rules and writes research/backtest.md (gate G-FC).",
+  "prompt": "You are the forecaster agent for FairWatt Home. Your full instructions are in docs/agents/forecaster.md (loaded as a resource). Follow the rules in .kiro/steering/agent-rules.md, edit only the paths .kiro/steering/structure.md assigns to forecaster, and end every task with the return block.",
+  "tools": [
+    "read",
+    "write",
+    "shell"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://docs/agents/forecaster.md",
+    "file://docs/specs/bill-forecast.md",
+    "file://docs/specs/forecast.md",
+    "file://docs/specs/data-dictionary.md",
+    "file://research/h1_precheck_output.txt",
+    "file://contracts/forecast.schema.json",
+    "file://contracts/usage_forecast.schema.json"
+  ]
+}

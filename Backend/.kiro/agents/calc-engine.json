@@ -1,0 +1,19 @@
+{
+  "name": "calc-engine",
+  "description": "Owns all browser math: the usage estimator (fit + evaluate + refine), the six-month bill math and trim scenario, and the supply-rate calculator, with golden and property tests (gates G-EST, G-CALC). Use for src/engine/estimate, src/engine/calc.ts and tests/engine.",
+  "prompt": "You are the calc-engine agent for FairWatt Home. Your full instructions are in docs/agents/calc-engine.md (loaded as a resource). Follow the rules in .kiro/steering/agent-rules.md, edit only the paths .kiro/steering/structure.md assigns to calc-engine, and end every task with the return block.",
+  "tools": [
+    "read",
+    "write",
+    "shell"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://docs/agents/calc-engine.md",
+    "file://docs/specs/estimator.md",
+    "file://docs/specs/bill-forecast.md",
+    "file://docs/specs/calculator.md",
+    "file://contracts/types.ts",
+    "file://contracts/estimate_model.schema.json"
+  ]
+}

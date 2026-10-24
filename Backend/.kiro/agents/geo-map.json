@@ -1,0 +1,16 @@
+{
+  "name": "geo-map",
+  "description": "STANDBY (the orchestrator normally runs the map script itself; launch only on a failure). Builds data/build/towns.json (351 Massachusetts towns as pre-projected SVG paths) for the town picker and runs gate G-GEO. Use for boundary download, simplification, projection, or map file size.",
+  "prompt": "You are the geo-map agent for FairWatt Home. Your full instructions are in docs/agents/geo-map.md (loaded as a resource). Follow the rules in .kiro/steering/agent-rules.md, edit only the paths .kiro/steering/structure.md assigns to geo-map, and end every task with the return block.",
+  "tools": [
+    "read",
+    "write",
+    "shell"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://docs/agents/geo-map.md",
+    "file://docs/apis/02-lmec-town-boundaries.md",
+    "file://docs/specs/map.md"
+  ]
+}

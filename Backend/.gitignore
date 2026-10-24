@@ -2,3 +2,13 @@ __pycache__/
 *.pyc
 .pytest_cache/
 docs/img/tests/_*.npz
+node_modules/
+.next/
+out/
+data/raw/
+*.preview.svg
+.env*
+.DS_Store
+*.tsbuildinfo
+test-results/
+playwright-report/

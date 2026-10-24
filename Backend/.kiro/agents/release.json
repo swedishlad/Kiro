@@ -1,0 +1,20 @@
+{
+  "name": "release",
+  "description": "W1: zod schemas + data loader in src/data and the copy-and-validate build script. Later: static export, Vercel deploy, clean-clone build, DEMO.md, SUBMISSION.md (SundAI card text) and the fallback recording (gate G-REL).",
+  "prompt": "You are the release agent for FairWatt Home. Your full instructions are in docs/agents/release.md (loaded as a resource). Follow the rules in .kiro/steering/agent-rules.md, edit only the paths .kiro/steering/structure.md assigns to release, and end every task with the return block.",
+  "tools": [
+    "read",
+    "write",
+    "shell",
+    "web"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://docs/agents/release.md",
+    "file://docs/apis/05-vercel-static-deploy.md",
+    "file://docs/ops/scaffold.md",
+    "file://contracts/types.ts",
+    "file://docs/ops/demo-script.md",
+    "file://docs/ops/submission.md"
+  ]
+}

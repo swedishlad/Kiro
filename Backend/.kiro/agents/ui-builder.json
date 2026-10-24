@@ -1,0 +1,21 @@
+{
+  "name": "ui-builder",
+  "description": "Builds the single-page Next.js UI: home inputs with town picker, usage chart, six-bill chart, what-you-can-do card, all states, light/dark, 375px mobile (gate G-UI). Use for app/, src/ui/, public/ (not public/data).",
+  "prompt": "You are the ui-builder agent for FairWatt Home. Your full instructions are in docs/agents/ui-builder.md (loaded as a resource). Follow the rules in .kiro/steering/agent-rules.md, edit only the paths .kiro/steering/structure.md assigns to ui-builder, and end every task with the return block.",
+  "tools": [
+    "read",
+    "write",
+    "shell"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://docs/agents/ui-builder.md",
+    "file://docs/specs/ui.md",
+    "file://docs/specs/map.md",
+    "file://docs/specs/estimator.md",
+    "file://docs/specs/bill-forecast.md",
+    "file://docs/specs/calculator.md",
+    "file://contracts/types.ts",
+    "file://docs/ops/scaffold.md"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fairwatt-backend-stats",
+  "task_description": "Python backend-only calculation module for FairWatt MA: (1) energy consumption statistics, (2) money-you-could-have-saved vs basic-service rate, (3) per-town map data with a GREEN/GREY/RED traffic-light class. Produces committed static JSON artifacts under data/build/ and a frontend contract doc. No UI/TS/React. Stays within stats/savings/map filenames; does not touch the sibling HMM (hmm*) or Monte-Carlo/all-cities (forecast_mc_*, allcities_*) workflows.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
