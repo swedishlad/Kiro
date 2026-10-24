@@ -3,11 +3,11 @@ import { useMemo, useState } from "react";
 import { KwhHistogram } from "../components/Histogram.tsx";
 import { LineChart } from "../components/LineChart.tsx";
 import { RangeChart } from "../components/RangeChart.tsx";
-import { LEVEL_LABELS, REGIMES, RegimeBadge, RegimeIcon, fromHmm, fromLevel } from "../components/regime.tsx";
+import { RegimeBadge, fromLevel } from "../components/regime.tsx";
 import { Callout, Card, ChartCard, Legend } from "../components/ui.tsx";
 import { MONTHS, fmtNum, fmtPct, fmtSignedPct } from "../data/format.ts";
 import { MIN_HOMES, estimateHome, type AnswerKey, type HomeAnswers } from "../data/homes.ts";
-import { consumptionStats, hmm, recs } from "../data/load.ts";
+import { consumptionStats, recs } from "../data/load.ts";
 import { HEAT_FUELS, HOME_TYPES, SQFT_BUCKETS, SQFT_LABELS, type SqftBucket } from "../data/model.ts";
 import { classify, weightedHistogram, weightedShareAtOrBelow } from "../data/stats.ts";
 
@@ -20,81 +20,11 @@ const { greenMax, greyMax } = (mapThresholds as { thresholds: { greenMax: number
 const ANSWER_LABEL: Record<AnswerKey, string> = { sqft: "size", type: "home type", fuel: "heating fuel", members: "household size" };
 
 export default function Usage() {
-  // Monthly use per account and sales vs a year earlier now live in the regime nowcast (Regimes & forecast).
+  // The use-level regimes, monthly use per account and sales vs a year earlier now live on the Regime tab.
   return (
     <>
-      <div className="grid">
-        <Card
-          className="span-12"
-          title="What the use regimes mean"
-          subtitle={`${hmm.n_states}-state Gaussian hidden Markov model over ${hmm.timeline.length} months of kWh per account (${hmm.engine}, seed ${hmm.seed}).`}
-          source="States are ordered by mean use: Low < Mid < High. Backend/data/build/hmm_regimes.json."
-        >
-          <div className="stack">
-            {hmm.states.map((s) => {
-              const r = fromHmm(s.regime);
-              const stay = s.index < hmm.transition_matrix.length ? hmm.transition_matrix[s.index][s.index] : 0;
-              return (
-                <div key={s.index} className="row" style={{ justifyContent: "space-between", flexWrap: "nowrap" }}>
-                  <RegimeBadge regime={r} />
-                  <span className="tile-meta" style={{ textAlign: "right" }}>
-                    <strong style={{ color: "var(--ink)" }}>{fmtNum(s.mean)} kWh</strong> avg · ±{fmtNum(Math.sqrt(s.variance))} · {fmtPct(s.stationary_prob)} of months
-                    {stay > 0.001 ? ` · stays ${fmtPct(stay)}` : ""}
-                  </span>
-                </div>
-              );
-            })}
-            <p className="note">
-              These levels follow the seasons (summer and mid-winter run High). Whether a month was unusual for its time of year is in{" "}
-              <a href="#/grid">Regimes &amp; forecast</a>.
-            </p>
-            <TransitionTable />
-          </div>
-        </Card>
-      </div>
-
       <HomeLikeYours />
     </>
-  );
-}
-
-function TransitionTable() {
-  return (
-    <div className="table-wrap" style={{ maxHeight: "none" }}>
-      <table className="data">
-        <caption className="sr-only">Chance of moving from one regime to another next month</caption>
-        <thead>
-          <tr>
-            <th scope="col">This month → next</th>
-            {REGIMES.map((r) => (
-              <th key={r} scope="col" className="r">
-                <span className="row" style={{ gap: 4, justifyContent: "flex-end" }}>
-                  <RegimeIcon regime={r} />
-                  {LEVEL_LABELS[r]}
-                </span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {hmm.transition_matrix.map((row, i) => (
-            <tr key={i}>
-              <th scope="row" style={{ fontWeight: 500 }}>
-                <span className="row" style={{ gap: 4 }}>
-                  <RegimeIcon regime={REGIMES[i]} />
-                  {LEVEL_LABELS[REGIMES[i]]}
-                </span>
-              </th>
-              {row.map((p, j) => (
-                <td key={j} className="r">
-                  {p < 0.0005 ? "—" : fmtPct(p)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   );
 }
 
