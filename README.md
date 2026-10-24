@@ -1,4 +1,4 @@
-# Kiro — Watt If Massachusetts energy dashboard
+# Watt If — Massachusetts energy dashboard
 
 Massachusetts residential electricity use, prices, basic-service rates and grid regimes, built on
 public EIA, Mass.gov and ISO New England data.
