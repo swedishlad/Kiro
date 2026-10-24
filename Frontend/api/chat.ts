@@ -4,20 +4,15 @@
 // Runs as a Vercel Node.js function; `npm run dev` mounts the same handler (vite.config.ts).
 // Needs GEMINI_API_KEY (a Google AI Studio key; the free tier works) in the environment.
 
-import { ApiError, FinishReason, GoogleGenAI, ThinkingLevel, type Content, type GenerateContentResponseUsageMetadata } from "@google/genai";
+import { ApiError, FinishReason, GoogleGenAI, type Content, type GenerateContentResponseUsageMetadata } from "@google/genai";
 
 import { KNOWLEDGE } from "../server/knowledge.ts";
 
 /**
- * Tried in order: when one is overloaded (503), over its free-tier quota (429, counted per model), gone (404) or slow to
- * start, the next one answers. Google's aliases for its newest Flash and Flash-Lite; pin versioned names to freeze behaviour.
+ * Google's alias for its newest Flash-Lite, with that model's default thinking. Chat answers are short and mostly look-ups,
+ * which Flash-Lite handles quickly; Flash was often overloaded or slow to start. Pin a versioned name to freeze behaviour.
  */
-const MODELS: { model: string; thinking?: ThinkingLevel }[] = [
-  /** Chat answers are short and mostly look-ups; raise to MEDIUM if answers get careless. */
-  { model: "gemini-flash-latest", thinking: ThinkingLevel.LOW },
-  /** Its own default thinking, which suits Flash-Lite whichever generation the alias points to. */
-  { model: "gemini-flash-lite-latest" },
-];
+const MODEL = "gemini-flash-lite-latest";
 const MAX_TOKENS = 8000;
 
 export const LIMITS = {
@@ -31,8 +26,6 @@ export const LIMITS = {
   windowMs: 10 * 60_000,
   /** under the function's 60 s limit (vercel.json), so a slow answer ends with a message instead of being cut off */
   answerMs: 50_000,
-  /** a model that hasn't started its answer by then hands over to the next one */
-  startMs: 20_000,
 };
 
 /**
@@ -136,14 +129,6 @@ function failureMessage(err: unknown): string {
   return "The assistant couldn't be reached. Please try again.";
 }
 
-/** A model that hadn't started its answer within LIMITS.startMs. */
-class SlowStart extends Error {}
-
-/** Worth asking the next model, before any of the answer has been sent. */
-function tryNext(err: unknown): boolean {
-  return err instanceof SlowStart || (err instanceof ApiError && (err.status === 404 || err.status === 429 || err.status >= 500));
-}
-
 /** The part of the SDK client the handler uses, so tests can pass a fake. */
 export type ChatClient = { models: Pick<GoogleGenAI["models"], "generateContentStream"> };
 
@@ -194,65 +179,35 @@ export async function handleChat(request: Request, client: ChatClient, today = n
         late = true;
         aborted.abort();
       }, LIMITS.answerMs);
-      /** One model's answer, streamed to the visitor; with `startMs`, gives up if no text has arrived by then. */
-      const ask = async ({ model, thinking }: (typeof MODELS)[number], startMs: number | null) => {
-        const attempt = new AbortController();
-        const stop = () => attempt.abort();
-        aborted.signal.addEventListener("abort", stop);
-        let slow = false;
-        const start = startMs === null ? undefined : setTimeout(() => {
-          slow = true;
-          attempt.abort();
-        }, startMs);
-        try {
-          const chunks = await client.models.generateContentStream({
-            model,
-            contents: toContents(parsed.turns),
-            config: {
-              systemInstruction,
-              maxOutputTokens: MAX_TOKENS,
-              ...(thinking && { thinkingConfig: { thinkingLevel: thinking } }),
-              abortSignal: attempt.signal,
-            },
-          });
-          let finish: string | undefined;
-          let blocked: string | undefined;
-          let usage: GenerateContentResponseUsageMetadata | undefined;
-          let version: string | undefined;
-          for await (const chunk of chunks) {
-            const text = chunk.text;
-            if (text) {
-              clearTimeout(start);
-              answered = true;
-              send({ type: "text", text });
-            }
-            finish = chunk.candidates?.[0]?.finishReason ?? finish;
-            blocked = chunk.promptFeedback?.blockReason ?? blocked;
-            usage = chunk.usageMetadata ?? usage;
-            version ??= chunk.modelVersion;
-          }
-          console.log(
-            `chat: model=${version ?? model} finish=${blocked ?? finish} in=${usage?.promptTokenCount ?? 0} cached=${usage?.cachedContentTokenCount ?? 0} thoughts=${usage?.thoughtsTokenCount ?? 0} out=${usage?.candidatesTokenCount ?? 0}`,
-          );
-          send(blocked || (finish && BLOCKED.has(finish)) ? { type: "refusal" } : { type: "done", truncated: finish === FinishReason.MAX_TOKENS });
-        } catch (err) {
-          throw slow && !answered ? new SlowStart(`no text after ${startMs! / 1000} s`, { cause: err }) : err;
-        } finally {
-          clearTimeout(start);
-          aborted.signal.removeEventListener("abort", stop);
-        }
-      };
       try {
-        for (const [i, m] of MODELS.entries()) {
-          const next = MODELS[i + 1];
-          try {
-            await ask(m, next ? LIMITS.startMs : null);
-            break;
-          } catch (err) {
-            if (!next || answered || aborted.signal.aborted || !tryNext(err)) throw err;
-            console.warn(`chat: ${m.model} ${err instanceof ApiError ? `returned ${err.status}` : (err as Error).message}; trying ${next.model}`);
+        const chunks = await client.models.generateContentStream({
+          model: MODEL,
+          contents: toContents(parsed.turns),
+          config: {
+            systemInstruction,
+            maxOutputTokens: MAX_TOKENS,
+            abortSignal: aborted.signal,
+          },
+        });
+        let finish: string | undefined;
+        let blocked: string | undefined;
+        let usage: GenerateContentResponseUsageMetadata | undefined;
+        let model: string | undefined;
+        for await (const chunk of chunks) {
+          const text = chunk.text;
+          if (text) {
+            answered = true;
+            send({ type: "text", text });
           }
+          finish = chunk.candidates?.[0]?.finishReason ?? finish;
+          blocked = chunk.promptFeedback?.blockReason ?? blocked;
+          usage = chunk.usageMetadata ?? usage;
+          model ??= chunk.modelVersion;
         }
+        console.log(
+          `chat: model=${model ?? MODEL} finish=${blocked ?? finish} in=${usage?.promptTokenCount ?? 0} cached=${usage?.cachedContentTokenCount ?? 0} thoughts=${usage?.thoughtsTokenCount ?? 0} out=${usage?.candidatesTokenCount ?? 0}`,
+        );
+        send(blocked || (finish && BLOCKED.has(finish)) ? { type: "refusal" } : { type: "done", truncated: finish === FinishReason.MAX_TOKENS });
       } catch (err) {
         if (late) {
           // Keep what already arrived; with nothing yet, say so rather than leave the visitor waiting.
