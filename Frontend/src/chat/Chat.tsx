@@ -1,6 +1,6 @@
 // The Watt If assistant: a chat panel that streams answers from /api/chat (api/chat.ts), opened by a
-// launcher button or, on the home page, by asking in its prompt box. The conversation
-// survives tab changes and reloads within the browser session.
+// launcher button or, on the home page, by asking in its prompt box. The conversation survives tab
+// changes and reloads within the browser session.
 
 import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 
@@ -44,10 +44,7 @@ const PROMPT_HINTS = [
 /** The mounted panel's way in for the prompt box: opens the panel and asks there. */
 let askInPanel: ((question: string) => void) | null = null;
 
-/** Pages with a prompt box, which stands in for the launcher until it scrolls away. */
-const PROMPT_PAGES = new Set(["bill"]);
-
-/** Whether the page's prompt box has scrolled out of sight, which brings the launcher back there. */
+/** Whether the home page's prompt box has scrolled out of sight, which brings the launcher back there. */
 let promptAway = false;
 const promptWatchers = new Set<() => void>();
 
@@ -352,7 +349,7 @@ export function Chat({ page }: { page: string }) {
         aria-expanded={open}
         aria-controls="chat-panel"
         onClick={() => setOpen(true)}
-        hidden={open || (PROMPT_PAGES.has(page) && !awayFromPrompt)}
+        hidden={open || (page === "bill" && !awayFromPrompt)}
       >
         <ChatIcon />
         Ask Watt If
@@ -480,9 +477,9 @@ function SendIcon() {
 }
 
 /**
- * The question box on the home page, in place of the floating launcher there until it scrolls
- * away. Its placeholder cycles through example questions, one per run of the hint's CSS animation; asking
- * opens the panel with the answer.
+ * The home page's question box, in place of the floating launcher there until it scrolls away. Its
+ * placeholder cycles through example questions, one per run of the hint's CSS animation; asking opens the
+ * panel with the answer.
  */
 export function PromptBox() {
   const [draft, setDraft] = useState("");
