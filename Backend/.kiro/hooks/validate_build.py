@@ -44,6 +44,8 @@ def extra(name, data):
                 errs.append(f"{a['area']}: state means not increasing green < grey < red")
             bad = [p["date"] for p in a["timeline"] if p["bandPct"] <= 0 or abs(sum(p["probs"]) - 1) > 1e-6][:3]
             errs += [f"{a['area']}: bad range or probs not summing to 1 on {bad}"] if bad else []
+            errs += [f"{a['area']}: forecast/outlook probs do not sum to 1" for f in a.get("forecast", []) + a["outlook"]
+                     if abs(sum(f["probs"]) - 1) > 1e-6][:1]
             errs += [f"{a['area']}: transition row {i} sums to {sum(r):.4f}" for i, r in enumerate(a["transition"])
                      if abs(sum(r) - 1) > 1e-6]
             if abs(sum(a["current"]["probs"]) - 1) > 1e-6:
