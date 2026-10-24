@@ -1,13 +1,14 @@
-import { Card } from "../components/ui.tsx";
+import johanPhoto from "../assets/team/johan.jpg";
 import taePhoto from "../assets/team/tae.jpg";
 import yuanPhoto from "../assets/team/yuan.jpg";
+import { Card } from "../components/ui.tsx";
 import { TEAM } from "../data/team.ts";
 import Sources from "./Sources.tsx";
 
 // Avatars take the categorical slots in order, so each person keeps the same colour in both themes.
 const AVATAR_COLORS = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--series-4)"];
-// Photos where we have them; everyone else keeps their initial.
-const PHOTOS: Partial<Record<(typeof TEAM)[number], string>> = { Tae: taePhoto, Yuan: yuanPhoto };
+// Photos where we have them (src/assets/team/); everyone else keeps their initial.
+const PHOTOS: Partial<Record<(typeof TEAM)[number], string>> = { Tae: taePhoto, Johan: johanPhoto, Yuan: yuanPhoto };
 
 export default function About() {
   return (

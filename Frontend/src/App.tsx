@@ -23,15 +23,15 @@ type RouteId = (typeof ROUTES)[number]["id"];
 /**
  * Section addresses. Usage, Prices & savings and Data & methods used to be tabs and are now sections of a
  * combined tab; their old links (which the assistant also writes) open that tab and scroll to the section, as
- * #/climate does for the Climate section. Regimes & forecast and the use levels are sections of the Regime tab.
- * The old Overview address opens the landing page.
+ * #/climate does for the Climate section. Regimes & forecast is the Regime tab's section.
+ * The old Overview address opens the landing page; the old use-levels address opens the Regime tab.
  */
 const SECTIONS: Record<string, { tab: RouteId; label: string; scroll: boolean } | undefined> = {
   usage: { tab: "data", label: "Usage", scroll: true },
   prices: { tab: "data", label: "Prices & savings", scroll: true },
   grid: { tab: "regime", label: "Regimes & forecast", scroll: true },
   hourly: { tab: "data", label: "Hour by hour", scroll: true },
-  levels: { tab: "regime", label: "Use levels", scroll: true },
+  levels: { tab: "regime", label: "Regime", scroll: false },
   climate: { tab: "data", label: "Climate", scroll: true },
   sources: { tab: "about", label: "Data & methods", scroll: true },
   overview: { tab: "bill", label: "Bill check", scroll: false },
