@@ -26,7 +26,7 @@ const THEME_LABEL: Record<ThemeChoice, string> = { system: "Auto", light: "Light
 function Logo() {
   return (
     <svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" style={{ fill: "var(--accent)" }} />
+      <rect width="32" height="32" rx="9" style={{ fill: "var(--accent)" }} />
       <path d="M18 4 8 18h7l-2 10 11-15h-7z" fill="#fff" />
     </svg>
   );
@@ -76,7 +76,6 @@ export function App() {
             <a className="brand" href="#/overview" style={{ color: "inherit", textDecoration: "none" }}>
               <Logo />
               <span className="brand-name">FairWatt</span>
-              <span className="brand-sub">Massachusetts energy dashboard</span>
             </a>
             <button type="button" className="theme-toggle" onClick={() => setThemeChoice(NEXT_THEME[choice])} aria-label={`Theme: ${THEME_LABEL[choice]}. Switch to ${THEME_LABEL[NEXT_THEME[choice]]}.`}>
               <ThemeIcon choice={choice} />

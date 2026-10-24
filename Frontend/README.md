@@ -63,9 +63,11 @@ src/
 
 ## Design notes
 
-- Colours are CSS custom properties with separate, validated light and dark sets (`src/styles.css`).
-- Type: Public Sans for body text, Bricolage Grotesque for headings and headline numbers, both
-  self-hosted from `@fontsource-variable/*` (bundled into `dist/`, no font CDN).
+- Apple-style system UI: grouped grey page, white rounded cards, system colours, flat fills. No
+  gradients, no borders on cards, and shadows only on things that float (tooltips).
+- Colours are CSS custom properties with separate light and dark sets (`src/styles.css`).
+- Type: the system font stack (San Francisco on Apple devices, Segoe UI on Windows), so no web
+  fonts are downloaded.
   Regimes always pair colour with a shape (▼ ● ▲) and a word: Low / Mid / High for the level model
   (`hmm_regimes.json`), Below / Within / Above range for the usual-range model (`regimes.json`).
 - Every chart has a Table view, keyboard reading (arrow keys) where it is a time series, and a
