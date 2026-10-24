@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect } from "react";
 
+import { Chat } from "./chat/Chat.tsx";
 import { setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./components/hooks.ts";
 import { Overview } from "./sections/Overview.tsx";
 
@@ -107,6 +108,7 @@ export function App() {
           Supply-side dollar figures only · <a href="#/sources">How these numbers are made</a>
         </span>
       </footer>
+      <Chat page={route} />
     </>
   );
 }
