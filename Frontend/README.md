@@ -3,8 +3,8 @@
 A static React + TypeScript site over the backend's committed artifacts. The dashboard makes no runtime
 fetches from third parties: the build bundles `Backend/data/build/*` and `Backend/data/snapshot/*`
 directly, so it always shows exactly what the backend produced. The one server piece is the optional
-assistant (`api/chat.ts`), which answers visitors' questions with Claude from a knowledge base built
-out of the same artifacts.
+assistant (`api/chat.ts`), which answers visitors' questions with Google Gemini from a knowledge base
+built out of the same artifacts.
 
 ## Run it
 
@@ -18,9 +18,9 @@ npm run preview    # serve dist/ locally
 npm run knowledge  # regenerate the assistant's knowledge base after a backend rebuild
 ```
 
-The assistant needs an Anthropic API key: put `ANTHROPIC_API_KEY=...` in `Frontend/.env.local`
-(git-ignored) or export it before `npm run dev`. Without one the site works and the chat panel says the
-assistant isn't available.
+The assistant needs a Gemini API key (free from [Google AI Studio](https://aistudio.google.com/apikey)):
+put `GEMINI_API_KEY=...` in `Frontend/.env.local` (git-ignored) or export it before `npm run dev`.
+Without one the site works and the chat panel says the assistant isn't available.
 
 Requires Node 22+ (the tests run TypeScript directly through Node's type stripping).
 `dist/` uses relative paths, so it can be served from any sub-path (GitHub Pages, S3, a file share).
@@ -30,7 +30,7 @@ Requires Node 22+ (the tests run TypeScript directly through Node's type strippi
 Vercel builds this folder: `vercel.json` pins the Vite preset, `npm ci`, `npm run build` and the
 `dist/` output. In the Vercel project settings, **Root Directory** must be `Frontend` and
 "Include files outside the root directory in the Build Step" must stay on (the build reads
-`../Backend/data`). Set **`ANTHROPIC_API_KEY`** in the project's Environment Variables for the assistant;
+`../Backend/data`). Set **`GEMINI_API_KEY`** in the project's Environment Variables for the assistant;
 Vercel serves `api/chat.ts` as a Node.js function at `/api/chat` (60 s limit in `vercel.json`). Any other
 static host works the same way for the dashboard (build, then upload `dist/`), but has no assistant.
 
@@ -45,16 +45,23 @@ and load zones, and how to read the dashboard.
   EIA month, every basic-service rate and fixed term since 2005, the savings method and examples, RECS
   bands, both regime models, the forecast, all 351 towns, sources and limits. It never reaches the
   browser bundle. After rebuilding the backend, run `npm run knowledge`; `npm test` fails until you do.
-- **How it answers:** `api/chat.ts` sends the instructions plus the knowledge base (prompt-cached,
-  so repeat questions read it at a fraction of the cost) to `claude-opus-5-5` at low effort, with
-  server-side fallback if a safety classifier declines, and streams the reply to the browser as NDJSON.
-  It adds today's date and the visitor's current tab. Change the model or effort at the top of the file.
+- **How it answers:** `api/chat.ts` sends the instructions plus the knowledge base as the system
+  instruction to `gemini-flash-latest` (Google's alias for its newest Flash model) with low thinking,
+  and streams the reply to the browser as NDJSON. The knowledge base comes first and never changes
+  between visitors, so Gemini's implicit caching can reuse it; today's date and the visitor's current tab
+  go last. Answers Gemini stops for safety or recitation are replaced with a polite decline. Change the
+  model or thinking level at the top of the file; pin a versioned model name to freeze behaviour.
+- **Free tier:** works with a free AI Studio key, within Google's per-minute and per-day quotas (see
+  the key's limits in AI Studio). Every question sends the whole knowledge base (roughly 20–30K tokens),
+  so the tokens-per-minute quota is usually what runs out first; visitors then see "busy, try again in a
+  minute". Turning on billing for the key raises the quotas.
 - **Guards:** messages up to 2,000 characters, the latest 24 turns, max 8,000 output tokens, and
-  20 requests per IP per 10 minutes per function instance. That limiter is a cost guard, not a security
-  boundary; for a public launch add a Vercel Firewall rate-limit rule on `/api/chat` and a spend limit
-  on the Anthropic key.
-- **Privacy:** questions go to Anthropic's API; the panel tells visitors not to share account details.
-  The conversation is kept in `sessionStorage` only. The function logs token usage, never message text.
+  20 requests per IP per 10 minutes per function instance. That limiter protects the quota, not a
+  security boundary; for a public launch add a Vercel Firewall rate-limit rule on `/api/chat`.
+- **Privacy:** questions go to Google's Gemini API. On the free tier Google may use prompts and answers
+  to improve its products (including human review), so the panel says so and asks visitors not to share
+  account details; a paid key doesn't have that use. The conversation is kept in `sessionStorage` only,
+  and the function logs token counts, never message text.
 - **UI:** `src/chat/Chat.tsx`; replies are rendered by `src/chat/markdown.ts`, which builds React
   elements (no HTML injection) and only links to in-site `#/` routes, `http(s)` and `mailto`.
 

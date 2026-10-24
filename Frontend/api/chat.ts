@@ -2,15 +2,16 @@
 // (server/knowledge.ts, generated from Backend/data) and streams the reply as NDJSON lines:
 //   {"type":"text","text":"…"} … then {"type":"done","truncated":false} | {"type":"refusal"} | {"type":"error","message":"…"}
 // Runs as a Vercel Node.js function; `npm run dev` mounts the same handler (vite.config.ts).
-// Needs ANTHROPIC_API_KEY in the environment.
+// Needs GEMINI_API_KEY (a Google AI Studio key; the free tier works) in the environment.
 
-import Anthropic from "@anthropic-ai/sdk";
+import { ApiError, FinishReason, GoogleGenAI, ThinkingLevel, type Content, type GenerateContentResponseUsageMetadata } from "@google/genai";
 
 import { KNOWLEDGE } from "../server/knowledge.ts";
 
-const MODEL = "claude-opus-5-5";
-/** Chat answers are short and mostly look-ups; raise to "medium" if answers get careless. */
-const EFFORT = "low";
+/** Google's alias for its newest Flash model, which the free tier includes. Pin a versioned name to freeze behaviour. */
+const MODEL = "gemini-flash-latest";
+/** Chat answers are short and mostly look-ups; raise to MEDIUM if answers get careless. */
+const THINKING = ThinkingLevel.LOW;
 const MAX_TOKENS = 8000;
 
 export const LIMITS = {
@@ -48,11 +49,11 @@ How to answer:
 - Write in the language the visitor writes in.
 - Stay on the site's topic: Massachusetts home electricity, energy prices and use, and this dashboard. For anything else, say briefly what you can help with.`;
 
-const SYSTEM: Anthropic.Beta.BetaTextBlockParam[] = [
-  { type: "text", text: INSTRUCTIONS },
-  // The knowledge base is the same for every visitor, so it is cached across requests.
-  { type: "text", text: KNOWLEDGE, cache_control: { type: "ephemeral" } },
-];
+/** The same for every visitor and first in the prompt, so Gemini's implicit caching can reuse it. */
+const SYSTEM = `${INSTRUCTIONS}\n\n${KNOWLEDGE}`;
+
+/** Finish reasons where Gemini stopped the answer itself: the partial text shouldn't be shown. */
+const BLOCKED = new Set<string>([FinishReason.SAFETY, FinishReason.RECITATION, FinishReason.BLOCKLIST, FinishReason.PROHIBITED_CONTENT, FinishReason.SPII]);
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -106,21 +107,32 @@ function json(status: number, body: object): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 }
 
+const UNAVAILABLE = "The assistant isn't available right now.";
+
 /** What the visitor sees when the API call fails; details go to the function log. */
 function failureMessage(err: unknown): string {
-  if (err instanceof Anthropic.RateLimitError || (err instanceof Anthropic.APIError && err.status === 529)) {
-    return "The assistant is busy right now. Please try again in a minute.";
-  }
-  if (err instanceof Anthropic.BadRequestError) return "The assistant couldn't answer that. Try rephrasing, or start a new chat.";
-  if (err instanceof Anthropic.APIConnectionError || err instanceof Anthropic.InternalServerError) {
-    return "The assistant couldn't be reached. Please try again.";
-  }
-  // Authentication, permission or a missing ANTHROPIC_API_KEY: the site's configuration, not the visitor's fault.
-  return "The assistant isn't available right now.";
+  // 429 is also what the free tier returns once its per-minute or per-day quota is used up.
+  if (err instanceof ApiError && err.status === 429) return "The assistant is busy right now. Please try again in a minute.";
+  if (err instanceof ApiError && err.status >= 500) return "The assistant couldn't be reached. Please try again.";
+  // 400/401/403 are almost always the site's configuration (a missing or invalid key), not the visitor.
+  if (err instanceof ApiError) return UNAVAILABLE;
+  return "The assistant couldn't be reached. Please try again.";
 }
 
 /** The part of the SDK client the handler uses, so tests can pass a fake. */
-export type ChatClient = { beta: { messages: Pick<Anthropic["beta"]["messages"], "stream"> } };
+export type ChatClient = { models: Pick<GoogleGenAI["models"], "generateContentStream"> };
+
+/** Gemini's roles are user/model, and consecutive turns from one side are joined into one. */
+function toContents(turns: ChatTurn[]): Content[] {
+  const contents: Content[] = [];
+  for (const t of turns) {
+    const role = t.role === "assistant" ? "model" : "user";
+    const last = contents[contents.length - 1];
+    if (last?.role === role) last.parts![0].text += `\n\n${t.content}`;
+    else contents.push({ role, parts: [{ text: t.content }] });
+  }
+  return contents;
+}
 
 export async function handleChat(request: Request, client: ChatClient, today = new Date()): Promise<Response> {
   // Vercel sets the client IP; the local dev server doesn't, and isn't limited.
@@ -138,25 +150,12 @@ export async function handleChat(request: Request, client: ChatClient, today = n
   const parsed = parseChatRequest(payload);
   if ("error" in parsed) return json(400, { error: parsed.error });
 
-  const messages: Anthropic.Beta.BetaMessageParam[] = parsed.turns.map((t) => ({ role: t.role, content: t.content }));
-  // Per-request context goes after the conversation, so the cached prefix stays the same for everyone.
+  // Per-request context goes after the knowledge base, so the shared prefix stays the same for everyone.
   const where = parsed.page ? ` The visitor is on the ${PAGES[parsed.page]} tab (#/${parsed.page}).` : "";
-  messages.push({ role: "system", content: `Today's date is ${today.toISOString().slice(0, 10)}.${where}` });
+  const systemInstruction = `${SYSTEM}\n\n# This conversation\n\nToday's date is ${today.toISOString().slice(0, 10)}.${where}`;
 
-  const stream = client.beta.messages.stream(
-    {
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      output_config: { effort: EFFORT },
-      // If a safety classifier declines, the API retries on Anthropic's recommended fallback model.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      system: SYSTEM,
-      messages,
-    },
-    { signal: request.signal },
-  );
-
+  const aborted = new AbortController();
+  request.signal.addEventListener("abort", () => aborted.abort());
   const encoder = new TextEncoder();
   let open = true;
   const body = new ReadableStream<Uint8Array>({
@@ -165,18 +164,34 @@ export async function handleChat(request: Request, client: ChatClient, today = n
         if (open) controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       };
       try {
-        for await (const event of stream) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") send({ type: "text", text: event.delta.text });
+        const chunks = await client.models.generateContentStream({
+          model: MODEL,
+          contents: toContents(parsed.turns),
+          config: {
+            systemInstruction,
+            maxOutputTokens: MAX_TOKENS,
+            thinkingConfig: { thinkingLevel: THINKING },
+            abortSignal: aborted.signal,
+          },
+        });
+        let finish: string | undefined;
+        let blocked: string | undefined;
+        let usage: GenerateContentResponseUsageMetadata | undefined;
+        let model: string | undefined;
+        for await (const chunk of chunks) {
+          const text = chunk.text;
+          if (text) send({ type: "text", text });
+          finish = chunk.candidates?.[0]?.finishReason ?? finish;
+          blocked = chunk.promptFeedback?.blockReason ?? blocked;
+          usage = chunk.usageMetadata ?? usage;
+          model ??= chunk.modelVersion;
         }
-        const message = await stream.finalMessage();
-        const u = message.usage;
         console.log(
-          `chat: model=${message.model} stop=${message.stop_reason} in=${u.input_tokens} cache_read=${u.cache_read_input_tokens ?? 0} cache_write=${u.cache_creation_input_tokens ?? 0} out=${u.output_tokens}`,
+          `chat: model=${model ?? MODEL} finish=${blocked ?? finish} in=${usage?.promptTokenCount ?? 0} cached=${usage?.cachedContentTokenCount ?? 0} thoughts=${usage?.thoughtsTokenCount ?? 0} out=${usage?.candidatesTokenCount ?? 0}`,
         );
-        // A refusal from the whole fallback chain: the partial text shouldn't be shown as an answer.
-        send(message.stop_reason === "refusal" ? { type: "refusal" } : { type: "done", truncated: message.stop_reason === "max_tokens" });
+        send(blocked || (finish && BLOCKED.has(finish)) ? { type: "refusal" } : { type: "done", truncated: finish === FinishReason.MAX_TOKENS });
       } catch (err) {
-        if (!(err instanceof Anthropic.APIUserAbortError)) {
+        if (!aborted.signal.aborted) {
           console.error("chat: request failed", err);
           send({ type: "error", message: failureMessage(err) });
         }
@@ -187,7 +202,7 @@ export async function handleChat(request: Request, client: ChatClient, today = n
     },
     cancel() {
       open = false;
-      stream.abort();
+      aborted.abort();
     },
   });
 
@@ -196,9 +211,14 @@ export async function handleChat(request: Request, client: ChatClient, today = n
   });
 }
 
-let client: Anthropic | null = null;
+let client: GoogleGenAI | null = null;
 
-export function POST(request: Request): Promise<Response> {
-  client ??= new Anthropic();
+export async function POST(request: Request): Promise<Response> {
+  const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    console.error("chat: GEMINI_API_KEY is not set");
+    return json(503, { error: UNAVAILABLE });
+  }
+  client ??= new GoogleGenAI({ apiKey });
   return handleChat(request, client);
 }
