@@ -1,9 +1,9 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 
 import { Chat } from "./chat/Chat.tsx";
-import { hasBeenWelcomed, setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./components/hooks.ts";
+import { hasSeenIntro, markIntroSeen, setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./components/hooks.ts";
+import { Intro } from "./components/Intro.tsx";
 
-const Welcome = lazy(() => import("./sections/Welcome.tsx"));
 const Bill = lazy(() => import("./sections/Bill.tsx"));
 const EnergyData = lazy(() => import("./sections/EnergyData.tsx"));
 const Regime = lazy(() => import("./sections/Regime.tsx"));
@@ -11,7 +11,6 @@ const Towns = lazy(() => import("./sections/Towns.tsx"));
 const About = lazy(() => import("./sections/About.tsx"));
 
 const ROUTES = [
-  { id: "welcome", label: "Welcome" },
   { id: "bill", label: "Bill check" },
   { id: "data", label: "Energy data" },
   { id: "regime", label: "Regime" },
@@ -20,9 +19,6 @@ const ROUTES = [
 ] as const;
 
 type RouteId = (typeof ROUTES)[number]["id"];
-
-/** The bare address opens the Welcome page until this browser has seen it, then Bill check (the home page). */
-const HOME: RouteId = hasBeenWelcomed() ? "bill" : "welcome";
 
 /**
  * Section addresses. Usage, Prices & savings and Data & methods used to be tabs and are now sections of a
@@ -103,19 +99,29 @@ function ThemeIcon({ choice }: { choice: ThemeChoice }) {
 }
 
 export function App() {
-  const raw = useHashRoute(HOME);
+  const raw = useHashRoute("bill");
   const section = SECTIONS[raw];
   const route: RouteId = ROUTES.some((r) => r.id === raw) ? (raw as RouteId) : (section?.tab ?? "bill");
   const { choice } = useTheme();
 
+  // A first visit to the home page gets a small note on Bill check (a deep link goes straight to its page), as
+  // does #/welcome, the old Welcome page's address. Closing it, or leaving Bill check, puts it away for good.
+  const [intro, setIntro] = useState(() => raw === "welcome" || (route === "bill" && !hasSeenIntro()));
+  useEffect(() => {
+    if (raw === "welcome") setIntro(true);
+  }, [raw]);
+  const closeIntro = useCallback(() => {
+    markIntroSeen();
+    setIntro(false);
+    if (window.location.hash.replace(/^#\/?/, "").startsWith("welcome")) window.location.replace("#/bill");
+  }, []);
+  useEffect(() => {
+    if (intro && route !== "bill") closeIntro();
+  }, [intro, route, closeIntro]);
+
   useEffect(() => {
     const label = section?.scroll ? section.label : ROUTES.find((r) => r.id === route)!.label;
-    document.title =
-      route === "bill"
-        ? "Watt-If? · Check your Massachusetts electric bill"
-        : route === "welcome"
-          ? "Welcome to Watt-If? · Your guide to Massachusetts electricity"
-          : `${label} · Watt-If?`;
+    document.title = route === "bill" ? "Watt-If? · Check your Massachusetts electric bill" : `${label} · Watt-If?`;
     if (section?.scroll) return scrollToSection(raw);
     window.scrollTo({ top: 0 });
   }, [raw, route, section]);
@@ -148,7 +154,6 @@ export function App() {
       </header>
       <main id="main" tabIndex={-1}>
         <Suspense fallback={<div className="loading">Loading…</div>}>
-          {route === "welcome" && <Welcome />}
           {route === "bill" && <Bill />}
           {route === "data" && <EnergyData />}
           {route === "regime" && <Regime />}
@@ -163,6 +168,7 @@ export function App() {
         </span>
       </footer>
       <Chat page={route} />
+      {intro ? <Intro onClose={closeIntro} /> : null}
     </>
   );
 }

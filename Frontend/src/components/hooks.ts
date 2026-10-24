@@ -67,22 +67,23 @@ export function useTheme(): { choice: ThemeChoice; dark: boolean } {
   return { choice, dark: choice === "dark" || (choice === "system" && systemDark) };
 }
 
-const WELCOMED_KEY = "fw-welcomed";
+// Set once the first-visit intro has been closed (or, before the intro, the old Welcome page was seen).
+const INTRO_KEY = "fw-welcomed";
 
-/** Whether this browser has seen the Welcome page. Without storage, assume so rather than show it on every visit. */
-export function hasBeenWelcomed(): boolean {
+/** Whether this browser has closed the first-visit intro. Without storage, assume so rather than show it on every visit. */
+export function hasSeenIntro(): boolean {
   try {
-    return localStorage.getItem(WELCOMED_KEY) !== null;
+    return localStorage.getItem(INTRO_KEY) !== null;
   } catch {
     return true;
   }
 }
 
-export function markWelcomed(): void {
+export function markIntroSeen(): void {
   try {
-    localStorage.setItem(WELCOMED_KEY, "1");
+    localStorage.setItem(INTRO_KEY, "1");
   } catch {
-    /* storage unavailable: hasBeenWelcomed already answers yes */
+    /* storage unavailable: hasSeenIntro already answers yes */
   }
 }
 
