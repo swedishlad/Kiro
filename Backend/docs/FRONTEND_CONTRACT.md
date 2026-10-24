@@ -21,7 +21,7 @@
 | **Next 6 bills (Monte Carlo)** | `simulateBills(...)` | `months[]` (p5…p95), `total`, `histogram` | $ | fan chart; Feb 1 reset marked; "supply portion" |
 | **Region 6-month forecast (Monte Carlo)** | `mc_forecast.json` → `areas[]` | `months[]` quantiles, `total`, `samplePaths` (20), `sameMonthsLastObservedGWh` | GWh | `calibration.cov80` + `nMonths` as the honesty badge |
 | **Regime light** 🟢⚪🔴 | `regimes.json` → `areas[]` (use `MA_RES` for "now": monthly to 2026-08; zones are daily to 2023-12-31) → `current` | `color`, `pctVsAverage`, `bandPct`, `date` | % | "red = above the historical average range (average ± 1 sd of the same period in the previous 5 years)"; show the date |
-| Regime history chart | `regimes.json` → `areas[].timeline` | `date`, `color`, `pctVsAverage`, `bandPct` (draw ±bandPct as the grey range band) | % | "colours use only data available at the time" |
+| **Regime nowcast** (2 panels) | `regimes.json` → `areas[].timeline` | top: `pctVsAverage ÷ bandPct` (sd from avg) as a line with points coloured by `color` + three lines at `states[].meanSdFromAverage`; bottom: stacked `probs` [green, grey, red] 0–100% | sd, probability | "filtered: past data only"; header "now: COLOR (p%)" from `current` |
 | Regime outlook | `regimes.json` → `areas[].outlook` | `days`, `probs` | probability | — |
 | **Map** (351 towns) | `towns.json` (SVG paths, join `id`) + `towns_metrics.json` (join `townId`) | `modeledAnnualMWh`, `perCapitaKwh`, `regimeColor`, `zone` | MWh, kWh | "**Modeled** from population and regional load; zone boundaries approximate" |
 | **City forecast** (any town) | `towns_metrics.json` → `towns[].forecast6mMWh`, `changeVsLastYearPct` | quantiles | MWh | "Modeled" |

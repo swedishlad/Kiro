@@ -2,7 +2,7 @@
 // Changing anything here is an ORCHESTRATOR decision: bump CONTRACTS_VERSION and contracts/VERSION,
 // and log the change in research/CHANGELOG.md. JSON Schemas for the data files live next to this file.
 
-export const CONTRACTS_VERSION = "2.1.0";
+export const CONTRACTS_VERSION = "2.2.0";
 
 // ---------------------------------------------------------------- utilities
 export type UtilityId = "NG" | "EV_EAST" | "EV_WEST" | "UNITIL";
@@ -259,7 +259,8 @@ export interface RegimeState {
   expectedDurationDays: number;
   shareOfDays: number;                                // share of days (or months) in this state, filtered
 }
-export interface RegimePoint { date: string; color: RegimeColor; pRed: number; pctVsAverage: number; bandPct: number }
+/** probs = filtered [P(green), P(grey), P(red)] for the stacked probability chart; sums to 1 */
+export interface RegimePoint { date: string; color: RegimeColor; pRed: number; probs: [number, number, number]; pctVsAverage: number; bandPct: number }
 export interface AreaRegimes {
   area: RegimeArea;
   unit: "day" | "month";
