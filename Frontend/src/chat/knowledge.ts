@@ -118,12 +118,12 @@ function siteSection(): string {
 
 Watt If is a free, public dashboard about Massachusetts residential electricity: what homes use, what they pay, what basic service costs, and whether use is running above or below its usual range. Every number comes from public data (U.S. EIA, Mass.gov DPU, ISO New England, U.S. Census, MassGIS) processed by the project's Python backend. The site has no user accounts and cannot see anyone's bill, meter or utility account; it does not sell electricity or sign anyone up.
 
-The site has five tabs: Bill check, Energy data, Regime, Map and About. Energy data holds the Hour by hour, Usage, Prices & savings and Climate sections; Regime holds Regimes & forecast and the use levels; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it. On a visitor's first visit to the home page, a small note in the corner of Bill check says to start with a bill there and that Energy data, Regime and Map have the bigger picture; "Got it" closes it.
+The site has five tabs: Bill check, Energy data, Regime, Map and About. Energy data holds the Hour by hour, Usage, Prices & savings and Climate sections; Regime holds Regimes & forecast; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it. On a visitor's first visit to the home page, a small note in the corner of Bill check says to start with a bill there and that Energy data, Regime and Map have the bigger picture; "Got it" closes it.
 - [Bill check](#/bill) (the home page): a visitor adds their Massachusetts electric bill (National Grid, Eversource or Unitil) as a photo, a screenshot or the PDF, several pages at once if they like, by choosing it, dropping it anywhere on the page or pasting it; they can also paste a PDF's text or type the numbers. It is read in their browser and never uploaded, so you cannot see it. A full report appears straight away: their use vs the typical Massachusetts home that month, their cost and all-in ¢/kWh vs the state average, their supply rate vs their utility's basic-service rate (and what the gap costs a year), their year estimated month by month from this bill, a year's kWh and cost, where the bill's money goes (supply vs delivery) when the bill prints those totals, and suggestions with rough yearly dollar figures: switching supply back to basic service, a Mass Save assessment, community or rooftop solar, heat pumps. Kilowatt-hours and the bill month are all it needs (the month can come from the statement date); the utility, total and supply rate add the cost and supply comparisons. The details it read sit under the report and can be corrected, and "Save as PDF" prints the report. Usage is only published statewide, so the comparison is Massachusetts-wide plus the visitor's own utility, not their town.
 - [Energy data](#/data): Hour by hour, Usage, Prices & savings and Climate on one page.
-- [Usage](#/usage): the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel). The use levels are on the Regime tab.
+- [Usage](#/usage): the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel).
 - [Prices & savings](#/prices): basic-service monthly rates by utility since 2005, the all-in average price vs the supply rate, fixed-option terms, and the "Did your supplier save you money?" calculator with a month-by-month breakdown.
-- [Regime](#/regime): every regime model on one page: Regimes & forecast, then the use levels.
+- [Regime](#/regime): Regimes & forecast: is use above or below its usual range, the outlook and the six-month forecast.
 - [Hour by hour](#/hourly) (at the top of the Energy data tab): a 3D surface of Massachusetts grid load for every hour since 2024 (hour of day × date × megawatts), coloured by that day's temperature; visitors drag to turn it and hover to read an hour. Summer afternoons form the tallest ridge (air conditioning), winter evenings a second one (heating and lighting), nights are the valleys.
 - [Regimes & forecast](#/grid) (on the Regime tab): a regime nowcast, a dark panel for the series picked under Series (homes, monthly; the Massachusetts grid or one zone, daily). It shows use vs the same period in the previous 5 years in standard deviations with the model's call on each point (red above / grey within / green below the usual range), and the filtered probability of each regime; homes also show the next six months (hatched where only the long-run odds are known). Then the outlook, how the three regimes behave, and the six-month grid load forecast: actual monthly load, then the Monte Carlo median, 50% and 90% ranges and 20 simulated paths, with its walk-forward test.
 - [Climate](#/climate): a modeled household's CO₂ from electricity on the New England grid. Pick monthly use, flexible use a day and a home battery; it shows yearly emissions, how much moving use to cleaner hours cuts, the cost per ton of steps like weatherization, a 20-year emissions range as the grid gets cleaner, and whether solar or a battery is worth buying now or later.
@@ -147,7 +147,7 @@ function termsSection(): string {
 - **Units**: kWh (kilowatt-hour) is the unit on the bill; ¢/kWh is cents per kWh. 1 MWh = 1,000 kWh, 1 GWh = 1,000 MWh, 1 TWh = 1,000 GWh.
 - **Typical home (typical account)**: statewide residential sales ÷ the 12-month average number of accounts (EIA-861M). It includes apartments and seasonal homes.
 - **A home like yours / P10, P50, P90**: weighted percentiles of yearly use from the 552 Massachusetts homes in EIA's 2020 Residential Energy Consumption Survey (RECS). 10% of similar homes use less than P10, half use less than P50 (the median) and 90% use less than P90. These are ranges for similar homes, not a reading of anyone's meter.
-- **Low / Mid / High (use levels, Regime tab)**: a 3-state hidden Markov model over monthly kWh per account. It mostly follows the season: summer months and January are High, spring and fall Low.
+- **Low / Mid / High (use levels; a backend model the site doesn't chart)**: a 3-state hidden Markov model over monthly kWh per account. It mostly follows the season: summer months and January are High, spring and fall Low.
 - **Below / Within / Above range (usual-range regimes, Regime tab)**: each month (homes) or day (grid zones) is compared with the same period in the previous 5 years; the usual range is that average ± 1 standard deviation. A hidden Markov model smooths the call so one odd day doesn't flip it. Colours always come with a shape and a word: green ▼ Below, grey ● Within, red ▲ Above. Weather is not removed, so a heat wave or cold snap that pushes use up shows as Above.
 - **Load zones**: ISO New England splits Massachusetts into ${ZONES.map((z) => `${z} (${ZONE_NAMES[z]})`).join(", ")}. Zone load includes businesses as well as homes. "MA grid" is the three zones added together.
 - **Modeled / simulated**: produced by a model rather than measured, such as the town-level figures and the forecast. The site labels these.`;
@@ -327,19 +327,6 @@ ${table(head, byMembers)}
 A year month by month: RECS band = yearly band × the statewide share of each month (EIA 2019–2025); the typical account is EIA 2025.
 
 ${table(["Month", "RECS P10 kWh", "RECS median kWh", "RECS P90 kWh", "Typical account 2025 kWh", "Share of the year"], monthly)}`;
-}
-
-function levelRegimeSection(d: KnowledgeInputs): string {
-  const h = d.hmm;
-  const states = [...h.states].sort((a, b) => a.mean - b.mean);
-  return `## Low / Mid / High use levels ([Use levels](#/levels), Regime tab)
-
-A ${h.n_states}-state Gaussian hidden Markov model over ${h.timeline.length} months of kWh per account (${h.engine}, seed ${h.seed}); states are ordered by mean use. Each month's regime is in the month-by-month table at the end.
-
-${table(
-  ["Regime", "Mean kWh per account", "Long-run share of months"],
-  states.map((s) => [LEVEL_WORD[s.regime], fmtNum(s.mean), fmtPct(s.stationary_prob)]),
-)}`;
 }
 
 function rangeRegimeSection(d: KnowledgeInputs): string {
@@ -535,7 +522,6 @@ Reference data for the Watt If assistant, generated from the backend artifacts t
     savingsSection(d),
     useSection(d),
     yearsSection(d),
-    levelRegimeSection(d),
     rangeRegimeSection(d),
     forecastSection(d),
     climateSection(d),
