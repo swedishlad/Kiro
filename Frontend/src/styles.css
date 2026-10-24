@@ -2249,31 +2249,27 @@ table.data tbody th {
 }
 
 /* ---------------------------------------------------------------------------------------------
-   Regime nowcast (components/RegimeNowcast.tsx): a dark, terminal-style panel in both themes, drawn
-   like Backend/docs/img/examples/regime_nowcast_*.png. Status colours validated on #0a1020 (dataviz
-   validator): colour-blind separation >= dE 10.1 on every pair, contrast >= 3:1; shapes + words always
-   travel with them. Re-pointing --low / --mid / --high / --surface / --ink here re-themes the shared
-   RegimeIcon, badges and Tooltip inside the panel.
+   Regime nowcast (components/RegimeNowcast.tsx), drawn like Backend/docs/img/examples/regime_nowcast_*.png.
+   It follows the site theme (Light / Dark / Auto): the panel sits on --surface-2 with the site's ink, and only
+   the status colours and accents are the panel's own, validated per theme on that surface (dataviz validator:
+   light #239c5e/#737b8b/#a92d2a on #f5f5f7, colour-blind dE >= 8.4; dark #1fbf6a/#6b7a90/#d9473f on #2c2c2e,
+   dE >= 9.7; contrast >= 3:1 both). Shapes + words always travel with them. Re-pointing --low / --mid / --high
+   here re-themes the shared RegimeIcon, badges and Tooltip keys inside the panel.
    --------------------------------------------------------------------------------------------- */
 .nowcast {
-  --now-bg: #070b16;
-  --now-grid: #1b2840;
-  --now-grid-strong: #34476b;
-  --now-ink: #e6ebf0;
-  --now-muted: #7e9fb3;
-  --now-teal: #2fe0b0;
-  --now-line: #7f93ab;
-  --now-band: #26344b;
-  --now-up: #cc7f38;
-  --now-down: #3f88c8;
-  --low: #14c46e;
-  --mid: #5b6b82;
-  --high: #c8403f;
-  --surface: #111a2e;
-  --ink: var(--now-ink);
-  --ink-2: #a9bccd;
-  --ink-muted: var(--now-muted);
-  --float-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  --now-bg: var(--surface-2);
+  --now-grid: #dcdce2;
+  --now-grid-strong: #b4b6bf;
+  --now-ink: var(--ink);
+  --now-muted: var(--ink-2);
+  --now-teal: #0a7c5c;
+  --now-line: #7b8494;
+  --now-band: #dde3ec;
+  --now-up: #c97a35;
+  --now-down: #3a82c4;
+  --low: #239c5e;
+  --mid: #737b8b;
+  --high: #a92d2a;
   background: var(--now-bg);
   color: var(--now-ink);
   border-radius: var(--radius-sm);
@@ -2282,6 +2278,28 @@ table.data tbody th {
   font-size: 12.5px;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .nowcast {
+    --now-grid: #3a3a3c;
+    --now-grid-strong: #5a5a5f;
+    --now-teal: #2fe0b0;
+    --now-line: #8e9bb0;
+    --now-band: #2f3a4c;
+    --low: #1fbf6a;
+    --mid: #6b7a90;
+    --high: #d9473f;
+  }
+}
+:root[data-theme="dark"] .nowcast {
+  --now-grid: #3a3a3c;
+  --now-grid-strong: #5a5a5f;
+  --now-teal: #2fe0b0;
+  --now-line: #8e9bb0;
+  --now-band: #2f3a4c;
+  --low: #1fbf6a;
+  --mid: #6b7a90;
+  --high: #d9473f;
 }
 .nowcast p {
   margin: 0;
@@ -2397,7 +2415,6 @@ table.data tbody th {
 }
 .nowcast .tooltip {
   font-family: var(--font);
-  border: 1px solid var(--now-grid-strong);
 }
 @media (max-width: 560px) {
   .nowcast {
