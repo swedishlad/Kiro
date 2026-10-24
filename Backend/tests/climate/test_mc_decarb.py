@@ -1,14 +1,57 @@
 """Unit tests and benchmarks for C++ and Python Monte Carlo decarbonization engine."""
 
+import math
 import time
 from concurrent.futures import ThreadPoolExecutor
 
+import numpy as np
 import pytest
 
+from backend.climate import mc_decarb
+from backend.climate.config import DAYS_PER_YEAR, GRAMS_PER_METRIC_TON
 from backend.climate.mc_decarb import (
     build_fan_chart_response,
     run_monte_carlo_decarbonization,
 )
+
+
+def _scalar_reference(
+    initial, theta, sigma, rate, solar_deg, battery_fade, annual_kwh, solar_kwh, battery_kwh, paths, years, seed
+):
+    """The original path-by-path loop of the Python fallback: cumulative tons [year, path]."""
+    rng = np.random.default_rng(seed)
+    dt = 1.0 / DAYS_PER_YEAR
+    sqrt_dt = math.sqrt(dt)
+    daily_base_kwh = annual_kwh / DAYS_PER_YEAR
+    out = np.zeros((years, paths))
+    for p in range(paths):
+        c_t = initial
+        cum_g = 0.0
+        for y in range(years):
+            daily_solar = (solar_kwh / DAYS_PER_YEAR) * (1.0 - solar_deg) ** y
+            bat_fraction = min(0.20 * (1.0 - battery_fade) ** y, 1.0) if battery_kwh > 0 else 0.0
+            net_kwh = max(0.0, daily_base_kwh - daily_solar)
+            for d in range(DAYS_PER_YEAR):
+                mu_t = initial * math.exp(-rate * (y + d / DAYS_PER_YEAR))
+                z = rng.standard_normal()
+                c_t = max(0.0, c_t + theta * (mu_t - c_t) * dt + sigma * sqrt_dt * z)
+                cum_g += net_kwh * c_t * (1.0 - bat_fraction)
+            out[y, p] = cum_g / GRAMS_PER_METRIC_TON
+    return out
+
+
+@pytest.mark.parametrize("chunk", [1000, 7, 1])
+def test_python_fallback_matches_scalar_loop_bit_for_bit(monkeypatch, chunk):
+    """The vectorized fallback reproduces the path-by-path loop exactly, whatever the chunk size."""
+    monkeypatch.setattr(mc_decarb, "_PY_CHUNK_PATHS", chunk)
+    args = (353.3, 0.5, 50.0, 0.035, 0.005, 0.02, 9125.0, 2000.0, 10.0)
+    ref = _scalar_reference(*args, 23, 4, 99)
+    res = mc_decarb._simulate_grid_decarb_python(*args, num_paths=23, num_years=4, base_seed=99)
+    assert res.yearly_p05_tons == [float(np.percentile(ref[y], 5)) for y in range(4)]
+    assert res.yearly_median_tons == [float(np.percentile(ref[y], 50)) for y in range(4)]
+    assert res.yearly_p95_tons == [float(np.percentile(ref[y], 95)) for y in range(4)]
+    assert res.terminal_mean_tons == float(np.mean(ref[-1]))
+    assert res.terminal_std_tons == float(np.std(ref[-1]))
 
 
 def test_seed_determinism():

@@ -61,6 +61,7 @@ const ARTIFACTS = [
   { file: "live_status.json", used: `Data-through dates: grid ${liveStatus.gridThrough}, homes ${liveStatus.homesThrough} (Sources, Grid)` },
   { file: "regimes.json", used: "Homes (monthly) and grid zones (daily) vs their usual range, outlooks (Overview, Regimes & forecast)" },
   { file: "mc_forecast.json", used: "Six-month load forecast and its walk-forward test (Overview, Regimes & forecast)" },
+  { file: "climate_dashboard.json", used: "The Climate API's answer for every household the tab offers: emissions, timing, abatement costs, solar and battery timing (Climate)" },
 ];
 
 export default function Sources() {
@@ -133,6 +134,14 @@ export default function Sources() {
               level with EIA sales because the ISO-NE files end in 2023. Before being shown, it was fit on data to Oct 2021 and scored
               on two later winters.
             </p>
+            <h3>Climate</h3>
+            <p>
+              The backend's Climate API (<code className="code">POST /api/climate/dashboard</code>) answers for each household on the
+              Climate tab, and the answers are saved with the site. It multiplies an hourly use shape by a fixed hourly profile of
+              marginal grid emissions for ISO New England, schedules flexible use and the battery with a linear program, ranks steps
+              by cost per ton, simulates the years ahead on a decarbonizing grid (Monte Carlo, seeded), and values buying solar or a battery
+              now versus later.
+            </p>
           </div>
         </Card>
 
@@ -147,6 +156,10 @@ export default function Sources() {
               <li>The forecast simulates zones independently, so the statewide band is probably too narrow.</li>
               <li>Town-to-zone assignment is approximate (the backend's <code className="code">zone_approx</code> column).</li>
               <li>Dollar figures cover electricity supply only; delivery charges are not modeled.</li>
+              <li>
+                Climate figures are modeled for a home like the one picked, on one typical day of grid emissions, not measured; the solar
+                and battery timing assumes a federal tax credit on the price.
+              </li>
             </ul>
           </div>
         </Card>
@@ -173,6 +186,7 @@ python3 src/backend/build_map.py
 python3 -m src.hmm.hmm_build
 python3 -m backend.regimes.build
 python3 -m backend.forecast.mc
+python3 -m backend.climate.build
 python3 -m pytest tests -q
 
 cd ../Frontend

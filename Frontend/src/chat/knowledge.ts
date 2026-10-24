@@ -2,6 +2,7 @@
 // document, built from the same backend artifacts and parsers the pages use. Pure (file text in,
 // Markdown out), so `npm run knowledge` and the drift test in knowledge.test.ts produce the same bytes.
 
+import { findScenario, hourLabel, tonsPerThousandUsd } from "../data/climate.ts";
 import { calendarYears, trailing12 } from "../data/derive.ts";
 import { addMonths, dateLabel, fmtNum, fmtPct, fmtSignedPct, ymLabel } from "../data/format.ts";
 import { estimateHome, MIN_HOMES, type HomeAnswers } from "../data/homes.ts";
@@ -19,6 +20,7 @@ import {
   parseMonthlyRates,
   parseRecs,
   parseTowns,
+  type ClimateArtifact,
   type ConsumptionStats,
   type EiaMonth,
   type FixedRow,
@@ -51,6 +53,7 @@ export interface KnowledgeInputs {
   mapConsumption: MapConsumption;
   regimes: GridRegimes;
   forecast: McForecast;
+  climate: ClimateArtifact;
 }
 
 /** Reads every input from Backend/data; `read` takes a path relative to that folder. */
@@ -68,6 +71,7 @@ export function readKnowledgeInputs(read: (path: string) => string): KnowledgeIn
     mapConsumption: json("build/map_consumption.json"),
     regimes: json("build/regimes.json"),
     forecast: json("build/mc_forecast.json"),
+    climate: json("build/climate_dashboard.json"),
   };
 }
 
@@ -116,6 +120,7 @@ Tabs (the site uses hash links, so link to them exactly as written):
 - [Usage](#/usage): monthly use per residential account since 2010 with the Low / Mid / High use regimes, sales vs a year earlier, what the regimes mean, the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel).
 - [Prices & savings](#/prices): basic-service monthly rates by utility since 2005, the all-in average price vs the supply rate, fixed-option terms, and the "Did your supplier save you money?" calculator with a month-by-month breakdown.
 - [Regimes & forecast](#/grid): homes (monthly) and the ISO-NE grid zones (daily) compared with the same period in the previous 5 years, the outlook, how the three regimes behave, and the six-month Monte Carlo load forecast with its walk-forward test.
+- [Climate](#/climate): a modeled household's CO₂ from electricity on the New England grid. Pick monthly use, flexible use a day and a home battery; it shows yearly emissions, how much moving use to cleaner hours cuts, the cost per ton of steps like weatherization, a 20-year emissions range as the grid gets cleaner, and whether solar or a battery is worth buying now or later.
 - [Towns](#/towns): a map and searchable table of all 351 cities and towns with county, ISO-NE load zone, 2020 and 2024 population and growth.
 - [Data & methods](#/sources): sources, how each number is made, limits, and how to rebuild.
 - [About](#/about): what Watt If is and the team that builds it: ${TEAM.slice(0, -1).join(", ")} and ${TEAM[TEAM.length - 1]}.
@@ -449,6 +454,57 @@ Limits worth knowing:
 Outside Watt If (for questions the data can't answer): the customer's bill or utility for account, billing, outage and service questions; Energy Switch Massachusetts (energyswitchma.gov), the state's site for comparing competitive supply offers; Mass Save (masssave.com) for energy-efficiency rebates; Mass.gov DPU for rate filings.`;
 }
 
+function climateSection(d: KnowledgeInputs): string {
+  const c = d.climate;
+  const as = c.assumptions;
+  const scc = c.apiDefaults.scc_usd_per_ton;
+  const usd = (v: number) => `${v < 0 ? "−" : ""}$${fmtNum(Math.abs(v))}`;
+  const def = findScenario(c, c.defaultScenario)!;
+  const intensity = def.now_arbitrage.hourly_series.map((h) => h.emissions_intensity_g_co2e_per_kwh);
+  const fan = def.later_decisions.fan_chart;
+  const last = fan.years.length - 1;
+  const rows = c.scenarios.map(({ request: r, response: x }) => [
+    fmtNum(r.total_monthly_kwh),
+    fmtNum(r.shiftable_load_kwh),
+    fmtNum(r.max_battery_capacity_kwh),
+    fmtNum(x.summary.current_annual_metric_tons, 2),
+    fmtNum(x.summary.best_case_reduction_pct, 1),
+    fmtNum(x.now_arbitrage.schedulable_reductions_annual_metric_tons, 2),
+    usd(x.summary.social_carbon_damage_yr_usd),
+  ]);
+  const steps = def.now_arbitrage.macc_curve.map(
+    (m, i) => `${i + 1}. ${m.intervention_name}: ${usd(m.abatement_cost_usd_per_ton)} per ton, ${fmtNum(m.annual_tons_abated, 2)} t a year, ${usd(m.annual_net_financial_savings_usd)} off the bill a year.`,
+  );
+  const assets = def.later_decisions.assets.map((a) => {
+    const spec = as.assets.find((x) => x.name === a.asset_name);
+    const values = a.deferral_analysis.map((s) => `${s.defer_years === 0 ? "now" : `in ${s.defer_years} yr`} ${usd(s.net_option_value_usd)}`).join(", ");
+    return `- ${a.asset_name}: **${a.recommendation === "INSTALL NOW" ? "Install now" : "Hold and wait"}**. Price ${usd(a.capex_usd)} before credits, falling ${fmtPct(a.annual_hardware_deflation_rate, 1)} a year; net value if bought ${values}; CO₂ avoided over ${spec?.lifeYears ?? "its"} years ${fmtNum(a.co2_averted_lifetime_tons_median, 1)} t (${fmtNum(a.co2_averted_lifetime_tons_p05, 1)}–${fmtNum(a.co2_averted_lifetime_tons_p95, 1)}); waiting a year releases ${fmtNum(a.delay_cost_metric_tons_per_yr, 2)} t it would have avoided.`;
+  });
+  return `## Climate tab (modeled household emissions)
+
+Everything on the [Climate](#/climate) tab is **modeled** for a home like the one picked, not measured. It is the backend's Climate API (${c.endpoint}) answering for each combination of monthly use (${c.options.total_monthly_kwh.map((k) => fmtNum(k)).join(", ")} kWh), flexible use a day (${c.options.shiftable_load_kwh.map((k) => fmtNum(k)).join(", ")} kWh: laundry, dishwasher, water heating, an EV charging overnight) and a home battery (${c.options.max_battery_capacity_kwh.map((k) => fmtNum(k)).join(" or ")} kWh). The default is ${fmtNum(c.defaultScenario.total_monthly_kwh)} kWh a month, ${fmtNum(c.defaultScenario.shiftable_load_kwh)} kWh flexible, ${fmtNum(c.defaultScenario.max_battery_capacity_kwh)} kWh battery.
+
+How it works:
+- Grid emissions: one typical day of hourly marginal emissions for ${as.region} (extra CO₂ per extra kWh), not live data: average ${fmtNum(def.now_arbitrage.average_grid_intensity_g_co2e_per_kwh)} g CO₂e/kWh, cleanest at ${hourLabel(intensity.indexOf(Math.min(...intensity)))} (${fmtNum(Math.min(...intensity))} g), dirtiest at ${hourLabel(intensity.indexOf(Math.max(...intensity)))} (${fmtNum(Math.max(...intensity))} g) when gas peaking plants run.
+- The home's monthly kWh is spread over a typical hourly shape. A linear program moves the flexible kWh and runs the battery, weighing CO₂ ${fmtPct(c.apiDefaults.carbon_vs_cost_weight)} and the bill ${fmtPct(1 - c.apiDefaults.carbon_vs_cost_weight)} on a time-of-use rate of ${fmtNum(as.touUsdPerKwh.offPeak * 100)}¢/kWh, ${fmtNum(as.touUsdPerKwh.peak * 100)}¢ from ${hourLabel(as.touUsdPerKwh.peakHours[0])} to ${hourLabel((as.touUsdPerKwh.peakHours[as.touUsdPerKwh.peakHours.length - 1] + 1) % 24)}.
+- Social cost of carbon: ${usd(scc)} a ton (U.S. EPA's 2023 estimate): damage to society, not a charge on the bill.
+- "Over ${as.analysisYears} years if nothing changes" is today's yearly total × ${as.analysisYears}. The ${as.analysisYears}-year range is a Monte Carlo of ${fmtNum(def.metadata.mc_paths)} paths of grid carbon intensity around a ${fmtPct(as.annualGridDecarbRate, 1)}-a-year decline (seed ${def.metadata.mc_seed}).
+- Carbon yield = CO₂ avoided a year by the 6 kW solar array plus timing, per $1,000 of solar price.
+- Solar and battery timing compares the net value in today's dollars (${fmtPct(as.discountRate)} a year discount; bill savings plus the social value of CO₂ avoided, minus the price after an assumed ${fmtPct(as.assets[0]?.federalTaxCreditPct ?? 0)} federal tax credit) of buying now or after 1–3 years. The credit is the model's assumption, not advice; visitors should check which credits apply before buying.
+
+Every scenario (t CO₂e a year at today's grid; cut = share of daily emissions avoided by moving use and the battery):
+
+${table(["Monthly kWh", "Flexible kWh/day", "Battery kWh", "t CO₂e/yr", "Cut from timing %", "t avoided by timing/yr", "Social cost/yr"], rows)}
+
+Default home (${fmtNum(c.defaultScenario.total_monthly_kwh)} kWh a month): ${fmtNum(def.summary.current_annual_metric_tons, 2)} t CO₂e a year, ${fmtNum(def.summary.lifetime_co2_liability_metric_tons, 1)} t over ${as.analysisYears} years if nothing changes, carbon yield ${fmtNum(tonsPerThousandUsd(def.summary.portfolio_carbon_yield_pct), 2)} t a year per $1,000. Simulated yearly emissions: median ${fmtNum(fan.median_tons[0], 2)} t in year 1 (5–95%: ${fmtNum(fan.p05_lower_bound_tons[0], 2)}–${fmtNum(fan.p95_upper_bound_tons[0], 2)}), ${fmtNum(fan.median_tons[last], 2)} t in year ${fan.years[last]} (${fmtNum(fan.p05_lower_bound_tons[last], 2)}–${fmtNum(fan.p95_upper_bound_tons[last], 2)}).
+
+Steps ranked by net cost per ton avoided (negative = saves more than it costs), default home:
+${steps.join("\n")}
+
+Solar and battery timing, default home:
+${assets.join("\n")}`;
+}
+
 /** The whole knowledge base as Markdown. */
 export function buildKnowledge(d: KnowledgeInputs): string {
   const latest = d.eia[d.eia.length - 1];
@@ -465,6 +521,7 @@ Reference data for the Watt If assistant, generated from the backend artifacts t
     levelRegimeSection(d),
     rangeRegimeSection(d),
     forecastSection(d),
+    climateSection(d),
     townsSection(d),
     sourcesSection(d),
     ratesSection(d),
