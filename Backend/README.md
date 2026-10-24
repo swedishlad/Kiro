@@ -14,6 +14,8 @@ The web frontend is built separately and consumes the committed JSON artifacts u
 | HMM regimes vs the **historical average range** (red = above, grey = within, green = below; range = avg ± 1 sd of the same period in the previous 5 years; ISO-NE zones daily + MA homes monthly to 2026-08; no look-ahead) | `backend/regimes/` | `data/build/regimes.json` |
 | Walk-forward-calibrated **Monte Carlo**, 6 months (Nov 2026 – Apr 2027), per zone + MA | `backend/forecast/mc.py` | `data/build/mc_forecast.json` |
 | Monte Carlo core on the EIA monthly series (in progress) | `forecast_mc_core.py` | — |
+| **Forecast for all 351 towns** (modeled: population share of zone × zone Monte Carlo; Nov 2026 – Apr 2027) | `backend/towns/build.py` | `data/build/towns_metrics.json` |
+| **Future regime** for homes (next 6 months; tested gap forecast where it beats the long-run odds) | `backend/regimes/build.py` | `regimes.json` → `forecast`, `outlook` |
 
 ## Data
 
@@ -34,8 +36,10 @@ The web frontend is built separately and consumes the committed JSON artifacts u
 python3 -m pytest tests -q                         # stats, savings, map, src/hmm
 python3 tests/backend/regimes/check_regimes.py     # G-HMM: leakage, ordering, not-seasonal checks
 python3 tests/backend/forecast/check_mc.py         # Monte Carlo: walk-forward calibration, leakage, reproducibility
+python3 tests/backend/towns/check_towns.py         # G-CITY: 351 towns, sums reconcile with each zone
 python3 tests/backend/make_test_charts.py          # charts of the test results -> docs/img/tests/
-# rebuild: python3 -m backend.regimes.build  then  python3 -m backend.forecast.mc
+# rebuild: python3 -m backend.regimes.build, then python3 -m backend.forecast.mc, then python3 -m backend.towns.build
+# frontend contract (what the site reads): docs/FRONTEND_CONTRACT.md
 ```
 
 40 tests (32 backend + 8 HMM).
