@@ -11,7 +11,7 @@ The web frontend is built separately and consumes the committed JSON artifacts u
 | Money-you-could-have-saved (vs basic-service rate) | `src/backend/savings_model.py`, `build_savings.py` | `data/build/savings_model.json` |
 | Per-town map data (green/grey/red traffic light) | `src/backend/map_consumption.py`, `build_map.py` | `data/build/map_consumption.json` |
 | HMM 3-state energy-use regime model | `src/hmm/` | `data/build/hmm_regimes.json` |
-| HMM regimes on **weather-adjusted daily** load (ISO-NE zones; walk-forward, forward-filtered; green/grey/red) | `backend/regimes/` | `data/build/regimes.json` |
+| HMM regimes vs the **historical average range** (red = above, grey = within, green = below; range = avg ± 1 sd of the same period in the previous 5 years; ISO-NE zones daily + MA homes monthly to 2026-08; no look-ahead) | `backend/regimes/` | `data/build/regimes.json` |
 | Walk-forward-calibrated **Monte Carlo**, 6 months (Nov 2026 – Apr 2027), per zone + MA | `backend/forecast/mc.py` | `data/build/mc_forecast.json` |
 | Monte Carlo core on the EIA monthly series (in progress) | `forecast_mc_core.py` | — |
 
@@ -26,7 +26,7 @@ The web frontend is built separately and consumes the committed JSON artifacts u
 - Per-town consumption level is a statewide model (`modeled: true`) — there is no verified per-town usage source in the data, so this is labeled honestly rather than invented.
 - HMM states are sorted by mean consumption: GREEN (low) < GREY (mid) < RED (high), seed 42 for reproducibility.
 - Savings are the supply portion only; positive = saved, negative = overpaid.
-- Two HMMs live here. `src/hmm/` classifies the raw monthly kWh level, so its colors largely follow the season (July red, April green). `backend/regimes/` classifies daily load **after removing what weather and the recent normal explain**, with no look-ahead; its red state appears in every calendar month. Method, tests and charts: `research/regimes.md`, `research/mc_backtest.md`, `docs/img/tests/`.
+- Two HMMs live here. `src/hmm/` classifies the raw monthly kWh level, so its colors largely follow the season (July red, April green). `backend/regimes/` compares each day (zones) or month (homes) with the **same period in the previous 5 years**: red = above that historical average range, grey = within, green = below; no look-ahead, and no calendar month is mostly red. Example output charts: `docs/img/examples/`. Method, tests and charts: `research/regimes.md`, `research/mc_backtest.md`, `docs/img/tests/`.
 
 ## Verify
 

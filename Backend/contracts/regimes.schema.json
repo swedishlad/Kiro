@@ -1,12 +1,13 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "fairwatt/regimes.schema.json",
- "title": "RegimesFile (data/build/regimes.json)",
+ "title": "RegimesFile (data/build/regimes.json) v2.1.0",
  "type": "object",
  "required": [
   "asOf",
   "method",
   "series",
+  "definition",
   "areas",
   "leakageTest",
   "notes"
@@ -21,7 +22,16 @@
    "minLength": 20
   },
   "series": {
-   "const": "weather-adjusted daily load (% vs expected)"
+   "const": "consumption vs historical average range (same period, previous 5 years)"
+  },
+  "definition": {
+   "type": "object",
+   "required": [
+    "red",
+    "grey",
+    "green",
+    "range"
+   ]
   },
   "leakageTest": {
    "const": "pass"
@@ -34,17 +44,20 @@
   },
   "areas": {
    "type": "array",
-   "minItems": 3,
+   "minItems": 5,
+   "maxItems": 5,
    "items": {
     "type": "object",
     "required": [
      "area",
+     "unit",
      "states",
      "transition",
      "current",
      "timeline",
      "monthly",
-     "outlook"
+     "outlook",
+     "agreementWithBandRule"
     ],
     "properties": {
      "area": {
@@ -52,7 +65,14 @@
        "NEMA",
        "SEMA",
        "WCMA",
-       "MA"
+       "MA",
+       "MA_RES"
+      ]
+     },
+     "unit": {
+      "enum": [
+       "day",
+       "month"
       ]
      },
      "states": {
@@ -67,8 +87,8 @@
           "required": [
            "color",
            "label",
-           "meanResidualPct",
-           "sdResidualPct",
+           "meanSdFromAverage",
+           "sdWithinState",
            "expectedDurationDays",
            "shareOfDays"
           ],
@@ -87,10 +107,15 @@
              "too much"
             ]
            },
-           "meanResidualPct": {
-            "type": "number"
+           "meanSdFromAverage": {
+            "enum": [
+             -1.5,
+             0,
+             0.0,
+             1.5
+            ]
            },
-           "sdResidualPct": {
+           "sdWithinState": {
             "type": "number",
             "exclusiveMinimum": 0
            },
@@ -121,8 +146,8 @@
           "required": [
            "color",
            "label",
-           "meanResidualPct",
-           "sdResidualPct",
+           "meanSdFromAverage",
+           "sdWithinState",
            "expectedDurationDays",
            "shareOfDays"
           ],
@@ -141,10 +166,15 @@
              "too much"
             ]
            },
-           "meanResidualPct": {
-            "type": "number"
+           "meanSdFromAverage": {
+            "enum": [
+             -1.5,
+             0,
+             0.0,
+             1.5
+            ]
            },
-           "sdResidualPct": {
+           "sdWithinState": {
             "type": "number",
             "exclusiveMinimum": 0
            },
@@ -175,8 +205,8 @@
           "required": [
            "color",
            "label",
-           "meanResidualPct",
-           "sdResidualPct",
+           "meanSdFromAverage",
+           "sdWithinState",
            "expectedDurationDays",
            "shareOfDays"
           ],
@@ -195,10 +225,15 @@
              "too much"
             ]
            },
-           "meanResidualPct": {
-            "type": "number"
+           "meanSdFromAverage": {
+            "enum": [
+             -1.5,
+             0,
+             0.0,
+             1.5
+            ]
            },
-           "sdResidualPct": {
+           "sdWithinState": {
             "type": "number",
             "exclusiveMinimum": 0
            },
@@ -244,7 +279,9 @@
       "required": [
        "date",
        "probs",
-       "color"
+       "color",
+       "pctVsAverage",
+       "bandPct"
       ],
       "properties": {
        "date": {
@@ -267,6 +304,13 @@
          "grey",
          "red"
         ]
+       },
+       "pctVsAverage": {
+        "type": "number"
+       },
+       "bandPct": {
+        "type": "number",
+        "exclusiveMinimum": 0
        }
       }
      },
@@ -278,7 +322,9 @@
        "required": [
         "date",
         "color",
-        "pRed"
+        "pRed",
+        "pctVsAverage",
+        "bandPct"
        ],
        "properties": {
         "date": {
@@ -296,6 +342,13 @@
          "type": "number",
          "minimum": 0,
          "maximum": 1
+        },
+        "pctVsAverage": {
+         "type": "number"
+        },
+        "bandPct": {
+         "type": "number",
+         "exclusiveMinimum": 0
         }
        }
       }
@@ -314,15 +367,6 @@
         "ym": {
          "type": "string",
          "pattern": "^(19|20)\\d\\d-(0[1-9]|1[0-2])$"
-        },
-        "green": {
-         "type": "number"
-        },
-        "grey": {
-         "type": "number"
-        },
-        "red": {
-         "type": "number"
         }
        }
       }
@@ -353,6 +397,11 @@
         }
        }
       }
+     },
+     "agreementWithBandRule": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
      }
     }
    }

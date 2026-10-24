@@ -39,12 +39,14 @@ def sort_params(p):
             "loglik": p["loglik"], "iters": p["iters"]}
 
 
-def fit(x, k=3, init=None, seed=0, n_init=1, max_iter=300, tol=1e-6, tied=False):
+def fit(x, k=3, init=None, seed=0, n_init=1, max_iter=300, tol=1e-6, tied=False, fixed_mu=None, fixed_sd=None):
     """Baum-Welch on x (1-D). `init` (a params dict) warm-starts; otherwise n_init seeded random starts.
 
     tied=True shares one standard deviation across states, so states differ only by level (mean). That keeps a
-    high-variance state from simply absorbing the peak seasons. Returns the best params by log-likelihood, sorted
-    by mean.
+    high-variance state from simply absorbing the peak seasons. fixed_mu anchors the state means (they are never
+    re-estimated), so each state keeps a fixed meaning and the HMM learns only spread and persistence; fixed_sd also
+    anchors the spread, leaving only the transition probabilities (stickiness) to learn.
+    Returns the best params by log-likelihood, sorted by mean.
     """
     x = np.asarray(x, float)
     sd_floor = 0.05 * x.std()
@@ -57,6 +59,11 @@ def fit(x, k=3, init=None, seed=0, n_init=1, max_iter=300, tol=1e-6, tied=False)
         starts.append({"pi": np.full(k, 1.0 / k),
                        "A": np.full((k, k), 0.1 / (k - 1)) + np.eye(k) * (0.9 - 0.1 / (k - 1)),
                        "mu": q + rng.normal(0, 0.1 * x.std(), k), "sd": np.full(k, x.std() / 2)})
+    for p in starts:
+        if fixed_mu is not None:
+            p["mu"] = np.array(fixed_mu, float)
+        if fixed_sd is not None:
+            p["sd"] = np.full(k, float(fixed_sd))
     best = None
     for p in starts:
         prev = -np.inf
@@ -70,10 +77,11 @@ def fit(x, k=3, init=None, seed=0, n_init=1, max_iter=300, tol=1e-6, tied=False)
             A = xi.sum(axis=0)
             A /= A.sum(axis=1, keepdims=True)
             w = gamma.sum(axis=0)
-            mu = (gamma * x[:, None]).sum(axis=0) / w
+            mu = (gamma * x[:, None]).sum(axis=0) / w if fixed_mu is None else np.array(fixed_mu, float)
             sq = gamma * (x[:, None] - mu) ** 2
             sd = np.full(k, np.sqrt(sq.sum() / len(x))) if tied else np.sqrt(sq.sum(axis=0) / w)
-            p = {"pi": gamma[0], "A": A, "mu": mu, "sd": np.maximum(sd, sd_floor)}
+            sd = np.full(k, float(fixed_sd)) if fixed_sd is not None else np.maximum(sd, sd_floor)
+            p = {"pi": gamma[0], "A": A, "mu": mu, "sd": sd}
             if ll - prev < tol:
                 break
             prev = ll
