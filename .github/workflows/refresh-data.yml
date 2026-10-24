@@ -1,8 +1,8 @@
 # Daily live refresh of the backend calculations (Backend/backend/live/update.py).
 # Pulls the newest public data (EIA-930 grid load, Open-Meteo temperature, EIA-861M monthly sales), re-runs the
-# regimes, Monte Carlo and 351-town builds, runs every backend gate plus the frontend tests and build, and commits
-# Backend/data/build/ only if all of it passed and new data arrived. Any failure = no commit: the site keeps the
-# last good numbers. The push to main redeploys the site.
+# regimes, Monte Carlo and 351-town builds, runs every backend gate, regenerates the "Ask FairWatt" knowledge base,
+# runs the frontend tests and build, and commits Backend/data/build/ + Frontend/server/knowledge.ts only if all of it
+# passed and new data arrived. Any failure = no commit: the site keeps the last good numbers. The push redeploys it.
 name: Refresh live data
 
 on:
@@ -48,10 +48,11 @@ jobs:
         working-directory: Backend
         run: python3 -m backend.live.update
 
-      - name: Frontend tests and build on the new data
+      - name: Assistant knowledge, frontend tests and build on the new data
         working-directory: Frontend
         run: |
           npm ci
+          npm run knowledge
           npm test
           npm run build
 
@@ -63,7 +64,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Backend/data/build
+          git add Backend/data/build Frontend/server/knowledge.ts
           grid=$(python3 -c "import json; print(json.load(open('Backend/data/build/live_status.json'))['gridThrough'])")
           homes=$(python3 -c "import json; print(json.load(open('Backend/data/build/live_status.json'))['homesThrough'])")
           git commit -m "data: live refresh (grid through $grid, homes through $homes; all gates pass)"

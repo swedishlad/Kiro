@@ -47,8 +47,8 @@ Interactive tools:
 - Basic service fixed rates, Aug 2026 – Jan 2027 (supply only): National Grid 17.185¢, Eversource East 17.323¢, Eversource West 15.934¢, Unitil 18.921¢.
 - Basic service monthly option for Jan 2027 (newest published month, winter peak): National Grid 20.086¢, Eversource East 25.510¢, Eversource West 23.742¢, Unitil 31.010¢.
 - Homes vs their usual range, Aug 2026: **Above range**, +8.3% vs the same month in the previous 5 years (usual range ±5.0%).
-- Grid zones on Dec 31, 2023 (the last ISO-NE day in the data): NEMA Below range (−5.7%), SEMA Within range (−3.8%), WCMA Below range (−7.7%), MA Below range (−5.8%).
-- Grid forecast, Nov 2026 – Apr 2027 (median, 80% range): NEMA 11.7 TWh (11.5–11.9), SEMA 6.8 TWh (6.7–6.9), WCMA 8.2 TWh (8.0–8.4), MA 26.6 TWh (26.2–27.1).
+- Grid zones on Oct 14, 2026 (the latest day EIA has published; refreshed daily): NEMA Above range (+8.0%), SEMA Above range (+5.3%), WCMA Within range (+4.5%), MA Above range (+6.2%).
+- Grid forecast, Nov 2026 – Apr 2027 (median, 80% range): NEMA 11.7 TWh (11.4–12.1), SEMA 6.9 TWh (6.7–7.1), WCMA 8.0 TWh (7.7–8.3), MA 26.6 TWh (25.8–27.5).
 
 ## The savings calculator ("Did your supplier save you money?", Prices & savings tab)
 
@@ -183,35 +183,35 @@ A 3-state Gaussian hidden Markov model over 200 months of kWh per account (hmmle
 - Definition: usual range = historical average +/- 1 standard deviation, same period of the previous 5 years. Above range = above the historical average range; Within = within the historical average range; Below = below the historical average range.
 - Method: 3-state Gaussian HMM (hand-rolled Baum-Welch) on z = (consumption - historical average) / historical sd, same period of the previous 5 years only; state means anchored at -1.5/0/+1.5 sd (below/within/above the range), tied spread and transitions learned; monthly walk-forward refit; forward-filtered. Leakage test (no look-ahead): pass.
 - How to read the outlook: today's state odds carried forward. A tested model of the gap is used only at horizons where it beat the long-run odds in a walk-forward test; otherwise the outlook is the long-run odds. It is not a weather forecast.
-- Zones NEMA/SEMA/WCMA/MA: ISO-NE daily load, all customer classes, 2020-01-01 to 2023-12-31 (files for 2024+ not available).
-- MA_RES: EIA-861M residential kWh per account (12-month mean of customers), monthly 2016-01 to 2026-08: the current light.
+- Zones NEMA/SEMA/WCMA/MA: daily load, all customer classes, 2020-01-01 to 2026-10-14 (ISO-NE to 2023, then EIA-930, which publishes ISO-NE zone data about 10 days late; refreshed daily).
+- MA_RES: EIA-861M residential kWh per account (12-month mean of customers), monthly 2016-01 to 2026-08: the current light (EIA posts each month about two months later).
 - Each day/month is compared with the same period in the previous 5 years only, so history is never re-coloured by later data.
 - Weather is not removed: a heat wave or cold snap that pushes use above the range shows red.
-- outlook / forecast: an AR(1) model of the gap is used at a horizon only where it beat the long-run mix in a walk-forward test (homes: next 1-2 months; grid: next week); otherwise they show the long-run odds. HMM transitions alone lost to the long-run mix, so they are not used for the future.
+- outlook / forecast: an AR(1) model of the gap is used at a horizon only where it beat the long-run mix in a walk-forward test (each entry's method, skill and n say which); otherwise they show the long-run odds. HMM transitions alone lost to the long-run mix, so they are not used for the future.
 
-### NEMA: Northeast MA & Boston (daily, ISO-NE)
+### NEMA: Northeast MA & Boston (daily, ISO-NE / EIA-930)
 
-- Latest day, Dec 31, 2023: **Below range**, −5.7% vs the 5-year average (usual range ±5.8%); below / within / above odds now 86% / 14% / 0%.
-- Outlook (below / within / above): 7 days 33% / 63% / 5%; 30 days 26% / 64% / 9% (long-run odds); 90 days 26% / 64% / 9% (long-run odds).
-- Long-run behaviour: Below range 34% of days, lasting about 4.2 days; Within range 58% of days, lasting about 5.4 days; Above range 8% of days, lasting about 3.2 days.
+- Latest day, Oct 14, 2026: **Above range**, +8.0% vs the 5-year average (usual range ±5.6%); below / within / above odds now 0% / 32% / 68%.
+- Outlook (below / within / above): 7 days 7% / 63% / 30%; 30 days 21% / 64% / 15% (long-run odds); 90 days 21% / 64% / 15% (long-run odds).
+- Long-run behaviour: Below range 25% of days, lasting about 3.8 days; Within range 60% of days, lasting about 5.8 days; Above range 15% of days, lasting about 4.2 days.
 
-### SEMA: Southeast MA (daily, ISO-NE)
+### SEMA: Southeast MA (daily, ISO-NE / EIA-930)
 
-- Latest day, Dec 31, 2023: **Within range**, −3.8% vs the 5-year average (usual range ±6.1%); below / within / above odds now 31% / 69% / 0%.
-- Outlook (below / within / above): 7 days 25% / 66% / 8%; 30 days 22% / 67% / 12% (long-run odds); 90 days 22% / 67% / 12% (long-run odds).
-- Long-run behaviour: Below range 28% of days, lasting about 3.6 days; Within range 61% of days, lasting about 5.0 days; Above range 11% of days, lasting about 3.3 days.
+- Latest day, Oct 14, 2026: **Above range**, +5.3% vs the 5-year average (usual range ±5.1%); below / within / above odds now 0% / 46% / 54%.
+- Outlook (below / within / above): 7 days 11% / 65% / 24%; 30 days 18% / 65% / 17% (long-run odds); 90 days 18% / 65% / 17% (long-run odds).
+- Long-run behaviour: Below range 22% of days, lasting about 3.5 days; Within range 60% of days, lasting about 5.4 days; Above range 18% of days, lasting about 4.1 days.
 
-### WCMA: West & Central MA (daily, ISO-NE)
+### WCMA: West & Central MA (daily, ISO-NE / EIA-930)
 
-- Latest day, Dec 31, 2023: **Below range**, −7.7% vs the 5-year average (usual range ±6.8%); below / within / above odds now 92% / 8% / 0%.
-- Outlook (below / within / above): 7 days 34% / 62% / 4%; 30 days 24% / 66% / 9% (long-run odds); 90 days 24% / 66% / 9% (long-run odds).
-- Long-run behaviour: Below range 30% of days, lasting about 3.4 days; Within range 62% of days, lasting about 4.8 days; Above range 8% of days, lasting about 3.2 days.
+- Latest day, Oct 14, 2026: **Within range**, +4.5% vs the 5-year average (usual range ±5.6%); below / within / above odds now 0% / 63% / 37%.
+- Outlook (below / within / above): 7 days 12% / 68% / 20%; 30 days 21% / 65% / 13% (long-run odds); 90 days 21% / 65% / 13% (long-run odds).
+- Long-run behaviour: Below range 25% of days, lasting about 3.1 days; Within range 61% of days, lasting about 4.7 days; Above range 14% of days, lasting about 3.7 days.
 
-### MA grid (three zones added, daily, ISO-NE)
+### MA grid (three zones added, daily, ISO-NE / EIA-930)
 
-- Latest day, Dec 31, 2023: **Below range**, −5.8% vs the 5-year average (usual range ±6.1%); below / within / above odds now 83% / 17% / 0%.
-- Outlook (below / within / above): 7 days 31% / 64% / 5%; 30 days 24% / 66% / 10% (long-run odds); 90 days 24% / 66% / 10% (long-run odds).
-- Long-run behaviour: Below range 31% of days, lasting about 3.7 days; Within range 61% of days, lasting about 4.9 days; Above range 9% of days, lasting about 3.2 days.
+- Latest day, Oct 14, 2026: **Above range**, +6.2% vs the 5-year average (usual range ±5.4%); below / within / above odds now 0% / 40% / 60%.
+- Outlook (below / within / above): 7 days 9% / 65% / 25%; 30 days 20% / 65% / 15% (long-run odds); 90 days 20% / 65% / 15% (long-run odds).
+- Long-run behaviour: Below range 24% of days, lasting about 3.4 days; Within range 61% of days, lasting about 5.2 days; Above range 15% of days, lasting about 4.0 days.
 
 ### Homes (statewide residential use per account, monthly, EIA)
 
@@ -221,7 +221,7 @@ A 3-state Gaussian hidden Markov model over 200 months of kWh per account (hmmle
 
 ### Share of days below / within / above range, by month (grid zones)
 
-2020–2023 ran mostly within or below the late-2010s range (COVID, efficiency, rooftop solar).
+2020–2023 ran mostly within or below the late-2010s range (COVID, efficiency, rooftop solar); load has grown since 2024 (EIA-930).
 
 | Month | NEMA below / within / above | SEMA below / within / above | WCMA below / within / above | MA below / within / above |
 |---|---|---|---|---|
@@ -273,66 +273,102 @@ A 3-state Gaussian hidden Markov model over 200 months of kWh per account (hmmle
 | Oct 2023 | 23% / 68% / 10% | 19% / 68% / 13% | 26% / 68% / 6% | 23% / 68% / 10% |
 | Nov 2023 | 20% / 73% / 7% | 17% / 53% / 30% | 20% / 77% / 3% | 20% / 73% / 7% |
 | Dec 2023 | 52% / 42% / 6% | 35% / 55% / 10% | 42% / 55% / 3% | 45% / 52% / 3% |
+| Jan 2024 | 13% / 65% / 23% | 6% / 58% / 35% | 16% / 65% / 19% | 16% / 61% / 23% |
+| Feb 2024 | 21% / 79% / 0% | 10% / 86% / 3% | 38% / 62% / 0% | 21% / 79% / 0% |
+| Mar 2024 | 19% / 52% / 29% | 16% / 58% / 26% | 29% / 55% / 16% | 19% / 58% / 23% |
+| Apr 2024 | 20% / 63% / 17% | 13% / 60% / 27% | 17% / 70% / 13% | 10% / 73% / 17% |
+| May 2024 | 6% / 77% / 16% | 0% / 84% / 16% | 13% / 74% / 13% | 10% / 74% / 16% |
+| Jun 2024 | 7% / 73% / 20% | 7% / 73% / 20% | 13% / 67% / 20% | 7% / 73% / 20% |
+| Jul 2024 | 10% / 55% / 35% | 13% / 58% / 29% | 16% / 55% / 29% | 10% / 58% / 32% |
+| Aug 2024 | 26% / 65% / 10% | 26% / 58% / 16% | 35% / 55% / 10% | 26% / 65% / 10% |
+| Sep 2024 | 10% / 90% / 0% | 23% / 77% / 0% | 20% / 80% / 0% | 10% / 90% / 0% |
+| Oct 2024 | 19% / 81% / 0% | 16% / 81% / 3% | 23% / 77% / 0% | 23% / 77% / 0% |
+| Nov 2024 | 27% / 73% / 0% | 23% / 70% / 7% | 37% / 63% / 0% | 30% / 67% / 3% |
+| Dec 2024 | 0% / 68% / 32% | 3% / 48% / 48% | 6% / 65% / 29% | 3% / 65% / 32% |
+| Jan 2025 | 3% / 45% / 52% | 6% / 48% / 45% | 6% / 58% / 35% | 6% / 45% / 48% |
+| Feb 2025 | 0% / 43% / 57% | 0% / 46% / 54% | 0% / 46% / 54% | 0% / 46% / 54% |
+| Mar 2025 | 3% / 84% / 13% | 3% / 77% / 19% | 13% / 71% / 16% | 6% / 81% / 13% |
+| Apr 2025 | 3% / 57% / 40% | 20% / 43% / 37% | 7% / 67% / 27% | 7% / 57% / 37% |
+| May 2025 | 10% / 61% / 29% | 16% / 74% / 10% | 10% / 65% / 26% | 10% / 68% / 23% |
+| Jun 2025 | 17% / 67% / 17% | 20% / 63% / 17% | 17% / 63% / 20% | 17% / 63% / 20% |
+| Jul 2025 | 10% / 58% / 32% | 10% / 65% / 26% | 23% / 45% / 32% | 16% / 55% / 29% |
+| Aug 2025 | 48% / 42% / 10% | 65% / 32% / 3% | 45% / 48% / 6% | 58% / 35% / 6% |
+| Sep 2025 | 23% / 53% / 23% | 43% / 40% / 17% | 33% / 57% / 10% | 33% / 53% / 13% |
+| Oct 2025 | 13% / 74% / 13% | 10% / 68% / 23% | 16% / 71% / 13% | 13% / 68% / 19% |
+| Nov 2025 | 10% / 47% / 43% | 3% / 53% / 43% | 17% / 47% / 37% | 10% / 50% / 40% |
+| Dec 2025 | 0% / 23% / 77% | 0% / 26% / 74% | 0% / 29% / 71% | 0% / 29% / 71% |
+| Jan 2026 | 6% / 39% / 55% | 0% / 45% / 55% | 6% / 39% / 55% | 6% / 39% / 55% |
+| Feb 2026 | 0% / 36% / 64% | 0% / 21% / 79% | 0% / 39% / 61% | 0% / 36% / 64% |
+| Mar 2026 | 3% / 55% / 42% | 6% / 45% / 48% | 13% / 52% / 35% | 6% / 52% / 42% |
+| Apr 2026 | 7% / 63% / 30% | 7% / 60% / 33% | 23% / 63% / 13% | 10% / 63% / 27% |
+| May 2026 | 10% / 71% / 19% | 6% / 71% / 23% | 26% / 65% / 10% | 19% / 68% / 13% |
+| Jun 2026 | 3% / 77% / 20% | 13% / 70% / 17% | 10% / 73% / 17% | 3% / 80% / 17% |
+| Jul 2026 | 26% / 61% / 13% | 32% / 55% / 13% | 35% / 52% / 13% | 32% / 55% / 13% |
+| Aug 2026 | 0% / 81% / 19% | 0% / 77% / 23% | 19% / 74% / 6% | 10% / 71% / 19% |
+| Sep 2026 | 13% / 80% / 7% | 7% / 87% / 7% | 33% / 63% / 3% | 17% / 77% / 7% |
+| Oct 2026 | 14% / 71% / 14% | 7% / 79% / 14% | 29% / 64% / 7% | 21% / 64% / 14% |
 
 ## Six-month grid load forecast, Nov 2026 – Apr 2027 (Regimes & forecast tab)
 
-- What it is: 10,000 simulated paths (weather-season bootstrap (2017-18..2022-23, +/-7 days) x rolling 2-year weather model x 3-state HMM regime-switching residual (tied sd) x EIA all-sector level ratio); level carried to today with EIA sales (ratio 1.0435) because the ISO-NE files end in 2023. All customer classes (homes and businesses), not a household bill. There is no separate forecast for the homes series.
-- Tested before shown: fit only on data to Oct 31, 2021, then run on two winters it never saw (2021-11..2022-04 and 2022-11..2023-04, 36 zone-months). The 80% range held the actual 89% of the time (90% range: 97%), and the median's error was 9% smaller than a "same month last year" guess. It is a simulation, never a promise.
-- Regional load of all customer classes; ISO-NE data ends 2023-12, so the level is carried to 2026 by EIA sales.
+- What it is: 10,000 simulated paths (weather bootstrap (the same months of 2017..2025, +/-7 days) x rolling 2-year weather model fit to 2026-10-14 x 3-state HMM regime-switching residual (tied sd)), on daily load observed through Oct 14, 2026 (ISO-NE 2017–2023, then EIA-930; refreshed daily). Each path carries the recent load level and its uncertainty. All customer classes (homes and businesses), not a household bill. There is no separate forecast for the homes series.
+- Tested before shown: refit before each of the last 7 winters (2019-20 .. 2025-26) and run on months it had not seen (126 zone-months). The 80% range held the actual 80% of the time (90% range: 87%), the median's error was 4% smaller than a "same month last year" guess, and six-month totals missed by 2.2% on average. It is a simulation, never a promise.
+- Regional load of all customer classes, observed daily through 2026-10-14 (ISO-NE 2017-2023, then EIA-930). The horizon is the 6 full months after the last observed day and moves forward as data arrives.
+- sameMonthsLastObservedGWh = the load actually observed in the same months a year earlier (2025-11 .. 2026-04).
 - Calibration fit only on data <= 2021-10-31, weather from seasons 2017-2021.
 - MA = the three zones summed per path; zone residuals are simulated independently (MA spread may be too narrow).
+- recentLevel = 1 + each zone's mean miss of the 2-year weather model over the last 365 days (carries a load trend to today); levelSdPct = how far that level has moved over 6 months, drawn once per path. backtest = the same method refit before each winter 2019-20 .. 2025-26: 80% range held 80% of 126 zone-months; 6-month total off by 2.2% on average.
 
 ### NEMA: Northeast MA & Boston
 
-Six-month total: median 11,660 GWh, 80% range 11,450–11,886 GWh, 90% range 11,396–11,950 GWh.
+Six-month total: median 11,744 GWh, 80% range 11,397–12,106 GWh, 90% range 11,295–12,212 GWh.
 
-| Month | P10 GWh | Median GWh | P90 GWh | Same month, last observed winter (2022-23) at today's level |
+| Month | P10 GWh | Median GWh | P90 GWh | Same month a year earlier (observed) |
 |---|---|---|---|---|
-| Nov 2026 | 1,782 | 1,839 | 1,893 | 1,834 |
-| Dec 2026 | 2,016 | 2,083 | 2,185 | 2,094 |
-| Jan 2027 | 2,050 | 2,157 | 2,276 | 2,077 |
-| Feb 2027 | 1,828 | 1,903 | 1,987 | 1,919 |
-| Mar 2027 | 1,891 | 1,955 | 2,017 | 1,960 |
-| Apr 2027 | 1,657 | 1,713 | 1,763 | 1,709 |
+| Nov 2026 | 1,745 | 1,816 | 1,885 | 1,824 |
+| Dec 2026 | 2,018 | 2,107 | 2,216 | 2,191 |
+| Jan 2027 | 2,083 | 2,206 | 2,324 | 2,295 |
+| Feb 2027 | 1,860 | 1,957 | 2,071 | 2,063 |
+| Mar 2027 | 1,860 | 1,938 | 2,017 | 1,951 |
+| Apr 2027 | 1,647 | 1,713 | 1,779 | 1,702 |
 
 ### SEMA: Southeast MA
 
-Six-month total: median 6,805 GWh, 80% range 6,701–6,929 GWh, 90% range 6,676–6,963 GWh.
+Six-month total: median 6,876 GWh, 80% range 6,685–7,087 GWh, 90% range 6,633–7,147 GWh.
 
-| Month | P10 GWh | Median GWh | P90 GWh | Same month, last observed winter (2022-23) at today's level |
+| Month | P10 GWh | Median GWh | P90 GWh | Same month a year earlier (observed) |
 |---|---|---|---|---|
-| Nov 2026 | 1,045 | 1,078 | 1,115 | 1,068 |
-| Dec 2026 | 1,212 | 1,249 | 1,308 | 1,258 |
-| Jan 2027 | 1,219 | 1,277 | 1,344 | 1,223 |
-| Feb 2027 | 1,067 | 1,110 | 1,153 | 1,101 |
-| Mar 2027 | 1,086 | 1,121 | 1,163 | 1,115 |
-| Apr 2027 | 934 | 962 | 993 | 956 |
+| Nov 2026 | 1,030 | 1,074 | 1,121 | 1,076 |
+| Dec 2026 | 1,217 | 1,268 | 1,333 | 1,310 |
+| Jan 2027 | 1,230 | 1,299 | 1,373 | 1,359 |
+| Feb 2027 | 1,071 | 1,128 | 1,201 | 1,206 |
+| Mar 2027 | 1,077 | 1,122 | 1,172 | 1,143 |
+| Apr 2027 | 942 | 977 | 1,016 | 973 |
 
 ### WCMA: West & Central MA
 
-Six-month total: median 8,159 GWh, 80% range 7,977–8,361 GWh, 90% range 7,929–8,413 GWh.
+Six-month total: median 8,001 GWh, 80% range 7,673–8,335 GWh, 90% range 7,583–8,437 GWh.
 
-| Month | P10 GWh | Median GWh | P90 GWh | Same month, last observed winter (2022-23) at today's level |
+| Month | P10 GWh | Median GWh | P90 GWh | Same month a year earlier (observed) |
 |---|---|---|---|---|
-| Nov 2026 | 1,235 | 1,284 | 1,342 | 1,272 |
-| Dec 2026 | 1,419 | 1,473 | 1,558 | 1,475 |
-| Jan 2027 | 1,451 | 1,533 | 1,622 | 1,452 |
-| Feb 2027 | 1,280 | 1,337 | 1,399 | 1,319 |
-| Mar 2027 | 1,302 | 1,353 | 1,412 | 1,339 |
-| Apr 2027 | 1,124 | 1,166 | 1,210 | 1,147 |
+| Nov 2026 | 1,181 | 1,242 | 1,309 | 1,262 |
+| Dec 2026 | 1,379 | 1,458 | 1,551 | 1,528 |
+| Jan 2027 | 1,413 | 1,507 | 1,602 | 1,583 |
+| Feb 2027 | 1,267 | 1,343 | 1,427 | 1,420 |
+| Mar 2027 | 1,246 | 1,309 | 1,380 | 1,329 |
+| Apr 2027 | 1,080 | 1,132 | 1,189 | 1,127 |
 
 ### Massachusetts (three zones added)
 
-Six-month total: median 26,611 GWh, 80% range 26,226–27,102 GWh, 90% range 26,144–27,199 GWh.
+Six-month total: median 26,625 GWh, 80% range 25,810–27,478 GWh, 90% range 25,575–27,718 GWh.
 
-| Month | P10 GWh | Median GWh | P90 GWh | Same month, last observed winter (2022-23) at today's level |
+| Month | P10 GWh | Median GWh | P90 GWh | Same month a year earlier (observed) |
 |---|---|---|---|---|
-| Nov 2026 | 4,105 | 4,199 | 4,312 | 4,174 |
-| Dec 2026 | 4,694 | 4,800 | 5,002 | 4,827 |
-| Jan 2027 | 4,746 | 4,972 | 5,211 | 4,752 |
-| Feb 2027 | 4,211 | 4,350 | 4,500 | 4,339 |
-| Mar 2027 | 4,321 | 4,429 | 4,555 | 4,413 |
-| Apr 2027 | 3,756 | 3,839 | 3,931 | 3,812 |
+| Nov 2026 | 3,985 | 4,130 | 4,287 | 4,163 |
+| Dec 2026 | 4,646 | 4,829 | 5,070 | 5,029 |
+| Jan 2027 | 4,747 | 5,013 | 5,271 | 5,237 |
+| Feb 2027 | 4,220 | 4,429 | 4,670 | 4,689 |
+| Mar 2027 | 4,212 | 4,369 | 4,541 | 4,424 |
+| Apr 2027 | 3,695 | 3,823 | 3,954 | 3,803 |
 
 ## Cities and towns (Towns tab)
 
@@ -706,14 +742,14 @@ Sources:
 - U.S. EIA Form EIA-861M: Massachusetts residential revenue, sales, accounts, average price and kWh per account, Jan 2010 – Aug 2026 (2026 preliminary).
 - Mass.gov DPU "Basic Service Rates" (retrieved 2 Jul 2026): monthly and fixed-option residential rates by utility, 2005 – Jan 2027.
 - U.S. EIA Residential Energy Consumption Survey 2020: 552 Massachusetts homes with yearly kWh, size, heating fuel, home type, household size and survey weight.
-- ISO New England: daily load and temperature for NEMA, SEMA and WCMA, 2017 – 2023.
+- ISO New England (2017 – 2023), then U.S. EIA-930 (2024 – Oct 14, 2026, published ~10 days late) with Open-Meteo temperature: daily load for NEMA, SEMA and WCMA, refreshed daily.
 - U.S. Census Bureau: population of the 351 towns, 2020 and 2024. MassGIS (via the Leventhal Map & Education Center) town boundaries.
 
 Limits worth knowing:
 - RECS 2020 is one COVID-year survey of 552 homes; its bands are wide on purpose.
 - EIA revises preliminary months (all of 2026 so far), so recent values can change.
 - There is no verified per-town usage data, so towns are never coloured by consumption.
-- ISO-NE load includes businesses as well as homes, and the files end on 31 Dec 2023.
+- Grid load includes businesses as well as homes, and EIA publishes it about 10 days late.
 - Usual-range regimes don't remove weather: a heat wave above the range counts as Above.
 - The forecast simulates zones independently, so the statewide band is probably too narrow.
 - Town-to-zone assignment is approximate.
