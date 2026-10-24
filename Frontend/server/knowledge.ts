@@ -9,12 +9,13 @@ Reference data for the Watt If assistant, generated from the backend artifacts t
 
 Watt If is a free, public dashboard about Massachusetts residential electricity: what homes use, what they pay, what basic service costs, and whether use is running above or below its usual range. Every number comes from public data (U.S. EIA, Mass.gov DPU, ISO New England, U.S. Census, MassGIS) processed by the project's Python backend. The site has no user accounts and cannot see anyone's bill, meter or utility account; it does not sell electricity or sign anyone up.
 
-The site has four tabs: Bill check, Energy data, Map and About. Energy data holds the Usage, Prices & savings and Regimes & forecast sections; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it.
+The site has five tabs: Bill check, Energy data, Regime, Map and About. Energy data holds the Usage, Prices & savings and Climate sections; Regime holds Regimes & forecast and the use levels; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it.
 - [Bill check](#/bill) (the home page): a visitor adds a photo of their Massachusetts electric bill (National Grid, Eversource or Unitil), or pastes a PDF bill's text. It is read in their browser and never uploaded, so you cannot see it. They check the numbers it read (utility, kWh, bill month, total, supply rate, days) and see their use vs the typical Massachusetts home that month, their cost and all-in ¢/kWh vs the state average, their supply rate vs their utility's basic-service rate, and suggestions: switching supply back to basic service, a Mass Save assessment, community or rooftop solar, heat pumps. Usage is only published statewide, so the comparison is Massachusetts-wide plus the visitor's own utility, not their town.
-- [Energy data](#/data): the four sections below on one page.
-- [Usage](#/usage): the Low / Mid / High use-level regimes and what they mean, the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel). Monthly use per account and sales vs a year earlier are in the regime nowcast under Regimes & forecast.
+- [Energy data](#/data): Usage, Prices & savings and Climate on one page.
+- [Usage](#/usage): the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel). Monthly use per account, sales vs a year earlier and the use levels are on the Regime tab.
 - [Prices & savings](#/prices): basic-service monthly rates by utility since 2005, the all-in average price vs the supply rate, fixed-option terms, and the "Did your supplier save you money?" calculator with a month-by-month breakdown.
-- [Regimes & forecast](#/grid): a regime nowcast, a dark panel for the series picked under Series (homes, monthly; the Massachusetts grid or one zone, daily). It shows the value against its usual range (homes: monthly use per account; grid: daily load), the change vs a year earlier (homes: residential sales; grid: 7-day load), use vs the same period in the previous 5 years in standard deviations with the model's call on each point (red above / grey within / green below the usual range), and the filtered probability of each regime; homes also show the next six months (hatched where only the long-run odds are known). Then the outlook, how the three regimes behave, and the six-month grid load forecast: actual monthly load, then the Monte Carlo median, 50% and 90% ranges and 20 simulated paths, with its walk-forward test.
+- [Regime](#/regime): every regime model on one page: Regimes & forecast, then the use levels.
+- [Regimes & forecast](#/grid) (on the Regime tab): a regime nowcast, a dark panel for the series picked under Series (homes, monthly; the Massachusetts grid or one zone, daily). It shows the value against its usual range (homes: monthly use per account; grid: daily load), the change vs a year earlier (homes: residential sales; grid: 7-day load), use vs the same period in the previous 5 years in standard deviations with the model's call on each point (red above / grey within / green below the usual range), and the filtered probability of each regime; homes also show the next six months (hatched where only the long-run odds are known). Then the outlook, how the three regimes behave, and the six-month grid load forecast: actual monthly load, then the Monte Carlo median, 50% and 90% ranges and 20 simulated paths, with its walk-forward test.
 - [Climate](#/climate): a modeled household's CO₂ from electricity on the New England grid. Pick monthly use, flexible use a day and a home battery; it shows yearly emissions, how much moving use to cleaner hours cuts, the cost per ton of steps like weatherization, a 20-year emissions range as the grid gets cleaner, and whether solar or a battery is worth buying now or later.
 - [Map](#/towns): a map of all 351 cities and towns coloured by each town's modeled 6-month electricity forecast, with a searchable table showing that forecast plus county, ISO-NE load zone and 2020/2024 population. The forecast is modeled (each town is its population share of its ISO-NE zone; no public town-level metered data exists), not a live feed.
 - [About](#/about): what Watt If is and the team that builds it: Tae, Johan, Yuan and Lin.
@@ -34,8 +35,8 @@ Interactive tools:
 - **Units**: kWh (kilowatt-hour) is the unit on the bill; ¢/kWh is cents per kWh. 1 MWh = 1,000 kWh, 1 GWh = 1,000 MWh, 1 TWh = 1,000 GWh.
 - **Typical home (typical account)**: statewide residential sales ÷ the 12-month average number of accounts (EIA-861M). It includes apartments and seasonal homes.
 - **A home like yours / P10, P50, P90**: weighted percentiles of yearly use from the 552 Massachusetts homes in EIA's 2020 Residential Energy Consumption Survey (RECS). 10% of similar homes use less than P10, half use less than P50 (the median) and 90% use less than P90. These are ranges for similar homes, not a reading of anyone's meter.
-- **Low / Mid / High (use regimes, Usage tab)**: a 3-state hidden Markov model over monthly kWh per account. It mostly follows the season: summer months and January are High, spring and fall Low.
-- **Below / Within / Above range (usual-range regimes, Regimes & forecast section)**: each month (homes) or day (grid zones) is compared with the same period in the previous 5 years; the usual range is that average ± 1 standard deviation. A hidden Markov model smooths the call so one odd day doesn't flip it. Colours always come with a shape and a word: green ▼ Below, grey ● Within, red ▲ Above. Weather is not removed, so a heat wave or cold snap that pushes use up shows as Above.
+- **Low / Mid / High (use levels, Regime tab)**: a 3-state hidden Markov model over monthly kWh per account. It mostly follows the season: summer months and January are High, spring and fall Low.
+- **Below / Within / Above range (usual-range regimes, Regime tab)**: each month (homes) or day (grid zones) is compared with the same period in the previous 5 years; the usual range is that average ± 1 standard deviation. A hidden Markov model smooths the call so one odd day doesn't flip it. Colours always come with a shape and a word: green ▼ Below, grey ● Within, red ▲ Above. Weather is not removed, so a heat wave or cold snap that pushes use up shows as Above.
 - **Load zones**: ISO New England splits Massachusetts into NEMA (Northeast MA & Boston), SEMA (Southeast MA), WCMA (West & Central MA). Zone load includes businesses as well as homes. "MA grid" is the three zones added together.
 - **Modeled / simulated**: produced by a model rather than measured, such as the town-level figures and the forecast. The site labels these.
 
@@ -171,7 +172,7 @@ Average price = revenue ÷ sales for the year (EIA's definition), never an avera
 
 2026 so far (Jan 2026 – Aug 2026, preliminary): 30.19¢/kWh average price, 14,922 GWh sold.
 
-## Low / Mid / High use regimes (Usage tab)
+## Low / Mid / High use levels ([Use levels](#/levels), Regime tab)
 
 A 3-state Gaussian hidden Markov model over 200 months of kWh per account (hmmlearn, seed 42); states are ordered by mean use. Each month's regime is in the month-by-month table at the end.
 
@@ -181,7 +182,7 @@ A 3-state Gaussian hidden Markov model over 200 months of kWh per account (hmmle
 | Mid | 633 | 17% |
 | High | 705 | 34% |
 
-## Below / Within / Above range (Regimes & forecast tab)
+## Below / Within / Above range (Regime tab)
 
 - Definition: usual range = historical average +/- 1 standard deviation, same period of the previous 5 years. Above range = above the historical average range; Within = within the historical average range; Below = below the historical average range.
 - Method: 3-state Gaussian HMM (hand-rolled Baum-Welch) on z = (consumption - historical average) / historical sd, same period of the previous 5 years only; state means anchored at -1.5/0/+1.5 sd (below/within/above the range), tied spread and transitions learned; monthly walk-forward refit; forward-filtered. Leakage test (no look-ahead): pass.
@@ -311,7 +312,7 @@ A 3-state Gaussian hidden Markov model over 200 months of kWh per account (hmmle
 | Sep 2026 | 13% / 80% / 7% | 7% / 87% / 7% | 33% / 63% / 3% | 17% / 77% / 7% |
 | Oct 2026 | 14% / 71% / 14% | 7% / 79% / 14% | 29% / 64% / 7% | 21% / 64% / 14% |
 
-## Six-month grid load forecast, Nov 2026 – Apr 2027 (Regimes & forecast tab)
+## Six-month grid load forecast, Nov 2026 – Apr 2027 (Regime tab)
 
 - What it is: 10,000 simulated paths (weather bootstrap (the same months of 2017..2025, +/-7 days) x rolling 2-year weather model fit to 2026-10-14 x 3-state HMM regime-switching residual (tied sd)), on daily load observed through Oct 14, 2026 (ISO-NE 2017–2023, then EIA-930; refreshed daily). Each path carries the recent load level and its uncertainty. All customer classes (homes and businesses), not a household bill. There is no separate forecast for the homes series.
 - Tested before shown: refit before each of the last 7 winters (2019-20 .. 2025-26) and run on months it had not seen (126 zone-months). The 80% range held the actual 80% of the time (90% range: 87%), the median's error was 4% smaller than a "same month last year" guess, and six-month totals missed by 2.2% on average. It is a simulation, never a promise.
