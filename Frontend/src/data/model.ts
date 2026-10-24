@@ -160,6 +160,39 @@ export function parseTowns(text: string): Town[] {
   });
 }
 
+/**
+ * data/build/towns_metrics.json: a dated snapshot (asOf) of each town's MODELED 6-month electricity
+ * forecast — each town is its population share of its ISO-NE zone (no public town-level metered data
+ * exists). Zones are approximated by county. Not live/real-time.
+ */
+export interface TownForecast {
+  townId: number;
+  name: string;
+  zone: Zone;
+  pop2024: number;
+  modeledAnnualMWh: number;
+  modeledResidentialMWh: number;
+  perCapitaKwh: number;
+  regimeColor: GridColor;
+  /** 6-month forecast total MWh, Monte Carlo quantiles */
+  forecast6mMWh: Quantiles;
+  /** the horizon's six P50 monthly totals, MWh */
+  forecastMonthlyP50MWh: number[];
+  /** P50 6-month total vs the same months a year earlier (observed), % */
+  changeVsLastYearPct: number;
+}
+
+export interface TownForecastDoc {
+  asOf: string;
+  method: string;
+  zoneMapping: string;
+  horizon: string[];
+  towns: TownForecast[];
+  zoneTotalsMWh: Record<Zone, number>;
+  residentialKwhPerPerson: number;
+  notes: string[];
+}
+
 // ----------------------------------------------------------------------------- RECS 2020
 
 export interface RecsHome {

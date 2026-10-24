@@ -35,6 +35,7 @@ import {
   type RegimeName,
   type SavingsModel,
   type Town,
+  type TownForecastDoc,
   type UtilityId,
   utilityById,
 } from "../data/model.ts";
@@ -51,6 +52,7 @@ export interface KnowledgeInputs {
   savingsModel: SavingsModel;
   hmm: HmmRegimes;
   mapConsumption: MapConsumption;
+  townForecast: TownForecastDoc;
   regimes: GridRegimes;
   forecast: McForecast;
   climate: ClimateArtifact;
@@ -69,6 +71,7 @@ export function readKnowledgeInputs(read: (path: string) => string): KnowledgeIn
     savingsModel: json("build/savings_model.json"),
     hmm: json("build/hmm_regimes.json"),
     mapConsumption: json("build/map_consumption.json"),
+    townForecast: json("build/towns_metrics.json"),
     regimes: json("build/regimes.json"),
     forecast: json("build/mc_forecast.json"),
     climate: json("build/climate_dashboard.json"),
@@ -115,14 +118,15 @@ function siteSection(): string {
 
 Watt If is a free, public dashboard about Massachusetts residential electricity: what homes use, what they pay, what basic service costs, and whether use is running above or below its usual range. Every number comes from public data (U.S. EIA, Mass.gov DPU, ISO New England, U.S. Census, MassGIS) processed by the project's Python backend. The site has no user accounts and cannot see anyone's bill, meter or utility account; it does not sell electricity or sign anyone up.
 
-The site has four tabs: Bill check, Energy data, Map and About. Energy data holds the Usage, Prices & savings and Regimes & forecast sections; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it.
+The site has five tabs: Bill check, Energy data, Regime, Map and About. Energy data holds the Usage, Prices & savings and Climate sections; Regime holds Regimes & forecast and the use levels; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it.
 - [Bill check](#/bill) (the home page): a visitor adds a photo of their Massachusetts electric bill (National Grid, Eversource or Unitil), or pastes a PDF bill's text. It is read in their browser and never uploaded, so you cannot see it. They check the numbers it read (utility, kWh, bill month, total, supply rate, days) and see their use vs the typical Massachusetts home that month, their cost and all-in ¢/kWh vs the state average, their supply rate vs their utility's basic-service rate, and suggestions: switching supply back to basic service, a Mass Save assessment, community or rooftop solar, heat pumps. Usage is only published statewide, so the comparison is Massachusetts-wide plus the visitor's own utility, not their town.
-- [Energy data](#/data): the four sections below on one page.
-- [Usage](#/usage): the Low / Mid / High use-level regimes and what they mean, the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel). Monthly use per account and sales vs a year earlier are in the regime nowcast under Regimes & forecast.
+- [Energy data](#/data): Usage, Prices & savings and Climate on one page.
+- [Usage](#/usage): the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel). The use levels are on the Regime tab.
 - [Prices & savings](#/prices): basic-service monthly rates by utility since 2005, the all-in average price vs the supply rate, fixed-option terms, and the "Did your supplier save you money?" calculator with a month-by-month breakdown.
-- [Regimes & forecast](#/grid): two regime nowcasts, dark panels for homes (monthly) and the Massachusetts grid (daily; or the zone picked under Series), with a Detailed / Simple switch. Detailed adds the value against its usual range (homes: monthly use per account; grid: daily load) and the change vs a year earlier (homes: residential sales; grid: 7-day load). Both show use vs the same period in the previous 5 years in standard deviations, each point marked with the model's call (red above / grey within / green below the usual range), and the filtered probability of each regime; homes also show the next six months (hatched where only the long-run odds are known). Then the outlook, how the three regimes behave, and the six-month grid load forecast: actual monthly load, then the Monte Carlo median, 50% and 90% ranges and 20 simulated paths, with its walk-forward test.
+- [Regime](#/regime): every regime model on one page: Regimes & forecast, then the use levels.
+- [Regimes & forecast](#/grid) (on the Regime tab): a regime nowcast, a dark panel for the series picked under Series (homes, monthly; the Massachusetts grid or one zone, daily). It shows use vs the same period in the previous 5 years in standard deviations with the model's call on each point (red above / grey within / green below the usual range), and the filtered probability of each regime; homes also show the next six months (hatched where only the long-run odds are known). Then the outlook, how the three regimes behave, and the six-month grid load forecast: actual monthly load, then the Monte Carlo median, 50% and 90% ranges and 20 simulated paths, with its walk-forward test.
 - [Climate](#/climate): a modeled household's CO₂ from electricity on the New England grid. Pick monthly use, flexible use a day and a home battery; it shows yearly emissions, how much moving use to cleaner hours cuts, the cost per ton of steps like weatherization, a 20-year emissions range as the grid gets cleaner, and whether solar or a battery is worth buying now or later.
-- [Map](#/towns): a map and searchable table of all 351 cities and towns with county, ISO-NE load zone, 2020 and 2024 population and growth.
+- [Map](#/towns): a map of all 351 cities and towns coloured by each town's modeled 6-month electricity forecast, with a searchable table showing that forecast plus county, ISO-NE load zone and 2020/2024 population. The forecast is modeled (each town is its population share of its ISO-NE zone; no public town-level metered data exists), not a live feed.
 - [About](#/about): what Watt If is and the team that builds it: ${TEAM.slice(0, -1).join(", ")} and ${TEAM[TEAM.length - 1]}.
 - [Data & methods](#/sources) (on the About tab): sources, how each number is made, limits, and how to rebuild.
 
@@ -142,8 +146,8 @@ function termsSection(): string {
 - **Units**: kWh (kilowatt-hour) is the unit on the bill; ¢/kWh is cents per kWh. 1 MWh = 1,000 kWh, 1 GWh = 1,000 MWh, 1 TWh = 1,000 GWh.
 - **Typical home (typical account)**: statewide residential sales ÷ the 12-month average number of accounts (EIA-861M). It includes apartments and seasonal homes.
 - **A home like yours / P10, P50, P90**: weighted percentiles of yearly use from the 552 Massachusetts homes in EIA's 2020 Residential Energy Consumption Survey (RECS). 10% of similar homes use less than P10, half use less than P50 (the median) and 90% use less than P90. These are ranges for similar homes, not a reading of anyone's meter.
-- **Low / Mid / High (use regimes, Usage tab)**: a 3-state hidden Markov model over monthly kWh per account. It mostly follows the season: summer months and January are High, spring and fall Low.
-- **Below / Within / Above range (usual-range regimes, Regimes & forecast section)**: each month (homes) or day (grid zones) is compared with the same period in the previous 5 years; the usual range is that average ± 1 standard deviation. A hidden Markov model smooths the call so one odd day doesn't flip it. Colours always come with a shape and a word: green ▼ Below, grey ● Within, red ▲ Above. Weather is not removed, so a heat wave or cold snap that pushes use up shows as Above.
+- **Low / Mid / High (use levels, Regime tab)**: a 3-state hidden Markov model over monthly kWh per account. It mostly follows the season: summer months and January are High, spring and fall Low.
+- **Below / Within / Above range (usual-range regimes, Regime tab)**: each month (homes) or day (grid zones) is compared with the same period in the previous 5 years; the usual range is that average ± 1 standard deviation. A hidden Markov model smooths the call so one odd day doesn't flip it. Colours always come with a shape and a word: green ▼ Below, grey ● Within, red ▲ Above. Weather is not removed, so a heat wave or cold snap that pushes use up shows as Above.
 - **Load zones**: ISO New England splits Massachusetts into ${ZONES.map((z) => `${z} (${ZONE_NAMES[z]})`).join(", ")}. Zone load includes businesses as well as homes. "MA grid" is the three zones added together.
 - **Modeled / simulated**: produced by a model rather than measured, such as the town-level figures and the forecast. The site labels these.`;
 }
@@ -327,7 +331,7 @@ ${table(["Month", "RECS P10 kWh", "RECS median kWh", "RECS P90 kWh", "Typical ac
 function levelRegimeSection(d: KnowledgeInputs): string {
   const h = d.hmm;
   const states = [...h.states].sort((a, b) => a.mean - b.mean);
-  return `## Low / Mid / High use regimes (Usage tab)
+  return `## Low / Mid / High use levels ([Use levels](#/levels), Regime tab)
 
 A ${h.n_states}-state Gaussian hidden Markov model over ${h.timeline.length} months of kWh per account (${h.engine}, seed ${h.seed}); states are ordered by mean use. Each month's regime is in the month-by-month table at the end.
 
@@ -369,7 +373,7 @@ function rangeRegimeSection(d: KnowledgeInputs): string {
     const m = a.monthly.find((x) => x.ym === ym);
     return m ? `${fmtPct(m.green)} / ${fmtPct(m.grey)} / ${fmtPct(m.red)}` : "—";
   };
-  return `## Below / Within / Above range (Regimes & forecast tab)
+  return `## Below / Within / Above range (Regime tab)
 
 - Definition: usual range = ${r.definition.range}. Above range = ${r.definition.red}; Within = ${r.definition.grey}; Below = ${r.definition.green}.
 - Method: ${r.method}. Leakage test (no look-ahead): ${r.leakageTest}.
@@ -395,7 +399,7 @@ function forecastSection(d: KnowledgeInputs): string {
     const rows = a.months.map((m, i) => [ymLabel(m.ym), fmtNum(m.p10), fmtNum(m.p50), fmtNum(m.p90), fmtNum(a.sameMonthsLastObservedGWh[i])]);
     return `### ${name}\n\nSix-month total: median ${fmtNum(a.total.p50)} GWh, 80% range ${fmtNum(a.total.p10)}–${fmtNum(a.total.p90)} GWh, 90% range ${fmtNum(a.total.p5)}–${fmtNum(a.total.p95)} GWh.\n\n${table(["Month", "P10 GWh", "Median GWh", "P90 GWh", "Same month a year earlier (observed)"], rows)}`;
   });
-  return `## Six-month grid load forecast, ${ymLabel(f.horizon[0])} – ${ymLabel(f.horizon[f.horizon.length - 1])} (Regimes & forecast tab)
+  return `## Six-month grid load forecast, ${ymLabel(f.horizon[0])} – ${ymLabel(f.horizon[f.horizon.length - 1])} (Regime tab)
 
 - What it is: ${fmtNum(f.nPaths)} simulated paths (${f.method}), on daily load observed through ${gridThrough ? dateLabel(gridThrough) : "the latest published day"} (ISO-NE 2017–2023, then EIA-930; refreshed daily). Each path carries the recent load level and its uncertainty. All customer classes (homes and businesses), not a household bill. There is no separate forecast for the homes series.
 - ${
@@ -408,26 +412,37 @@ ${f.notes.map((n) => `- ${n}`).join("\n")}
 ${blocks.join("\n\n")}`;
 }
 
+/** MWh -> compact label with a sensible unit (GWh above 1,000 MWh). */
+function fmtMwh(mwh: number): string {
+  return mwh >= 1000 ? `${fmtNum(mwh / 1000, 1)} GWh` : `${fmtNum(mwh)} MWh`;
+}
+
 function townsSection(d: KnowledgeInputs): string {
-  const { towns, mapConsumption: map } = d;
+  const { towns, townForecast: fc } = d;
+  const fcById = new Map(fc.towns.map((t) => [t.townId, t]));
+  const horizon = `${ymLabel(fc.horizon[0])} – ${ymLabel(fc.horizon[fc.horizon.length - 1])}`;
   const zoneRows = ZONES.map((z) => {
     const ts = towns.filter((t) => t.zone === z);
     const p20 = ts.reduce((s, t) => s + t.pop2020, 0);
     const p24 = ts.reduce((s, t) => s + t.pop2024, 0);
-    return [`${z} (${ZONE_NAMES[z]})`, ts.length, fmtNum(p24), fmtSignedPct(p24 / p20 - 1)];
+    return [`${z} (${ZONE_NAMES[z]})`, ts.length, fmtMwh(fc.zoneTotalsMWh[z]), fmtNum(p24), fmtSignedPct(p24 / p20 - 1)];
   });
   const rows = [...towns]
     .sort((a, b) => a.name.localeCompare(b.name))
-    .map((t) => [t.name, t.county, t.zone, fmtNum(t.pop2020), fmtNum(t.pop2024), fmtSignedPct(t.pop2024 / t.pop2020 - 1)]);
+    .map((t) => {
+      const f = fcById.get(t.id);
+      return [t.name, t.county, t.zone, f ? fmtMwh(f.forecast6mMWh.p50) : "—", fmtNum(t.pop2024), fmtSignedPct(t.pop2024 / t.pop2020 - 1)];
+    });
   return `## Cities and towns (Map tab)
 
-- What differs by town on the site: the ISO-NE load zone (which decides which zone's grid regime and forecast apply) and population. Zone assignment is approximate (by county in the backend; for example Brookline is counted in SEMA).
-- Why the map isn't coloured by usage: there is no verified per-town electricity-use source (RECS 2020 has no town field and EIA-861M is statewide), so the backend gives every town the same modeled level, ${fmtNum(map.towns[0].annualKwhModel)} kWh a year (the statewide RECS median, class Mid), and the site doesn't paint differences that aren't in the data. For a household, use [A home like yours](#/usage).
-- Which utility serves a town is not in the data.
+- The map colours all 351 towns by each town's **modeled 6-month electricity forecast** (${horizon}, median total MWh on a log scale; darker blue = more). The searchable table lists that forecast plus county, ISO-NE load zone and 2020/2024 population; click a town on the map or in the table to pin its forecast median and 80% range (p10–p90).
+- The forecast is **modeled, not metered** (${fc.method}): each town gets its population share of its ISO-NE zone's Monte Carlo forecast, because no public town-level electricity data exists. All-customer load includes businesses, so commercial centres (downtown Boston) are understated and suburbs overstated. For a single household, use [A home like yours](#/usage).
+- Zone assignment is approximate (${fc.zoneMapping}; for example Brookline is counted in SEMA) and decides which zone's grid regime and forecast apply to a town. Which utility serves a town is not in the data.
+- This is a dated snapshot (as of ${fc.asOf}), not a live feed.
 
-${table(["Zone", "Towns", "Population 2024", "Change since 2020"], zoneRows)}
+${table(["Zone", "Towns", "6-mo forecast", "Population 2024", "Change since 2020"], zoneRows)}
 
-${table(["Town", "County", "Zone", "Pop. 2020", "Pop. 2024", "Change"], rows)}`;
+${table(["Town", "County", "Zone", "6-mo forecast", "Pop. 2024", "Change since 2020"], rows)}`;
 }
 
 function sourcesSection(d: KnowledgeInputs): string {
@@ -445,7 +460,7 @@ Sources:
 Limits worth knowing:
 - RECS 2020 is one COVID-year survey of ${recs.length} homes; its bands are wide on purpose.
 - EIA revises preliminary months (all of 2026 so far), so recent values can change.
-- There is no verified per-town usage data, so towns are never coloured by consumption.
+- There is no verified per-town usage data, so the Map tab's town forecast is modeled (each town's population share of its ISO-NE zone), not metered.
 - Grid load includes businesses as well as homes, and EIA publishes it about 10 days late.
 - Usual-range regimes don't remove weather: a heat wave above the range counts as Above.
 - The forecast simulates zones independently, so the statewide band is probably too narrow.
