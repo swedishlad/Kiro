@@ -67,6 +67,26 @@ export function useTheme(): { choice: ThemeChoice; dark: boolean } {
   return { choice, dark: choice === "dark" || (choice === "system" && systemDark) };
 }
 
+// Set once the first-visit intro has been closed (or, before the intro, the old Welcome page was seen).
+const INTRO_KEY = "fw-welcomed";
+
+/** Whether this browser has closed the first-visit intro. Without storage, assume so rather than show it on every visit. */
+export function hasSeenIntro(): boolean {
+  try {
+    return localStorage.getItem(INTRO_KEY) !== null;
+  } catch {
+    return true;
+  }
+}
+
+export function markIntroSeen(): void {
+  try {
+    localStorage.setItem(INTRO_KEY, "1");
+  } catch {
+    /* storage unavailable: hasSeenIntro already answers yes */
+  }
+}
+
 /** Tiny hash router: "#/prices" -> "prices". */
 export function useHashRoute(defaultRoute: string): string {
   const get = () => window.location.hash.replace(/^#\/?/, "").split("?")[0] || defaultRoute;

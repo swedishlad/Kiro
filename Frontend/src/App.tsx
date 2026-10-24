@@ -1,7 +1,8 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 
 import { Chat } from "./chat/Chat.tsx";
-import { setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./components/hooks.ts";
+import { hasSeenIntro, markIntroSeen, setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./components/hooks.ts";
+import { Intro } from "./components/Intro.tsx";
 
 const Bill = lazy(() => import("./sections/Bill.tsx"));
 const EnergyData = lazy(() => import("./sections/EnergyData.tsx"));
@@ -22,14 +23,15 @@ type RouteId = (typeof ROUTES)[number]["id"];
 /**
  * Section addresses. Usage, Prices & savings and Data & methods used to be tabs and are now sections of a
  * combined tab; their old links (which the assistant also writes) open that tab and scroll to the section, as
- * #/climate does for the Climate section. Regimes & forecast and the use levels are sections of the Regime tab.
- * The old Overview address opens the landing page.
+ * #/climate does for the Climate section. Regimes & forecast is the Regime tab's section.
+ * The old Overview address opens the landing page; the old use-levels address opens the Regime tab.
  */
 const SECTIONS: Record<string, { tab: RouteId; label: string; scroll: boolean } | undefined> = {
   usage: { tab: "data", label: "Usage", scroll: true },
   prices: { tab: "data", label: "Prices & savings", scroll: true },
   grid: { tab: "regime", label: "Regimes & forecast", scroll: true },
-  levels: { tab: "regime", label: "Use levels", scroll: true },
+  hourly: { tab: "data", label: "Hour by hour", scroll: true },
+  levels: { tab: "regime", label: "Regime", scroll: false },
   climate: { tab: "data", label: "Climate", scroll: true },
   sources: { tab: "about", label: "Data & methods", scroll: true },
   overview: { tab: "bill", label: "Bill check", scroll: false },
@@ -102,6 +104,21 @@ export function App() {
   const route: RouteId = ROUTES.some((r) => r.id === raw) ? (raw as RouteId) : (section?.tab ?? "bill");
   const { choice } = useTheme();
 
+  // A first visit to the home page gets a small note on Bill check (a deep link goes straight to its page), as
+  // does #/welcome, the old Welcome page's address. Closing it, or leaving Bill check, puts it away for good.
+  const [intro, setIntro] = useState(() => raw === "welcome" || (route === "bill" && !hasSeenIntro()));
+  useEffect(() => {
+    if (raw === "welcome") setIntro(true);
+  }, [raw]);
+  const closeIntro = useCallback(() => {
+    markIntroSeen();
+    setIntro(false);
+    if (window.location.hash.replace(/^#\/?/, "").startsWith("welcome")) window.location.replace("#/bill");
+  }, []);
+  useEffect(() => {
+    if (intro && route !== "bill") closeIntro();
+  }, [intro, route, closeIntro]);
+
   useEffect(() => {
     const label = section?.scroll ? section.label : ROUTES.find((r) => r.id === route)!.label;
     document.title = route === "bill" ? "Watt-If? · Check your Massachusetts electric bill" : `${label} · Watt-If?`;
@@ -151,6 +168,7 @@ export function App() {
         </span>
       </footer>
       <Chat page={route} />
+      {intro ? <Intro onClose={closeIntro} /> : null}
     </>
   );
 }

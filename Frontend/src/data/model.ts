@@ -534,3 +534,17 @@ export interface ClimateArtifact {
   };
   scenarios: { request: ClimateScenarioKey; response: ClimateDashboard }[];
 }
+
+/** data/build/grid_hourly.json: Massachusetts grid load every hour (EIA-930, three zones), 24 values per day. */
+export interface GridHourly {
+  area: "MA";
+  unit: "MW";
+  from: string;
+  to: string;
+  source: string;
+  zones?: string[];
+  /** one row per day from `from`, 24 hourly MW values each (DST days filled / averaged to 24) */
+  mw: number[][];
+  /** that day's Massachusetts temperature, °F */
+  tempF: number[];
+}

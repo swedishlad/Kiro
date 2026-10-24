@@ -1,12 +1,14 @@
-// The Energy data tab: what used to be the Usage and Prices & savings tabs, then Climate, one after another.
-// Each keeps its own heading and filters; #/usage, #/prices and #/climate scroll to them. The regime models
+// The Energy data tab: the 3D hourly load surface first, then what used to be the Usage and Prices & savings tabs,
+// then Climate. Each keeps its own heading and filters; #/hourly, #/usage, #/prices and #/climate scroll to them. The regime models
 // have their own tab (Regime.tsx).
 
 import Climate from "./Climate.tsx";
+import Hourly from "./Hourly.tsx";
 import Prices from "./Prices.tsx";
 import Usage from "./Usage.tsx";
 
 const PARTS = [
+  { id: "hourly", label: "Hour by hour", Section: Hourly },
   { id: "usage", label: "Usage", Section: Usage },
   { id: "prices", label: "Prices & savings", Section: Prices },
   { id: "climate", label: "Climate", Section: Climate },
