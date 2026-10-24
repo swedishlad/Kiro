@@ -85,7 +85,7 @@ export function App() {
 
   useEffect(() => {
     const label = section?.scroll ? section.label : ROUTES.find((r) => r.id === route)!.label;
-    document.title = route === "bill" ? "FairWatt · Check your Massachusetts electric bill" : `${label} · FairWatt MA Energy`;
+    document.title = route === "bill" ? "Watt If · Check your Massachusetts electric bill" : `${label} · Watt If MA Energy`;
     if (section?.scroll) return scrollToSection(raw);
     window.scrollTo({ top: 0 });
   }, [raw, route, section]);
@@ -100,7 +100,7 @@ export function App() {
           <div className="brand-row">
             <a className="brand" href="#/bill" style={{ color: "inherit", textDecoration: "none" }}>
               <Logo />
-              <span className="brand-name">FairWatt</span>
+              <span className="brand-name">Watt If</span>
             </a>
             <button type="button" className="theme-toggle" onClick={() => setThemeChoice(NEXT_THEME[choice])} aria-label={`Theme: ${THEME_LABEL[choice]}. Switch to ${THEME_LABEL[NEXT_THEME[choice]]}.`}>
               <ThemeIcon choice={choice} />

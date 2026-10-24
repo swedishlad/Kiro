@@ -1,8 +1,8 @@
 {
-  "name": "fairwatt-frontend",
+  "name": "watt-if-frontend",
   "private": true,
   "version": "0.1.0",
-  "description": "Massachusetts energy data dashboard (FairWatt) built on the committed Backend/data artifacts.",
+  "description": "Massachusetts energy data dashboard (Watt If) built on the committed Backend/data artifacts.",
   "type": "module",
   "scripts": {
     "predev": "node scripts/copy-ocr-assets.mjs",

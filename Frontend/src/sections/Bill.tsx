@@ -122,7 +122,7 @@ export default function Bill() {
   return (
     <>
       <header className="mission">
-        <h1 className="mission-title">FairWatt helps Massachusetts households pay a fair price for electricity.</h1>
+        <h1 className="mission-title">Watt If helps Massachusetts households pay a fair price for electricity.</h1>
         <p className="mission-lede">
           Check your electric bill: add a photo to see how your use and costs compare with homes across the state, and what would lower
           them. The photo is read on your device and never uploaded.
@@ -421,7 +421,7 @@ function Suggestions({ items }: { items: Suggestion[] }) {
       </div>
       <div style={{ marginTop: 16 }}>
         <Callout>
-          FairWatt doesn't sell energy or get paid for referrals. Rebates, credits and program rules change; check the linked sites for what
+          Watt If doesn't sell energy or get paid for referrals. Rebates, credits and program rules change; check the linked sites for what
           applies to you now.
         </Callout>
       </div>

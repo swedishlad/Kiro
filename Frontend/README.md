@@ -1,4 +1,4 @@
-# FairWatt Frontend — Massachusetts energy dashboard
+# Watt If Frontend — Massachusetts energy dashboard
 
 A static React + TypeScript site over the backend's committed artifacts. The dashboard makes no runtime
 fetches from third parties: the build bundles `Backend/data/build/*` and `Backend/data/snapshot/*`
@@ -36,7 +36,7 @@ static host works the same way for the dashboard (build, then upload `dist/`), b
 
 ## Assistant
 
-A chat panel on every page ("Ask FairWatt") answers questions about the site's topic: basic-service
+A chat panel on every page ("Ask Watt If") answers questions about the site's topic: basic-service
 rates, whether a competitive supplier saved money, how much homes use, the regimes and forecast, towns
 and load zones, and how to read the dashboard.
 
@@ -78,7 +78,7 @@ Regimes & forecast sections; About ends with Data & methods. The old section add
 | Energy data → Prices & savings | Basic-service monthly rates by utility, all-in price vs supply rate, fixed terms, savings calculator | `snapshot/monthly_residential_cents_*.csv`, `snapshot/fixed_residential_cents_*.csv`, `savings_model.json` |
 | Energy data → Regimes & forecast | Homes (monthly) and ISO-NE zones (daily) vs the same period in the previous 5 years, outlook, transition matrix; six-month Monte Carlo forecast with its walk-forward test | `regimes.json`, `mc_forecast.json` |
 | Towns | Map of all 351 towns (load zone, population, growth), searchable table | `ma_towns.csv`, `map_consumption.json`, `src/geo/ma-towns.topo.json` |
-| About | What FairWatt is and the team (Tae, Johan, Yuan, Lin; listed in `src/data/team.ts`) | — |
+| About | What Watt If is and the team (Tae, Johan, Yuan, Lin; listed in `src/data/team.ts`) | — |
 | About → Data & methods | Sources, methods, limits, rebuild steps | — |
 | Assistant (every page) | Chat answers grounded in the knowledge base below | `server/knowledge.ts` (generated from all of the above) |
 
