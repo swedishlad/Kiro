@@ -47,7 +47,7 @@ const PAGES: Record<string, string> = {
   prices: "Prices & savings",
   grid: "Regimes & forecast",
   climate: "Climate",
-  towns: "Towns",
+  towns: "Map",
   about: "About",
   sources: "Data & methods",
 };

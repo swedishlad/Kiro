@@ -75,7 +75,7 @@ and load zones, and how to read the dashboard.
 
 ## Sections
 
-Four tabs: Bill check (the home page), Energy data, Towns and About. Energy data stacks the Usage, Prices & savings,
+Four tabs: Bill check (the home page), Energy data, Map and About. Energy data stacks the Usage, Prices & savings,
 Regimes & forecast and Climate sections; About ends with Data & methods. The section addresses (`#/usage`, `#/prices`,
 `#/grid`, `#/climate`, `#/sources`) open the tab that holds them and scroll to the section; `#/overview` opens Bill check.
 
@@ -86,7 +86,7 @@ Regimes & forecast and Climate sections; About ends with Data & methods. The sec
 | Energy data → Prices & savings | Basic-service monthly rates by utility, all-in price vs supply rate, fixed terms, savings calculator | `snapshot/monthly_residential_cents_*.csv`, `snapshot/fixed_residential_cents_*.csv`, `savings_model.json` |
 | Energy data → Regimes & forecast | Homes (monthly) and ISO-NE zones (daily) vs the same period in the previous 5 years, outlook, transition matrix; six-month Monte Carlo forecast with its walk-forward test | `regimes.json`, `mc_forecast.json` |
 | Energy data → Climate | A modeled household's CO₂ on the New England grid: pick monthly use, flexible use a day and a battery; yearly emissions, social cost, moving use to cleaner hours (24-hour chart + grid emissions by hour), cost per ton of each step (abatement cost curve), 20-year Monte Carlo range, and the solar / battery "install now or wait" call | `climate_dashboard.json` (the Climate API's answers) |
-| Towns | Map of all 351 towns (load zone, population, growth), searchable table | `ma_towns.csv`, `map_consumption.json`, `src/geo/ma-towns.topo.json` |
+| Map | Map of all 351 towns (load zone, population, growth), searchable table | `ma_towns.csv`, `map_consumption.json`, `src/geo/ma-towns.topo.json` |
 | About | What Watt If is and the team (Tae, Johan, Yuan, Lin; listed in `src/data/team.ts`) | — |
 | About → Data & methods | Sources, methods, limits, rebuild steps | — |
 | Assistant (every page) | Chat answers grounded in the knowledge base below | `server/knowledge.ts` (generated from all of the above) |

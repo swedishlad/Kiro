@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { HBarChart } from "../components/BarChart.tsx";
 import { useTheme, usePersistentState } from "../components/hooks.ts";
 import { TownMap } from "../components/TownMap.tsx";
-import { Callout, Card, DataTable, Filter, Legend, Segmented, type TooltipRow } from "../components/ui.tsx";
+import { Card, DataTable, Filter, Legend, Segmented, type TooltipRow } from "../components/ui.tsx";
 import { fmtCompact, fmtNum, fmtSignedPct } from "../data/format.ts";
-import { loadMapConsumption, towns } from "../data/load.ts";
-import { ZONES, ZONE_NAMES, type MapConsumption, type Town, type Zone } from "../data/model.ts";
+import { towns } from "../data/load.ts";
+import { ZONES, ZONE_NAMES, type Town, type Zone } from "../data/model.ts";
 
 const LAYERS = ["zone", "population", "growth"] as const;
 type Layer = (typeof LAYERS)[number];
@@ -49,15 +49,6 @@ export default function Towns() {
   const [zone, setZone] = useState<Zone | "all">("all");
   const [county, setCounty] = useState<string>("all");
   const [selected, setSelected] = useState<number | null>(null);
-  const [modeled, setModeled] = useState<MapConsumption | null>(null);
-
-  useEffect(() => {
-    let live = true;
-    loadMapConsumption().then((m) => live && setModeled(m));
-    return () => {
-      live = false;
-    };
-  }, []);
 
   const byId = useMemo(() => new Map(towns.map((t) => [t.id, t])), []);
   const counties = useMemo(() => [...new Set(towns.map((t) => t.county))].sort(), []);
@@ -207,7 +198,7 @@ export default function Towns() {
           </div>
         </section>
 
-        <Card className="span-8" title="All towns" subtitle="Sort by any column; click a row to pin it on the map." source="U.S. Census population estimates (2020 base, 2024 vintage); zone assignment from the backend's town table (approximate).">
+        <Card className="span-12" title="All towns" subtitle="Sort by any column; click a row to pin it on the map." source="U.S. Census population estimates (2020 base, 2024 vintage); zone assignment from the backend's town table (approximate).">
           <DataTable
             caption="Massachusetts towns"
             maxHeight={520}
@@ -234,26 +225,6 @@ export default function Towns() {
             ]}
             rows={filtered}
           />
-        </Card>
-
-        <Card className="span-4" title="Why the map isn't coloured by usage">
-          <div className="stack">
-            <Callout>
-              There is no verified per-town electricity-use source: RECS 2020 has no town field and EIA-861M is statewide. The backend's map
-              artifact therefore gives every town the same modeled level
-              {modeled ? (
-                <>
-                  {" "}
-                  — <strong>{fmtNum(modeled.towns[0].annualKwhModel)} kWh/yr</strong>, class {modeled.towns[0].class} —
-                </>
-              ) : null}{" "}
-              and we don't paint differences that aren't in the data.
-            </Callout>
-            <p className="prose">
-              What does differ by town is the ISO-NE load zone, which decides which zone's grid regime applies, and population. Use the
-              Usage tab's “home like yours” estimate for your own household.
-            </p>
-          </div>
         </Card>
       </div>
     </>
