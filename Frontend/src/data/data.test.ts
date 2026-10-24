@@ -110,9 +110,9 @@ test("traffic-light classes are inclusive on the upper bound", () => {
 
 test("EIA series is complete, ascending and matches the typical-account figures", () => {
   const eia = parseEia(read("build/eia_ma_monthly.csv"));
-  assert.equal(eia.length, 200);
   assert.equal(eia[0].ym, "2010-01");
-  assert.equal(eia[eia.length - 1].ym, "2026-08");
+  assert.ok(eia[eia.length - 1].ym >= "2026-08"); // the daily refresh appends EIA-861M months as they are published
+  assert.equal(eia.length, ymIndex(eia[eia.length - 1].ym) - ymIndex("2010-01") + 1);
   eia.forEach((m, i) => i && assert.equal(ymIndex(m.ym) - ymIndex(eia[i - 1].ym), 1));
   const stats = json<ConsumptionStats>("build/consumption_stats.json");
   const perAccount = kwhPerAccountTrailing(eia);
@@ -177,7 +177,8 @@ test("period aggregates price as revenue / sales", () => {
   assert.equal(years[years.length - 1].year, 2025); // 2026 is partial
   assert.equal(Number(years[0].priceCents.toFixed(2)), 14.59);
   const ttm = trailing12(eia);
-  assert.deepEqual([ttm.from, ttm.to, ttm.months], ["2025-09", "2026-08", 12]);
+  const lastYm = eia[eia.length - 1].ym;
+  assert.deepEqual([ttm.from, ttm.to, ttm.months], [addMonths(lastYm, -11), lastYm, 12]);
   const last = eia[eia.length - 1];
   assert.equal(Number(summarize([last]).priceCents.toFixed(2)), last.priceCents);
 });

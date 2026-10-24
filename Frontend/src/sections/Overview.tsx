@@ -201,12 +201,12 @@ export function Overview() {
           title="The grid: last observed day and the next six months"
           subtitle={
             zones.length
-              ? `Each zone on ${dateLabel(zones[0].current.date)} (the last ISO-NE day in the data) vs its usual range, and the median load forecast for ${ymLabel(grid!.forecast.horizon[0])} – ${ymLabel(grid!.forecast.horizon[grid!.forecast.horizon.length - 1])}.`
+              ? `Each zone on ${dateLabel(zones[0].current.date)} (the latest day EIA has published; refreshed daily) vs its usual range, and the median load forecast for ${ymLabel(grid!.forecast.horizon[0])} – ${ymLabel(grid!.forecast.horizon[grid!.forecast.horizon.length - 1])}.`
               : "Loading ISO New England zones…"
           }
           source={
             <>
-              ISO-NE daily load (all customer classes); walk-forward-tested Monte Carlo forecast. <a href="#/grid">Explore →</a>
+              ISO-NE (2017–2023) and EIA-930 daily load (all customer classes); walk-forward-tested Monte Carlo forecast. <a href="#/grid">Explore →</a>
             </>
           }
         >

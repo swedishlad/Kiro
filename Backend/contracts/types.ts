@@ -2,7 +2,7 @@
 // Changing anything here is an ORCHESTRATOR decision: bump CONTRACTS_VERSION and contracts/VERSION,
 // and log the change in research/CHANGELOG.md. JSON Schemas for the data files live next to this file.
 
-export const CONTRACTS_VERSION = "2.3.0";
+export const CONTRACTS_VERSION = "2.4.0";
 
 // ---------------------------------------------------------------- utilities
 export type UtilityId = "NG" | "EV_EAST" | "EV_WEST" | "UNITIL";
@@ -297,20 +297,28 @@ export interface RegimesFile {
 export interface McAreaForecast {
   area: AreaId;
   unit: "GWh";
-  months: ({ ym: YearMonth } & Quantiles)[];          // 6 months, 2026-11 … 2027-04
+  months: ({ ym: YearMonth } & Quantiles)[];          // the 6 full months after the last observed day (rolls forward)
   total: Quantiles;                                   // sum over the 6 months, per path
   samplePaths: number[][];                            // 20 paths × 6 months, for a spaghetti chart
-  sameMonthsLastObservedGWh: number[];                // the same 6 calendar months, last observed year, level-adjusted
+  sameMonthsLastObservedGWh: number[];                // v2.4.0: the same 6 calendar months a year earlier, observed (no adjustment)
 }
 export interface McForecastFile {
   asOf: string;
-  horizon: YearMonth[];                               // ["2026-11", …, "2027-04"]
+  horizon: YearMonth[];                               // 6 months after the last observed day, e.g. ["2026-11", …, "2027-04"]
   nPaths: number;
   seed: number;
-  method: string;                                     // weather-year bootstrap × regression + regime-aware residual bootstrap, level × 1.0435
-  levelAdjustment: { source: "S15 all-sector"; ratio: number };
+  method: string;                                     // weather-year bootstrap × rolling weather model × regime-switching residual
+  /** v2.4.0: live data reaches the last published day, so the ratio is 1 ("none: observed load"); "S15 all-sector" = snapshot era (×1.0435) */
+  levelAdjustment: { source: "S15 all-sector" | "none: observed load"; ratio: number };
   areas: McAreaForecast[];                            // NEMA, SEMA, WCMA, MA
   calibration: { trainEnd: string; test: string; nMonths: number; cov80: number; cov90: number; maeVsNaive: number };
+  /** v2.4.0: rolling origin, refit on Oct 31 before every complete winter since 2019-20 (grows a winter a year). Prefer it to `calibration` (one origin, two winters). */
+  backtest: {
+    winters: string; nWinters: number; nMonths: number; cov80: number; cov90: number; maeVsNaive: number;
+    totalBiasPct: number; totalMaePct: number; totalCov80: number;   // 6-month totals: mean % miss, mean |% miss|, share inside the 80% range
+  };
+  recentLevel: Record<"NEMA" | "SEMA" | "WCMA", number>;   // v2.4.0: 1 + mean miss of the 2-year weather model, last 365 days
+  levelSdPct: Record<"NEMA" | "SEMA" | "WCMA", number>;    // v2.4.0: sd (%) of that level's 6-month moves; one shock per path
   notes: string[];
 }
 
@@ -349,4 +357,16 @@ export interface SimulatedBills {
   histogram: { edges: number[]; counts: number[] };   // of the 6-month total
   nPaths: number;
   seed: number;
+}
+
+// ---------------------------------------------------------------- data/build/live_status.json  (owner: release)  v2.4.0
+/** Written by backend/live/update.py only after every gate passed. Show "data through gridThrough" next to grid charts. */
+export interface LiveStatus {
+  builtAt: string;                                    // UTC, "2026-10-24T17:05:00Z"
+  gridThrough: string;                                // last day of zone load (EIA-930 runs ~10 days behind)
+  homesThrough: string;                               // last EIA-861M month, "2026-08" (~2 months behind)
+  forecastHorizon: [string, string];                  // first and last Monte Carlo month
+  schedule: string;
+  sources: { id: string; name: string; from: string; to: string }[];
+  gates: string[];                                    // all passed, e.g. ["G-LIVE", "G-HMM", "G-FC", "G-CITY", "schemas", "pytest"]
 }
