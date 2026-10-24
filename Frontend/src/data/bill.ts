@@ -3,8 +3,9 @@
 // check and correct what was read before anything is compared.
 //
 // Bills from National Grid, Eversource and Unitil differ in layout but share a vocabulary: a
-// billing period, total kWh (repeated on most charge lines), an amount due, and a supply or
-// generation rate per kWh. Each field keeps the line it was read from as evidence.
+// billing period, total kWh (repeated on most charge lines), an amount due, a supply or
+// generation rate per kWh, and section totals for delivery and supply. Each field keeps the line
+// it was read from as evidence.
 
 import { MONTHS } from "./format.ts";
 import type { UtilityId } from "./model.ts";
@@ -19,6 +20,11 @@ export interface BillFields {
   periodStart: string | null;
   periodEnd: string | null;
   days: number | null;
+  /** The date the bill was issued; dates the bill when no service period was read. */
+  statementDate: string | null;
+  /** Section totals for this period's charges, when the bill prints them */
+  supplyDollars: number | null;
+  deliveryDollars: number | null;
 }
 
 export type BillEvidence = Partial<Record<keyof BillFields, string>>;
@@ -205,6 +211,33 @@ function findSupplyRate(text: string, kwh: number | null): { cents: number; line
   return null;
 }
 
+/** The issue date: "Statement Date: 08/12/2026", "Bill date Feb 7, 2026". */
+function findStatementDate(text: string): { date: string; line: string } | null {
+  const key = /(?:statement|bill(?:ing)?|invoice)\s+date|date\s+(?:of\s+)?(?:bill|statement)|date\s+(?:issued|mailed)/i;
+  const anyDate = new RegExp(`${NUMERIC_DATE}|${WORD_DATE}`, "i");
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const at = lines[i].search(key);
+    if (at < 0) continue;
+    const m = anyDate.exec(lines[i].slice(at)) ?? anyDate.exec(lines[i + 1] ?? "");
+    const date = m ? readDate(m[0]) : null;
+    if (date) return { date, line: lines[i].trim() };
+  }
+  return null;
+}
+
+/** A section total such as "Total Supply Services $115.47" or "Total Delivery Charges 118.20". */
+function findSectionTotal(text: string, key: RegExp): { dollars: number; line: string } | null {
+  for (const line of text.split("\n")) {
+    const at = line.search(key);
+    if (at < 0) continue;
+    const m = AMOUNT.exec(line.slice(at));
+    const v = m ? toNumber(m[1]) : NaN;
+    if (v > 0 && v < 10_000) return { dollars: v, line: line.trim() };
+  }
+  return null;
+}
+
 // ----------------------------------------------------------------------------- public
 
 export function parseBillText(raw: string): ParsedBill {
@@ -225,6 +258,12 @@ export function parseBillText(raw: string): ParsedBill {
   if (total) evidence.totalDollars = total.line;
   const supply = findSupplyRate(text, kwh?.kwh ?? null);
   if (supply) evidence.supplyCents = supply.line;
+  const statement = findStatementDate(text);
+  if (statement) evidence.statementDate = statement.line;
+  const supplyTotal = findSectionTotal(text, /total\s+(?:supply|supplier|generation)/i);
+  if (supplyTotal) evidence.supplyDollars = supplyTotal.line;
+  const deliveryTotal = findSectionTotal(text, /total\s+delivery/i);
+  if (deliveryTotal) evidence.deliveryDollars = deliveryTotal.line;
 
   return {
     fields: {
@@ -235,6 +274,9 @@ export function parseBillText(raw: string): ParsedBill {
       periodStart: period.start,
       periodEnd: period.end,
       days: period.days,
+      statementDate: statement?.date ?? null,
+      supplyDollars: supplyTotal?.dollars ?? null,
+      deliveryDollars: deliveryTotal?.dollars ?? null,
     },
     evidence,
   };
@@ -247,4 +289,18 @@ export function billMonth(start: string | null, end: string | null): string | nu
     return mid.toISOString().slice(0, 7);
   }
   return end ? end.slice(0, 7) : null;
+}
+
+const shiftDays = (iso: string, days: number): string => new Date(Date.parse(iso) + days * 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * The bill month, from the best date the bill gave: its service period, else the period's end and
+ * length, else the statement date (meters are read a few days before the bill is issued, and a
+ * period runs about a month, so its middle sits about 18 days earlier).
+ */
+export function inferBillMonth(f: Pick<BillFields, "periodStart" | "periodEnd" | "days" | "statementDate">): { ym: string; from: "period" | "statement" } | null {
+  if (f.periodStart && f.periodEnd) return { ym: billMonth(f.periodStart, f.periodEnd)!, from: "period" };
+  if (f.periodEnd) return { ym: shiftDays(f.periodEnd, -Math.round((f.days ?? 30) / 2)).slice(0, 7), from: "period" };
+  if (f.statementDate) return { ym: shiftDays(f.statementDate, -18).slice(0, 7), from: "statement" };
+  return null;
 }
