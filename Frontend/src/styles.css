@@ -1175,8 +1175,87 @@ table.data tbody th {
 }
 
 /* ---------------------------------------------------------------------------------------------
-   Bill check — upload, read, compare, suggest
+   Bill check — the landing page: mission, upload, read, compare, suggest
    --------------------------------------------------------------------------------------------- */
+.mission {
+  margin-bottom: 28px;
+  max-width: 900px;
+}
+.mission-title {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+.mission-lede {
+  color: var(--ink-2);
+  font-size: 19px;
+  line-height: 1.45;
+  max-width: 760px;
+  margin-top: 14px;
+}
+.mission-scope {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--ink);
+  font-size: 14px;
+}
+.mission-scope strong {
+  color: var(--accent-ink);
+}
+@media (max-width: 640px) {
+  .mission-title {
+    font-size: 28px;
+  }
+  .mission-lede {
+    font-size: 16px;
+  }
+  .mission-scope {
+    border-radius: 12px;
+  }
+}
+
+/* A combined tab: one title, quick links, then each former tab as a section */
+.jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+.jump a {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.jump a:hover {
+  background: var(--baseline);
+  text-decoration: none;
+}
+.page-section {
+  scroll-margin-top: 72px;
+  padding-top: 16px;
+}
+.page-section + .page-section,
+.page-section-break {
+  margin-top: 56px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 560px) {
+  .page-section {
+    scroll-margin-top: 104px;
+  }
+}
+.page-section .page-title {
+  font-size: 28px;
+}
 .dropzone {
   display: grid;
   justify-items: center;
@@ -1411,7 +1490,7 @@ table.data tbody th {
   font-size: 12px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 560px) {
   .topbar-inner {
     padding-top: 10px;
     padding-bottom: 8px;

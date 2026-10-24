@@ -39,7 +39,7 @@ export default function Usage() {
     <>
       <div className="page-head">
         <div>
-          <h1 className="page-title">How much electricity Massachusetts homes use</h1>
+          <h2 className="page-title">How much electricity Massachusetts homes use</h2>
           <p className="page-lede">
             Statewide monthly use per residential account since 2010 (EIA-861M), the model's low / mid / high use regimes, and the RECS
             2020 survey of 552 Massachusetts homes for “a home like yours”.
@@ -226,9 +226,9 @@ function HomeLikeYours() {
     <>
       <div className="page-head" style={{ marginTop: 32 }}>
         <div>
-          <h2 className="page-title" style={{ fontSize: 20 }}>
+          <h3 className="page-title" style={{ fontSize: 20 }}>
             A home like yours
-          </h2>
+          </h3>
           <p className="page-lede">
             Estimates from the {hly.annualKwh.n} Massachusetts homes in EIA's 2020 Residential Energy Consumption Survey, weighted to
             represent all homes in the state. These are ranges for similar homes, not a reading of your meter.

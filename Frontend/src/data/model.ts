@@ -410,7 +410,7 @@ export interface ClimateRequest {
   mc_seed: number;
 }
 
-/** The household inputs the Climate tab varies; every other input stays at the API default. */
+/** The household inputs the Climate section varies; every other input stays at the API default. */
 export type ClimateScenarioKey = Pick<ClimateRequest, "total_monthly_kwh" | "shiftable_load_kwh" | "max_battery_capacity_kwh">;
 
 export const CLIMATE_KEYS: readonly (keyof ClimateScenarioKey)[] = ["total_monthly_kwh", "shiftable_load_kwh", "max_battery_capacity_kwh"];

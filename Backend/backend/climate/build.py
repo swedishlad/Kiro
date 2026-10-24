@@ -1,4 +1,4 @@
-"""Build data/build/climate_dashboard.json: the Climate tab's household scenarios, straight from the API.
+"""Build data/build/climate_dashboard.json: the Climate section's household scenarios, straight from the API.
 
 The site is static (no server at runtime), so it cannot call POST /api/climate/dashboard. Instead this script
 sends that endpoint one request per household scenario below, in process through the same FastAPI app the server
@@ -31,7 +31,7 @@ OUT = os.path.join(ROOT, "data", "build", "climate_dashboard.json")
 
 ENDPOINT = "/api/climate/dashboard"
 
-# The household inputs the Climate tab lets a visitor pick. 600 kWh a month is about the typical Massachusetts
+# The household inputs the Climate section lets a visitor pick. 600 kWh a month is about the typical Massachusetts
 # account (consumption_stats.json); 750 kWh, 6 kWh of flexible load and a 10 kWh battery are the API defaults.
 OPTIONS = {
     "total_monthly_kwh": [300, 600, 750, 1000, 1500],

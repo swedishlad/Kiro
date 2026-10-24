@@ -1,5 +1,5 @@
-// The Climate tab reads the Climate API's saved answers (Backend/data/build/climate_dashboard.json, written by
-// `python3 -m backend.climate.build`). These tests pin the file to the fields and invariants the tab reads.
+// The Climate section reads the Climate API's saved answers (Backend/data/build/climate_dashboard.json, written by
+// `python3 -m backend.climate.build`). These tests pin the file to the fields and invariants the section reads.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -26,7 +26,7 @@ test("climate_dashboard.json has one API answer for every scenario the tab offer
   assert.equal(findScenario(artifact, { total_monthly_kwh: 1, shiftable_load_kwh: 0, max_battery_capacity_kwh: 0 }), null);
 });
 
-test("every saved answer has the shape the Climate tab reads", () => {
+test("every saved answer has the shape the Climate section reads", () => {
   const finite = (v: number) => Number.isFinite(v);
   for (const { request, response: r } of artifact.scenarios) {
     const id = JSON.stringify(request);
@@ -67,7 +67,7 @@ test("emissions scale with the monthly kWh (same hourly shape, same grid)", () =
   assert.ok(hi / lo < 1.01, `${lo} .. ${hi}`); // the API rounds tons to 0.01
 });
 
-test("Climate tab helpers", () => {
+test("Climate section helpers", () => {
   assert.deepEqual([0, 3, 12, 13, 23].map(hourLabel), ["12 am", "3 am", "12 pm", "1 pm", "11 pm"]);
   assert.equal(tonsPerThousandUsd(18.62), 0.1862);
   const d = findScenario(artifact, artifact.defaultScenario)!;

@@ -2,30 +2,62 @@ import { Suspense, lazy, useEffect } from "react";
 
 import { Chat } from "./chat/Chat.tsx";
 import { setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./components/hooks.ts";
-import { Overview } from "./sections/Overview.tsx";
 
-const Usage = lazy(() => import("./sections/Usage.tsx"));
-const Prices = lazy(() => import("./sections/Prices.tsx"));
 const Bill = lazy(() => import("./sections/Bill.tsx"));
-const Grid = lazy(() => import("./sections/Grid.tsx"));
-const Climate = lazy(() => import("./sections/Climate.tsx"));
+const EnergyData = lazy(() => import("./sections/EnergyData.tsx"));
 const Towns = lazy(() => import("./sections/Towns.tsx"));
-const Sources = lazy(() => import("./sections/Sources.tsx"));
 const About = lazy(() => import("./sections/About.tsx"));
 
 const ROUTES = [
-  { id: "overview", label: "Overview" },
-  { id: "usage", label: "Usage" },
-  { id: "prices", label: "Prices & savings" },
   { id: "bill", label: "Bill check" },
-  { id: "grid", label: "Regimes & forecast" },
-  { id: "climate", label: "Climate" },
+  { id: "data", label: "Energy data" },
   { id: "towns", label: "Towns" },
-  { id: "sources", label: "Data & methods" },
   { id: "about", label: "About" },
 ] as const;
 
 type RouteId = (typeof ROUTES)[number]["id"];
+
+/**
+ * Section addresses. Usage, Prices & savings, Regimes & forecast and Data & methods used to be tabs
+ * and are now sections of a combined tab; their old links (which the assistant also writes) open
+ * that tab and scroll to the section, as #/climate does for the Climate section. The old Overview
+ * address opens the landing page.
+ */
+const SECTIONS: Record<string, { tab: RouteId; label: string; scroll: boolean } | undefined> = {
+  usage: { tab: "data", label: "Usage", scroll: true },
+  prices: { tab: "data", label: "Prices & savings", scroll: true },
+  grid: { tab: "data", label: "Regimes & forecast", scroll: true },
+  climate: { tab: "data", label: "Climate", scroll: true },
+  sources: { tab: "about", label: "Data & methods", scroll: true },
+  overview: { tab: "bill", label: "Bill check", scroll: false },
+};
+
+/**
+ * Waits for a lazily loaded section to render, then scrolls it under the sticky bar. Sections above it
+ * load their own data and grow, so it keeps the section in place for a few seconds, until the visitor
+ * scrolls or types.
+ */
+function scrollToSection(id: string): () => void {
+  let frame = 0;
+  let pinnedTop: number | null = null;
+  const started = performance.now();
+  const stop = () => {
+    cancelAnimationFrame(frame);
+    for (const e of ["wheel", "touchstart", "keydown"]) window.removeEventListener(e, stop);
+  };
+  const tick = () => {
+    const el = document.getElementById(`sec-${id}`);
+    if (el && (pinnedTop === null || Math.abs(el.getBoundingClientRect().top - pinnedTop) > 1)) {
+      el.scrollIntoView({ block: "start" });
+      pinnedTop = el.getBoundingClientRect().top;
+    }
+    if (performance.now() - started < (el ? 8000 : 4000)) frame = requestAnimationFrame(tick);
+    else stop();
+  };
+  for (const e of ["wheel", "touchstart", "keydown"]) window.addEventListener(e, stop, { passive: true });
+  frame = requestAnimationFrame(tick);
+  return stop;
+}
 
 const NEXT_THEME: Record<ThemeChoice, ThemeChoice> = { system: "light", light: "dark", dark: "system" };
 const THEME_LABEL: Record<ThemeChoice, string> = { system: "Auto", light: "Light", dark: "Dark" };
@@ -62,15 +94,17 @@ function ThemeIcon({ choice }: { choice: ThemeChoice }) {
 }
 
 export function App() {
-  const raw = useHashRoute("overview");
-  const route: RouteId = ROUTES.some((r) => r.id === raw) ? (raw as RouteId) : "overview";
+  const raw = useHashRoute("bill");
+  const section = SECTIONS[raw];
+  const route: RouteId = ROUTES.some((r) => r.id === raw) ? (raw as RouteId) : (section?.tab ?? "bill");
   const { choice } = useTheme();
 
   useEffect(() => {
-    const label = ROUTES.find((r) => r.id === route)!.label;
-    document.title = route === "overview" ? "Watt If MA Energy" : `${label} · Watt If MA Energy`;
+    const label = section?.scroll ? section.label : ROUTES.find((r) => r.id === route)!.label;
+    document.title = route === "bill" ? "Watt If · Check your Massachusetts electric bill" : `${label} · Watt If MA Energy`;
+    if (section?.scroll) return scrollToSection(raw);
     window.scrollTo({ top: 0 });
-  }, [route]);
+  }, [raw, route, section]);
 
   return (
     <>
@@ -80,7 +114,7 @@ export function App() {
       <header className="topbar">
         <div className="topbar-inner">
           <div className="brand-row">
-            <a className="brand" href="#/overview" style={{ color: "inherit", textDecoration: "none" }}>
+            <a className="brand" href="#/bill" style={{ color: "inherit", textDecoration: "none" }}>
               <Logo />
               <span className="brand-name">Watt If</span>
             </a>
@@ -89,7 +123,7 @@ export function App() {
               {THEME_LABEL[choice]}
             </button>
           </div>
-          <nav className="tabs" aria-label="Dashboard sections">
+          <nav className="tabs" aria-label="Site sections">
             {ROUTES.map((r) => (
               <a key={r.id} className="tab" href={`#/${r.id}`} aria-current={r.id === route ? "page" : undefined}>
                 {r.label}
@@ -100,14 +134,9 @@ export function App() {
       </header>
       <main id="main" tabIndex={-1}>
         <Suspense fallback={<div className="loading">Loading…</div>}>
-          {route === "overview" && <Overview />}
-          {route === "usage" && <Usage />}
-          {route === "prices" && <Prices />}
           {route === "bill" && <Bill />}
-          {route === "grid" && <Grid />}
-          {route === "climate" && <Climate />}
+          {route === "data" && <EnergyData />}
           {route === "towns" && <Towns />}
-          {route === "sources" && <Sources />}
           {route === "about" && <About />}
         </Suspense>
       </main>
