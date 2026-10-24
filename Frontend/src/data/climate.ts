@@ -1,4 +1,4 @@
-// Helpers for the Climate tab over the Climate API's answers (POST /api/climate/dashboard in
+// Helpers for the Climate section over the Climate API's answers (POST /api/climate/dashboard in
 // Backend/app.py). The site is static, so it reads those answers from climate_dashboard.json, one per
 // household scenario; with VITE_CLIMATE_API_URL set it can also ask a running API directly.
 

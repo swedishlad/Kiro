@@ -44,7 +44,7 @@ python3 tests/backend/make_test_charts.py          # charts of the test results 
 # refresh everything from the live sources (what CI runs daily): python3 -m backend.live.update
 # rebuild only: python3 -m backend.regimes.build, then python3 -m backend.forecast.mc, then python3 -m backend.towns.build
 python3 -m pytest tests/climate -q                 # Climate API (needs scipy, fastapi, httpx, pytest-asyncio; see pyproject.toml)
-python3 -m backend.climate.build                   # the Climate tab's scenarios -> data/build/climate_dashboard.json (~1 min)
+python3 -m backend.climate.build                   # the Climate section's scenarios -> data/build/climate_dashboard.json (~1 min)
 uvicorn app:app --port 8000                        # the Climate API itself (the site can call it: Frontend/README.md#climate)
 # frontend contract (what the site reads): docs/FRONTEND_CONTRACT.md
 ```

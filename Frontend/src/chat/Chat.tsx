@@ -23,14 +23,10 @@ const GENERAL = [
 ];
 
 const BY_PAGE: Record<string, string> = {
-  overview: "How have electricity prices changed since 2010?",
-  usage: "We use about 8,000 kWh a year. How does that compare?",
-  prices: GENERAL[1],
-  grid: "What does “Above range” mean?",
-  climate: "Is it better to buy solar now or wait?",
+  bill: "Where is the supply rate on my bill?",
+  data: "We use about 8,000 kWh a year. How does that compare?",
   towns: "Which load zone is Worcester in?",
-  sources: "Where does this site's data come from?",
-  about: "Who builds Watt If?",
+  about: "Where does this site's data come from?",
 };
 
 function suggestionsFor(page: string): string[] {
