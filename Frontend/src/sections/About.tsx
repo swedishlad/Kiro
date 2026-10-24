@@ -10,7 +10,7 @@ export default function About() {
     <>
       <div className="page-head">
         <div>
-          <h1 className="page-title">About Watt If</h1>
+          <h1 className="page-title">About Watt-If?</h1>
           <p className="page-lede">
             Watt If is a free, public dashboard about Massachusetts residential electricity: what homes use, what they pay, what basic
             service costs, and whether use is running above or below its usual range.
@@ -31,7 +31,7 @@ export default function About() {
           </ul>
         </Card>
 
-        <Card className="span-6" title="What it is">
+        <Card className="span-12" title="What it is">
           <div className="prose">
             <p>
               Every number comes from public data — U.S. EIA, Mass.gov DPU, ISO New England, U.S. Census and MassGIS — processed by the
@@ -40,18 +40,6 @@ export default function About() {
             <p>
               The site has no user accounts and cannot see anyone's bill, meter or utility account. It does not sell electricity or sign
               anyone up.
-            </p>
-          </div>
-        </Card>
-
-        <Card className="span-6" title="How it works">
-          <div className="prose">
-            <p>
-              The dashboard reads the backend's files directly, so it always shows exactly what the backend produced. The “Ask Watt If”
-              assistant answers from a knowledge base built from the same files.
-            </p>
-            <p>
-              Sources, methods and limits are in <a href="#/sources">Data and methods</a> below.
             </p>
           </div>
         </Card>
