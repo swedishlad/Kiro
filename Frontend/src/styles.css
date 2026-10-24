@@ -1181,11 +1181,40 @@ table.data tbody th {
   margin-bottom: 28px;
   max-width: 900px;
 }
+/* The headline cycles through questions (one per run of mission-line's animation, see MissionTitle); the
+   hidden copies of every question share its grid cell and hold the height of the tallest */
 .mission-title {
+  display: grid;
+  align-items: end;
   font-size: 40px;
   font-weight: 700;
   line-height: 1.12;
   letter-spacing: -0.03em;
+}
+.mission-sizer,
+.mission-line {
+  grid-area: 1 / 1;
+}
+.mission-sizer {
+  visibility: hidden;
+}
+.mission-line {
+  animation: mission-line 5s ease-in-out both;
+}
+@keyframes mission-line {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  8%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
 }
 .mission-lede {
   color: var(--ink-2);
@@ -2231,6 +2260,9 @@ table.data tbody th {
     opacity: 0.6;
   }
   .prompt-hint {
+    animation-name: prompt-hint-fade;
+  }
+  .mission-line {
     animation-name: prompt-hint-fade;
   }
   .chat-launcher {

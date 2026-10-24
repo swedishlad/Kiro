@@ -97,6 +97,50 @@ type Phase = { kind: "idle" } | { kind: "reading"; progress: ReadProgress; names
 
 const editable = (t: EventTarget | null): boolean => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 
+/** The headlines the landing page cycles through, each one a question the site answers. */
+const HEADLINES = [
+  "Watt-if you paid a fair price for every watt?",
+  "Watt-if your bill could show how you compare with homes across the state?",
+  "Watt-if your supplier charges more than basic service?",
+  "Watt-if your home uses more than a typical Massachusetts home?",
+  "Watt-if the grid is running above its usual range right now?",
+  "Watt-if you could see the next six months of electricity use?",
+  "Watt-if your town uses more electricity than its neighbors?",
+  "Watt-if rooftop solar could cover what you use?",
+];
+
+/** A copy of the items in a random order (Fisher–Yates). */
+function shuffled<T>(items: readonly T[]): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/**
+ * The landing page's headline: the HEADLINES in a random order, one per run of mission-line's CSS animation.
+ * Every headline also sits hidden in the same grid cell, so the tallest holds the height and the lede below
+ * never jumps.
+ */
+function MissionTitle() {
+  const [order] = useState(() => shuffled(HEADLINES));
+  const [at, setAt] = useState(0);
+  return (
+    <h1 className="mission-title">
+      {HEADLINES.map((line) => (
+        <span key={line} className="mission-sizer" aria-hidden="true">
+          {line}
+        </span>
+      ))}
+      <span key={at} className="mission-line" onAnimationEnd={() => setAt((a) => (a + 1) % order.length)}>
+        {order[at]}
+      </span>
+    </h1>
+  );
+}
+
 export default function Bill() {
   const [form, setForm] = useState<Form>(EMPTY);
   const [extras, setExtras] = useState<Extras>(NO_EXTRAS);
@@ -242,7 +286,7 @@ export default function Bill() {
   return (
     <>
       <header className="mission no-print">
-        <h1 className="mission-title">Watt-if you paid a fair price for every watt?</h1>
+        <MissionTitle />
         <p className="mission-lede">
           Add your electric bill (a photo, a screenshot or the PDF) and get a full report: how your use and costs compare with homes across
           the state, what the year looks like, and what would lower your bill. It's read on your device and never uploaded.
