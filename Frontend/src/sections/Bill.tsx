@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { PromptBox } from "../chat/Chat.tsx";
 import { Callout, Card } from "../components/ui.tsx";
 import { billMonth, daysBetween, parseBillText, type BillEvidence, type BillFields } from "../data/bill.ts";
 import { compareBill, suggestionsFor, type BillInput, type Comparison, type Suggestion, type SuggestionKind } from "../data/billCompare.ts";
@@ -130,6 +131,7 @@ export default function Bill() {
         <p className="mission-scope">
           <strong>Massachusetts bills only.</strong> Works for National Grid, Eversource and Unitil customers.
         </p>
+        <PromptBox />
       </header>
 
       <div className="grid">

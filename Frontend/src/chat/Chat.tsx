@@ -1,7 +1,8 @@
-// The Watt If assistant: a launcher button and a chat panel that streams answers from /api/chat
-// (api/chat.ts). The conversation survives tab changes and reloads within the browser session.
+// The Watt If assistant: a chat panel that streams answers from /api/chat (api/chat.ts), opened by a
+// launcher button or, on the home page, by asking in its prompt box. The conversation survives tab
+// changes and reloads within the browser session.
 
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import type { ChatEvent } from "../../api/chat.ts";
 import { parseMarkdown, type Inline } from "./markdown.ts";
@@ -28,6 +29,19 @@ const BY_PAGE: Record<string, string> = {
   towns: "Which load zone is Worcester in?",
   about: "Where does this site's data come from?",
 };
+
+/** Example questions the home page's prompt box cycles through as its placeholder. */
+const PROMPT_HINTS = [
+  "Where is the supply rate on my bill?",
+  "What does basic service cost right now?",
+  "I pay 14.9¢/kWh to a competitive supplier. Am I saving money?",
+  "How much electricity does a typical Massachusetts home use?",
+  "We use about 8,000 kWh a year. How does that compare?",
+  "Which load zone is Worcester in?",
+];
+
+/** The mounted panel's way in for the prompt box: opens the panel and asks there. */
+let askInPanel: ((question: string) => void) | null = null;
 
 function suggestionsFor(page: string): string[] {
   const first = BY_PAGE[page];
@@ -181,6 +195,8 @@ export function Chat({ page }: { page: string }) {
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
+  /** where focus was when the panel opened (the launcher or the prompt box), to return it on close */
+  const returnRef = useRef<HTMLElement | null>(null);
   const stickRef = useRef(true);
   const wasOpen = useRef(false);
   /** bumped by each send and by "New chat", so a superseded stream can't write into the chat */
@@ -191,10 +207,25 @@ export function Chat({ page }: { page: string }) {
   useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => {
-    if (open) inputRef.current?.focus();
-    else if (wasOpen.current) launcherRef.current?.focus();
+    if (open) {
+      returnRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      inputRef.current?.focus();
+    } else if (wasOpen.current) (returnRef.current?.isConnected ? returnRef.current : launcherRef.current)?.focus();
     wasOpen.current = open;
   }, [open]);
+
+  // A question from the prompt box joins the conversation, or waits in the draft while an answer streams.
+  const ask = useEffectEvent((question: string) => {
+    setOpen(true);
+    if (busy) setDraft(question);
+    else void send(question);
+  });
+  useEffect(() => {
+    askInPanel = (question) => ask(question);
+    return () => {
+      askInPanel = null;
+    };
+  }, []);
 
   // Follow the answer as it streams, unless the visitor has scrolled up to read.
   useLayoutEffect(() => {
@@ -295,7 +326,7 @@ export function Chat({ page }: { page: string }) {
         aria-expanded={open}
         aria-controls="chat-panel"
         onClick={() => setOpen(true)}
-        hidden={open}
+        hidden={open || page === "bill"}
       >
         <ChatIcon />
         Ask Watt If
@@ -411,5 +442,69 @@ export function Chat({ page }: { page: string }) {
         </section>
       ) : null}
     </>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * The home page's question box, in place of the floating launcher there. Its placeholder cycles through
+ * example questions, one per run of the hint's CSS animation; asking opens the panel with the answer.
+ */
+export function PromptBox() {
+  const [draft, setDraft] = useState("");
+  const [hint, setHint] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="prompt-box">
+      <form
+        className="prompt"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const question = draft.trim();
+          if (!question || !askInPanel) return;
+          inputRef.current?.focus(); // closing the panel returns here, not to the send button it disables
+          askInPanel(question);
+          setDraft("");
+        }}
+      >
+        <span className="prompt-icon">
+          <ChatIcon />
+        </span>
+        <div className="prompt-field">
+          <input
+            ref={inputRef}
+            className="prompt-input"
+            type="text"
+            enterKeyHint="send"
+            autoComplete="off"
+            maxLength={MAX_INPUT}
+            aria-label="Ask the Watt If assistant"
+            aria-describedby="prompt-note"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          {draft ? null : (
+            <span key={hint} className="prompt-hint" aria-hidden="true" onAnimationEnd={() => setHint((h) => (h + 1) % PROMPT_HINTS.length)}>
+              {PROMPT_HINTS[hint]}
+            </span>
+          )}
+        </div>
+        <button type="submit" className="prompt-send" disabled={!draft.trim()} aria-label="Ask">
+          <SendIcon />
+        </button>
+      </form>
+      <p id="prompt-note" className="prompt-note">
+        AI answers from this site's data, powered by Google Gemini. They can be wrong, and questions go to Google, so please don't share
+        account numbers or other personal details.
+      </p>
+    </div>
   );
 }
