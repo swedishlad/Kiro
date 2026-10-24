@@ -3,5 +3,10 @@
   "framework": "vite",
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "functions": {
+    "api/chat.ts": {
+      "maxDuration": 60
+    }
+  }
 }
