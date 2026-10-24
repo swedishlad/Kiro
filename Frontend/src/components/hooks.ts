@@ -67,6 +67,25 @@ export function useTheme(): { choice: ThemeChoice; dark: boolean } {
   return { choice, dark: choice === "dark" || (choice === "system" && systemDark) };
 }
 
+const WELCOMED_KEY = "fw-welcomed";
+
+/** Whether this browser has seen the Welcome page. Without storage, assume so rather than show it on every visit. */
+export function hasBeenWelcomed(): boolean {
+  try {
+    return localStorage.getItem(WELCOMED_KEY) !== null;
+  } catch {
+    return true;
+  }
+}
+
+export function markWelcomed(): void {
+  try {
+    localStorage.setItem(WELCOMED_KEY, "1");
+  } catch {
+    /* storage unavailable: hasBeenWelcomed already answers yes */
+  }
+}
+
 /** Tiny hash router: "#/prices" -> "prices". */
 export function useHashRoute(defaultRoute: string): string {
   const get = () => window.location.hash.replace(/^#\/?/, "").split("?")[0] || defaultRoute;
