@@ -29,6 +29,7 @@ Everything is committed under `Backend/`. The site (`Frontend/`) bundles `Backen
 
 ## Field notes
 - `regimes.json` timeline point: `pctVsAverage` (% vs the historical average), `bandPct` (half-width of the usual range, %), so the sd value is `pctVsAverage ÷ bandPct`; `probs` = filtered [P(below), P(within), P(above)]. States are anchored at −1.5 / 0 / +1.5 sd.
+- v2.5.0: every timeline point also has `value` (grid zones: GWh that day; MA_RES: kWh per account), so the usual range in units is `value ÷ (1 + pctVsAverage/100) × (1 ± bandPct/100)`, and `yoyPct` (% vs a year earlier: grid = 7-day mean vs the same 7 days 52 weeks before; homes = same month). The site's detailed nowcast and the fan chart's monthly history use them.
 - Grid zones run to the latest day EIA has published (ISO-NE 2017–2023, EIA-930 since; EIA posts ISO-NE zone data ~10 days late); homes (`MA_RES`) to the latest EIA-861M month (~2 months late). Show both dates from `live_status.json`.
 - `mc_forecast.json`: `levelAdjustment` is now `{source: "none: observed load", ratio: 1}`; the recent level is in `recentLevel` / `levelSdPct`. Quote `backtest` (cov80 0.80, median 4 % better than "same month last year", 6-month totals off 2.2 % on average), not `calibration` (kept for history).
 - Colours always travel with a word and a shape (▼ ● ▲): green vs red fails colour-blind separation (ΔE 4.1).

@@ -2,7 +2,7 @@
 // Changing anything here is an ORCHESTRATOR decision: bump CONTRACTS_VERSION and contracts/VERSION,
 // and log the change in research/CHANGELOG.md. JSON Schemas for the data files live next to this file.
 
-export const CONTRACTS_VERSION = "2.4.0";
+export const CONTRACTS_VERSION = "2.5.0";
 
 // ---------------------------------------------------------------- utilities
 export type UtilityId = "NG" | "EV_EAST" | "EV_WEST" | "UNITIL";
@@ -260,7 +260,13 @@ export interface RegimeState {
   shareOfDays: number;                                // share of days (or months) in this state, filtered
 }
 /** probs = filtered [P(green), P(grey), P(red)] for the stacked probability chart; sums to 1 */
-export interface RegimePoint { date: string; color: RegimeColor; pRed: number; probs: [number, number, number]; pctVsAverage: number; bandPct: number }
+export interface RegimePoint {
+  date: string; color: RegimeColor; pRed: number; probs: [number, number, number]; pctVsAverage: number; bandPct: number;
+  /** v2.5.0: the classified value: GWh per day (grid zones) or kWh per account (MA_RES); usual range = value / (1 + pctVsAverage/100) × (1 ± bandPct/100) */
+  value: number;
+  /** v2.5.0: % vs a year earlier: daily = 7-day mean vs the same 7 days 52 weeks before; monthly = same month a year before. Absent where history is short */
+  yoyPct?: number;
+}
 export interface AreaRegimes {
   area: RegimeArea;
   unit: "day" | "month";

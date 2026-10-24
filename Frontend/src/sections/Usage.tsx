@@ -1,16 +1,13 @@
 import { useMemo, useState } from "react";
 
-import { ColumnChart } from "../components/BarChart.tsx";
 import { KwhHistogram } from "../components/Histogram.tsx";
-import { usePersistentState } from "../components/hooks.ts";
 import { LineChart } from "../components/LineChart.tsx";
 import { RangeChart } from "../components/RangeChart.tsx";
-import { LEVEL_LABELS, REGIMES, RegimeBadge, RegimeIcon, RegimeLegend, fromHmm, fromLevel } from "../components/regime.tsx";
-import { Callout, Card, ChartCard, Filter, Legend, Segmented } from "../components/ui.tsx";
-import { RANGES, RANGE_LABEL, sliceRange, type Range } from "../data/derive.ts";
-import { MONTHS, fmtNum, fmtPct, fmtSignedPct, ymLabel } from "../data/format.ts";
+import { LEVEL_LABELS, REGIMES, RegimeBadge, RegimeIcon, fromHmm, fromLevel } from "../components/regime.tsx";
+import { Callout, Card, ChartCard, Legend } from "../components/ui.tsx";
+import { MONTHS, fmtNum, fmtPct, fmtSignedPct } from "../data/format.ts";
 import { MIN_HOMES, estimateHome, type AnswerKey, type HomeAnswers } from "../data/homes.ts";
-import { consumptionStats, eia, hmm, hmmByYm, recs } from "../data/load.ts";
+import { consumptionStats, hmm, recs } from "../data/load.ts";
 import { HEAT_FUELS, HOME_TYPES, SQFT_BUCKETS, SQFT_LABELS, type SqftBucket } from "../data/model.ts";
 import { classify, weightedHistogram, weightedShareAtOrBelow } from "../data/stats.ts";
 
@@ -23,108 +20,12 @@ const { greenMax, greyMax } = (mapThresholds as { thresholds: { greenMax: number
 const ANSWER_LABEL: Record<AnswerKey, string> = { sqft: "size", type: "home type", fuel: "heating fuel", members: "household size" };
 
 export default function Usage() {
-  const [range, setRange] = usePersistentState<Range>("usage-range", "all", RANGES);
-  const rows = useMemo(() => sliceRange(eia, range), [range]);
-
-  // Sales vs the same month a year earlier (statewide sales; customer counts are too noisy for this).
-  const yoy = useMemo(() => {
-    const byYm = new Map(eia.map((r) => [r.ym, r]));
-    return rows.flatMap((r) => {
-      const prior = byYm.get(`${r.year - 1}-${String(r.month).padStart(2, "0")}`);
-      return prior ? [{ ym: r.ym, change: r.salesMwh / prior.salesMwh - 1, preliminary: r.preliminary }] : [];
-    });
-  }, [rows]);
-
+  // Monthly use per account and sales vs a year earlier now live in the regime nowcast (Regimes & forecast).
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h2 className="page-title">How much electricity Massachusetts homes use</h2>
-          <p className="page-lede">
-            Statewide monthly use per residential account since 2010 (EIA-861M), the model's low / mid / high use regimes, and the RECS
-            2020 survey of 552 Massachusetts homes for “a home like yours”.
-          </p>
-        </div>
-      </div>
-
-      <div className="filters" role="group" aria-label="History filters">
-        <Filter label="History">
-          <Segmented label="Time range" value={range} onChange={setRange} options={RANGES.map((r) => ({ value: r, label: RANGE_LABEL[r] }))} />
-        </Filter>
-        <span className="tile-meta">
-          {ymLabel(rows[0].ym)} – {ymLabel(rows[rows.length - 1].ym)} · {rows.length} months
-        </span>
-      </div>
-
       <div className="grid">
-        <ChartCard
-          className="span-12"
-          title="Monthly use per residential account"
-          subtitle="kWh per account each month; the strip underneath is the use regime the hidden Markov model assigns to that month."
-          source="EIA-861M (kWh per customer = sales ÷ accounts). 2026 months are preliminary and will be revised."
-          table={{
-            columns: [
-              { key: "m", label: "Month", render: (r) => ymLabel(r.ym), sort: (r) => r.ym },
-              { key: "k", label: "kWh / account", align: "r", render: (r) => fmtNum(r.kwhPerCustomer, 1), sort: (r) => r.kwhPerCustomer },
-              { key: "s", label: "Sales (GWh)", align: "r", render: (r) => fmtNum(r.salesMwh / 1000, 0), sort: (r) => r.salesMwh },
-              { key: "c", label: "Accounts", align: "r", render: (r) => fmtNum(r.customers), sort: (r) => r.customers },
-              { key: "g", label: "Regime", render: (r) => { const t = hmmByYm.get(r.ym); return t ? <RegimeBadge regime={fromHmm(t.regime)} /> : "—"; } },
-              { key: "p", label: "Status", render: (r) => (r.preliminary ? "Preliminary" : "Final") },
-            ],
-            rows: [...rows].reverse(),
-          }}
-        >
-          <RegimeLegend labels={{ low: "Low-use regime", mid: "Mid", high: "High-use regime" }} />
-          <LineChart
-            x={rows.map((r) => r.ym)}
-            xKind="month"
-            series={[{ id: "kwh", label: "kWh per account", color: "var(--series-1)", values: rows.map((r) => r.kwhPerCustomer) }]}
-            strip={{ label: "use regime", values: rows.map((r) => { const t = hmmByYm.get(r.ym); return t ? fromHmm(t.regime) : null; }) }}
-            yFormat={(v) => fmtNum(v)}
-            valueFormat={(v) => `${fmtNum(v)} kWh`}
-            titleFor={(i) => ymLabel(rows[i].ym)}
-            noteFor={(i) => (rows[i].preliminary ? "Preliminary EIA figure" : undefined)}
-            height={300}
-            ariaLabel="Monthly kWh per residential account"
-          />
-        </ChartCard>
-
-        <ChartCard
-          className="span-7"
-          title="Residential sales vs the same month a year earlier"
-          subtitle="Above zero: homes bought more electricity than a year before; below: less."
-          source="EIA-861M residential sales (MWh). Uses total sales, not per-account figures, because monthly account counts are noisy."
-          table={{
-            columns: [
-              { key: "m", label: "Month", render: (r) => ymLabel(r.ym), sort: (r) => r.ym },
-              { key: "c", label: "Change", align: "r", render: (r) => fmtSignedPct(r.change), sort: (r) => r.change },
-            ],
-            rows: [...yoy].reverse(),
-          }}
-        >
-          <Legend
-            items={[
-              { label: "More than a year earlier", color: "var(--series-2)", key: "rect" },
-              { label: "Less", color: "var(--series-1)", key: "rect" },
-            ]}
-          />
-          <ColumnChart
-            categories={yoy.map((r) => r.ym)}
-            values={yoy.map((r) => r.change)}
-            colorFor={(i) => (yoy[i].change >= 0 ? "var(--series-2)" : "var(--series-1)")}
-            yFormat={(v) => fmtSignedPct(v, 0)}
-            valueFormat={(v) => fmtSignedPct(v)}
-            tickLabel={(i) => (yoy.length > 30 ? yoy[i].ym.slice(0, 4) : `${MONTHS[Number(yoy[i].ym.slice(5)) - 1]} ’${yoy[i].ym.slice(2, 4)}`)}
-            titleFor={(i) => ymLabel(yoy[i].ym)}
-            rowsFor={(i) => [{ key: "rect", color: yoy[i].change >= 0 ? "var(--series-2)" : "var(--series-1)", value: fmtSignedPct(yoy[i].change), label: "vs same month last year" }]}
-            noteFor={(i) => (yoy[i].preliminary ? "Preliminary EIA figure" : undefined)}
-            height={300}
-            ariaLabel="Year-over-year change in residential electricity sales by month"
-          />
-        </ChartCard>
-
         <Card
-          className="span-5"
+          className="span-12"
           title="What the use regimes mean"
           subtitle={`${hmm.n_states}-state Gaussian hidden Markov model over ${hmm.timeline.length} months of kWh per account (${hmm.engine}, seed ${hmm.seed}).`}
           source="States are ordered by mean use: Low < Mid < High. Backend/data/build/hmm_regimes.json."
@@ -144,10 +45,8 @@ export default function Usage() {
               );
             })}
             <p className="note">
-              This model keys on the level of use, so its regimes mostly track the seasons: <strong>High</strong> months are summer
-              air-conditioning and mid-winter peaks, <strong>Low</strong> months are spring and autumn. To see whether a month was unusual
-              for its time of year, use <a href="#/grid">Regimes &amp; forecast</a>, which compares each month with the same month in the
-              previous five years.
+              These levels follow the seasons (summer and mid-winter run High). Whether a month was unusual for its time of year is in{" "}
+              <a href="#/grid">Regimes &amp; forecast</a>.
             </p>
             <TransitionTable />
           </div>

@@ -1,7 +1,9 @@
 // The energy regime nowcast: a dark, terminal-style view of the usual-range HMM (regimes.json), drawn like
-// Backend/docs/img/examples/regime_nowcast_*.png. Top: use vs the historical average in sd, each point shaped and
-// coloured by its filtered state, with the three state means. Bottom: the filtered P(state) stacked and, for homes,
-// the next six months (hatched where only the long-run odds are known). Colours are scoped to .nowcast (styles.css).
+// Backend/docs/img/examples/regime_nowcast_*.png. The detailed view opens with the classified value against its usual
+// range (homes: kWh per account; grid: GWh a day) and the change vs a year earlier. Then: use vs the historical
+// average in sd, each point shaped and
+// coloured by its filtered state, with the three state means; and the filtered P(state) stacked, with the homes
+// forecast (hatched where only the long-run odds are known). Colours are scoped to .nowcast (styles.css).
 
 import { scaleLinear } from "d3-scale";
 import { area as d3area, curveLinear, curveStep, line as d3line } from "d3-shape";
@@ -11,18 +13,19 @@ import { dayTicks, monthTicks } from "./axes.ts";
 import { useWidth } from "./hooks.ts";
 import { RANGE_LABELS, RANGE_SHORT, RegimeIcon, fromGrid, type Regime } from "./regime.tsx";
 import { Tooltip, type TooltipRow } from "./ui.tsx";
-import { MONTHS, dateLabel, fmtNum, fmtPct, ymIndex, ymLabel } from "../data/format.ts";
+import { MONTHS, dateLabel, fmtNum, fmtPct, fmtSignedPct, ymIndex, ymLabel } from "../data/format.ts";
 import type { GridArea, GridColor, RangePoint } from "../data/model.ts";
-import { STACK, Z_LIM, forecastBars, headline, nextLine, nowPoints, pctPerSd, type NowPoint } from "../data/nowcast.ts";
+import { STACK, Z_LIM, forecastBars, headline, nextLine, nowPoints, type DetailContext, type NowPoint } from "../data/nowcast.ts";
 
 /** TC's words for the three states (red = too much, grey = mid, green = good) */
 const WORD: Record<GridColor, string> = { red: "too much", grey: "mid", green: "good" };
 const FILL: Record<GridColor, string> = { green: "var(--low)", grey: "var(--mid)", red: "var(--high)" };
-const TOP_H = 230;
-const BOT_H = 150;
 const PAD = 10;
 const AXIS_H = 28;
 const LEFT = 40;
+/** panel heights: simple view (two panels) or detailed (four) */
+const H2 = { top: 230, bot: 150 };
+const H4 = { use: 180, yoy: 104, top: 180, bot: 124 };
 
 const signed = (v: number, d = 1) => `${v > 0.00001 ? "+" : v < -0.00001 ? "−" : ""}${fmtNum(Math.abs(v), d)}`;
 
@@ -42,9 +45,11 @@ export interface RegimeNowcastProps {
   title: string;
   /** short name for the summary line, e.g. "Homes" */
   label: string;
+  /** detailed view: value vs its usual range + change vs a year earlier, aligned with `timeline` (data/nowcast.ts) */
+  detail?: DetailContext;
 }
 
-export function RegimeNowcast({ area: a, timeline, areas, title, label }: RegimeNowcastProps) {
+export function RegimeNowcast({ area: a, timeline, areas, title, label, detail }: RegimeNowcastProps) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
   const hatchId = `nowcast-hatch-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
@@ -60,15 +65,29 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
   const innerW = Math.max(40, width - LEFT - right);
   const xAt = (i: number) => LEFT + (N <= 1 ? innerW / 2 : (i / (N - 1)) * innerW);
   const slot = N > 1 ? innerW / (N - 1) : innerW;
-  const yTop = scaleLinear().domain([-Z_LIM, Z_LIM]).range([PAD + TOP_H, PAD]);
-  const yBot = scaleLinear().domain([0, 1]).range([PAD + BOT_H, PAD]);
+  const H = detail ? H4 : { ...H2, use: 0, yoy: 0 };
+  const yTop = scaleLinear().domain([-Z_LIM, Z_LIM]).range([PAD + H.top, PAD]);
+  const yBot = scaleLinear().domain([0, 1]).range([PAD + H.bot, PAD]);
 
-  // xAt depends only on innerW and N; yTop / yBot are fixed.
+  // kWh panel: the usual range and the line share one scale; sales panel: symmetric around zero
+  const scales = useMemo(() => {
+    if (!detail) return null;
+    const vals = [...detail.value, ...detail.lo, ...detail.hi].filter((v): v is number => v !== null);
+    const yUse = scaleLinear().domain([Math.min(...vals), Math.max(...vals)]).nice(4).range([PAD + H4.use, PAD]);
+    const m = Math.max(0.05, ...detail.yoy.filter((v): v is number => v !== null).map(Math.abs));
+    const yYoy = scaleLinear().domain([-m, m]).nice(4).range([PAD + H4.yoy, PAD]);
+    return { yUse, yYoy };
+  }, [detail]);
+
+  // xAt depends only on innerW and N; the y scales only on the data and the fixed heights.
   const drawn = useMemo(() => {
     const size = monthly ? Math.max(2, Math.min(4, slot * 0.45)) : 1.7;
     const marks: Record<GridColor, string> = { green: "", grey: "", red: "" };
+    const useMarks: Record<GridColor, string> = { green: "", grey: "", red: "" };
     pts.forEach((p, i) => {
       marks[p.color] += shapeAt(fromGrid(p.color), xAt(i), yTop(p.z), size);
+      const k = detail?.value[i];
+      if (scales && k !== null && k !== undefined) useMarks[p.color] += shapeAt(fromGrid(p.color), xAt(i), scales.yUse(k), size);
     });
     const zLine = d3line<NowPoint>().x((_, i) => xAt(i)).y((p) => yTop(p.z))(pts) ?? "";
     const stacks = STACK.map(
@@ -79,10 +98,26 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
           .y1((p) => yBot(p.probs.slice(0, k + 1).reduce((s, v) => s + v, 0)))
           .curve(monthly ? curveStep : curveLinear)(pts) ?? "",
     );
+    let band = "";
+    let valueLine = "";
+    if (detail && scales) {
+      const idx = detail.value.map((_, i) => i);
+      band =
+        d3area<number>()
+          .defined((i) => detail.lo[i] !== null && detail.hi[i] !== null)
+          .x((i) => xAt(i))
+          .y0((i) => scales.yUse(detail.lo[i] as number))
+          .y1((i) => scales.yUse(detail.hi[i] as number))(idx) ?? "";
+      valueLine =
+        d3line<number>()
+          .defined((i) => detail.value[i] !== null)
+          .x((i) => xAt(i))
+          .y((i) => scales.yUse(detail.value[i] as number))(idx) ?? "";
+    }
     const xs = monthly ? [...pts.map((p) => p.date.slice(0, 7)), ...fc.map((f) => f.ym)] : pts.map((p) => p.date);
     const ticks = monthly ? monthTicks(xs, innerW) : dayTicks(xs, innerW);
-    return { marks, zLine, stacks, ticks };
-  }, [pts, fc, monthly, innerW, N, slot]); // eslint-disable-line react-hooks/exhaustive-deps
+    return { marks, useMarks, zLine, stacks, band, valueLine, ticks };
+  }, [pts, fc, monthly, innerW, N, slot, detail, scales]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!n)
     return (
@@ -92,13 +127,12 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
     );
 
   const h = headline(a);
-  const means = a.states.map((s) => s.meanSdFromAverage);
-  const per = pctPerSd(a.timeline);
   const next = nextLine(allFc);
   const asOf = monthly ? ymLabel(a.current.date.slice(0, 7)) : dateLabel(a.current.date);
   const zones = areas.filter((z) => z.area === "NEMA" || z.area === "SEMA" || z.area === "WCMA");
   const divider = fc.length && n ? (xAt(n - 1) + xAt(n)) / 2 : null;
   const barW = Math.max(3, Math.min(slot * 0.88, 30));
+  const yoyW = Math.max(1, Math.min(slot * 0.72, 22));
 
   const onMove = (e: PointerEvent<SVGRectElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -120,15 +154,37 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
   let tip: { title: string; rows: TooltipRow[]; note?: string } | null = null;
   if (active !== null && active < n) {
     const p = pts[active];
+    const k = detail?.value[active];
+    const lo = detail?.lo[active];
+    const hi = detail?.hi[active];
+    const yoy = detail?.yoy[active];
+    const dp = detail?.unit === "GWh" ? 1 : 0;
+    const detailRows: TooltipRow[] =
+      k !== null && k !== undefined
+        ? [
+            { key: "line", color: "var(--now-line)", value: `${fmtNum(k, dp)} ${detail!.unit}`, label: detail!.valueLabel },
+            ...(lo !== null && lo !== undefined && hi !== null && hi !== undefined
+              ? [{ key: "rect" as const, color: "var(--now-band)", value: `${fmtNum(lo, dp)}–${fmtNum(hi, dp)}`, label: `usual range, ${detail!.unit}` }]
+              : []),
+            ...(yoy !== null && yoy !== undefined
+              ? [{ key: "rect" as const, color: yoy >= 0 ? "var(--now-up)" : "var(--now-down)", value: fmtSignedPct(yoy), label: detail!.yoyLabel }]
+              : []),
+          ]
+        : [];
     tip = {
       title: monthly ? ymLabel(p.date.slice(0, 7)) : dateLabel(p.date),
       rows: [
-        { key: <RegimeIcon regime={fromGrid(p.color)} />, value: RANGE_LABELS[fromGrid(p.color)], label: WORD[p.color] },
-        { value: `${signed(p.pct)}%`, label: "vs the 5-year average" },
+        { key: <RegimeIcon regime={fromGrid(p.color)} />, value: RANGE_LABELS[fromGrid(p.color)], label: `${signed(p.pct)}% vs avg` },
+        ...detailRows,
         { value: `${signed(p.sd, 2)} sd`, label: `usual range ±${fmtNum(p.band, 1)}%` },
         ...probRows(p.probs),
       ],
-      note: Math.abs(p.sd) > Z_LIM ? `Drawn at the ${Z_LIM} sd edge.` : undefined,
+      note:
+        Math.abs(p.sd) > Z_LIM
+          ? `Drawn at the ${Z_LIM} sd edge.`
+          : detail?.preliminary[active]
+            ? "Preliminary EIA figure: will be revised."
+            : undefined,
     };
   } else if (active !== null) {
     const f = fc[active - n];
@@ -144,21 +200,30 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
   const overlay = (height: number) => (
     <rect x={LEFT} y={0} width={innerW} height={height} fill="transparent" onPointerMove={onMove} onPointerDown={onMove} onPointerLeave={() => setActive(null)} />
   );
+  const dividerLine = (height: number) => (divider !== null ? <line className="now-divider" x1={divider} x2={divider} y1={PAD} y2={PAD + height} /> : null);
+  const panelTitle = (text: string) => (
+    <text className="now-axis" x={LEFT} y={PAD - 1}>
+      {text}
+    </text>
+  );
+  const focus = (y: number | null) =>
+    active !== null && active < n && y !== null ? (
+      <path d={shapeAt(fromGrid(pts[active].color), xAt(active), y, monthly ? 6 : 4)} className="now-focus" style={{ fill: FILL[pts[active].color] }} />
+    ) : null;
 
   return (
     <div className="nowcast" ref={ref}>
       <div className="nowcast-head">
         <p>
           <span className="now-title">ENERGY REGIME NOWCAST</span>{" "}
-          <span className="now-muted">· 3-state HMM on consumption vs the historical average range, filtered (past data only)</span>
+          <span className="now-muted">· 3-state HMM vs the 5-year usual range</span>
         </p>
         <p className="now-big">
           now:{" "}
           <span className="now-state" style={{ color: FILL[h.color] }}>
             <RegimeIcon regime={fromGrid(h.color)} size={13} /> {h.color.toUpperCase()} ({fmtPct(h.p)})
           </span>{" "}
-          · {signed(a.current.pctVsAverage)}% vs historical avg (range ±{fmtNum(a.current.bandPct, 1)}%) · state means{" "}
-          {means.map((m) => signed(m, 1)).join(" / ")} sd (≈ {means.map((m) => `${signed(m * per, 0)}%`).join(" / ")})
+          · {signed(a.current.pctVsAverage)}% vs average (usual range ±{fmtNum(a.current.bandPct, 1)}%)
         </p>
         <p className="now-muted">
           {title} · as of {asOf}
@@ -169,8 +234,38 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
             {next.model.length
               ? next.model.map((f) => `${MONTHS[ymIndex(f.ym) % 12]} ${RANGE_SHORT[fromGrid(f.color)].toLowerCase()} (${fmtPct(f.probs[2])} above)`).join(" · ")
               : "no tested forecast"}{" "}
-            · after that: long-run odds ({next.longRun} months, hatched)
+            · then long-run odds (hatched)
           </p>
+        ) : null}
+      </div>
+
+      <div className="nowcast-legend">
+        {(["red", "grey", "green"] as GridColor[]).map((c) => (
+          <span key={c}>
+            <RegimeIcon regime={fromGrid(c)} /> {WORD[c]} <span className="now-muted">({RANGE_SHORT[fromGrid(c)].toLowerCase()})</span>
+          </span>
+        ))}
+        {detail ? (
+          <>
+            <span>
+              <span className="now-swatch" style={{ background: "var(--now-band)" }} /> usual range
+            </span>
+            <span>
+              <span className="now-swatch" style={{ background: "var(--now-up)" }} /> more than a year earlier
+            </span>
+            <span>
+              <span className="now-swatch" style={{ background: "var(--now-down)" }} /> less
+            </span>
+          </>
+        ) : null}
+        {fc.length ? (
+          <span>
+            <svg width="14" height="10" aria-hidden="true">
+              <rect width="14" height="10" style={{ fill: "var(--mid)" }} opacity={0.5} />
+              <rect width="14" height="10" fill={`url(#${hatchId})`} />
+            </svg>
+            long-run odds
+          </span>
         ) : null}
       </div>
 
@@ -179,20 +274,72 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
         tabIndex={0}
         role="group"
         aria-roledescription="chart"
-        aria-label={`Regime nowcast for ${title}: use versus the historical average in standard deviations, and the filtered probability of each regime. Use left and right arrow keys to read values; the table view lists them all.`}
+        aria-label={`Regime nowcast for ${title}: ${detail ? `${detail.valueTitle}; ${detail.yoyTitle}; ` : ""}use versus the historical average in standard deviations, and the filtered probability of each regime. Use left and right arrow keys to read values; the table view lists them all.`}
         onKeyDown={onKey}
         onBlur={() => setActive(null)}
       >
-        <svg width={width} height={TOP_H + 2 * PAD}>
-          <text className="now-axis" x={LEFT} y={PAD - 1}>
-            sd from the historical average
-          </text>
+        {detail && scales ? (
+          <>
+            <svg width={width} height={H4.use + 2 * PAD}>
+              {panelTitle(narrow ? detail.valueTitle.split(" · ")[0] : detail.valueTitle)}
+              {scales.yUse.ticks(4).map((t) => (
+                <g key={t}>
+                  <line className="now-grid" x1={LEFT} x2={LEFT + innerW} y1={Math.round(scales.yUse(t)) + 0.5} y2={Math.round(scales.yUse(t)) + 0.5} />
+                  <text className="now-axis" x={LEFT - 8} y={scales.yUse(t)} dy="0.32em" textAnchor="end">
+                    {fmtNum(t)}
+                  </text>
+                </g>
+              ))}
+              <path d={drawn.band} className="now-band" />
+              <path d={drawn.valueLine} fill="none" className="now-zline" strokeWidth={1.2} />
+              {STACK.map((c) => (
+                <path key={c} d={drawn.useMarks[c]} style={{ fill: FILL[c] }} />
+              ))}
+              {dividerLine(H4.use)}
+              {crosshair(PAD, PAD + H4.use)}
+              {focus(active !== null && active < n && detail.value[active] !== null ? scales.yUse(detail.value[active] as number) : null)}
+              {overlay(H4.use + 2 * PAD)}
+            </svg>
+            <svg width={width} height={H4.yoy + 2 * PAD}>
+              {panelTitle(detail.yoyTitle)}
+              {scales.yYoy.ticks(4).map((t) => (
+                <g key={t}>
+                  <line className={t === 0 ? "now-edge" : "now-grid"} x1={LEFT} x2={LEFT + innerW} y1={Math.round(scales.yYoy(t)) + 0.5} y2={Math.round(scales.yYoy(t)) + 0.5} />
+                  <text className="now-axis" x={LEFT - 8} y={scales.yYoy(t)} dy="0.32em" textAnchor="end">
+                    {fmtSignedPct(t, 0)}
+                  </text>
+                </g>
+              ))}
+              {detail.yoy.map((v, i) =>
+                v === null ? null : (
+                  <rect
+                    key={i}
+                    x={xAt(i) - yoyW / 2}
+                    width={yoyW}
+                    y={Math.min(scales.yYoy(0), scales.yYoy(v))}
+                    height={Math.max(1, Math.abs(scales.yYoy(v) - scales.yYoy(0)))}
+                    style={{ fill: v >= 0 ? "var(--now-up)" : "var(--now-down)" }}
+                    opacity={active === null || active === i ? 1 : 0.85}
+                  />
+                ),
+              )}
+              {dividerLine(H4.yoy)}
+              {crosshair(PAD, PAD + H4.yoy)}
+              {overlay(H4.yoy + 2 * PAD)}
+            </svg>
+          </>
+        ) : null}
+
+        <svg width={width} height={H.top + 2 * PAD}>
+          {panelTitle("sd from the 5-year average")}
           {[-4, -3, -2, -1, 0, 1, 2, 3, 4].map((t) => (
             <g key={t}>
               <line className={t === -1 || t === 1 ? "now-edge" : "now-grid"} x1={LEFT} x2={LEFT + innerW} y1={Math.round(yTop(t)) + 0.5} y2={Math.round(yTop(t)) + 0.5} />
-              <text className="now-axis" x={LEFT - 8} y={yTop(t)} dy="0.32em" textAnchor="end">
-                {t > 0 ? `+${t}` : t < 0 ? `−${-t}` : "0"}
-              </text>
+              {detail && t % 2 ? null : (
+                <text className="now-axis" x={LEFT - 8} y={yTop(t)} dy="0.32em" textAnchor="end">
+                  {t > 0 ? `+${t}` : t < 0 ? `−${-t}` : "0"}
+                </text>
+              )}
             </g>
           ))}
           {a.states.map((s) => (
@@ -212,40 +359,19 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
           {STACK.map((c) => (
             <path key={c} d={drawn.marks[c]} style={{ fill: FILL[c] }} />
           ))}
-          {divider !== null ? <line className="now-divider" x1={divider} x2={divider} y1={PAD} y2={PAD + TOP_H} /> : null}
-          {crosshair(PAD, PAD + TOP_H)}
-          {active !== null && active < n ? (
-            <path d={shapeAt(fromGrid(pts[active].color), xAt(active), yTop(pts[active].z), monthly ? 6 : 4)} className="now-focus" style={{ fill: FILL[pts[active].color] }} />
-          ) : null}
-          {overlay(TOP_H + 2 * PAD)}
+          {dividerLine(H.top)}
+          {crosshair(PAD, PAD + H.top)}
+          {focus(active !== null && active < n ? yTop(pts[active].z) : null)}
+          {overlay(H.top + 2 * PAD)}
         </svg>
 
-        <div className="nowcast-legend">
-          {(["red", "grey", "green"] as GridColor[]).map((c) => (
-            <span key={c}>
-              <RegimeIcon regime={fromGrid(c)} /> {WORD[c]} <span className="now-muted">({RANGE_SHORT[fromGrid(c)].toLowerCase()})</span>
-            </span>
-          ))}
-          {fc.length ? (
-            <span>
-              <svg width="14" height="10" aria-hidden="true">
-                <rect width="14" height="10" style={{ fill: "var(--mid)" }} opacity={0.5} />
-                <rect width="14" height="10" fill={`url(#${hatchId})`} />
-              </svg>
-              long-run odds
-            </span>
-          ) : null}
-        </div>
-
-        <svg width={width} height={BOT_H + 2 * PAD + AXIS_H}>
+        <svg width={width} height={H.bot + 2 * PAD + AXIS_H}>
           <defs>
             <pattern id={hatchId} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
               <line x1="0" y1="0" x2="0" y2="5" className="now-hatch" strokeWidth="2" />
             </pattern>
           </defs>
-          <text className="now-axis" x={LEFT} y={PAD - 1}>
-            P(state), filtered
-          </text>
+          {panelTitle("P(state)")}
           {[0, 0.5, 1].map((t) => (
             <g key={t}>
               <line className="now-grid" x1={LEFT} x2={LEFT + innerW} y1={Math.round(yBot(t)) + 0.5} y2={Math.round(yBot(t)) + 0.5} />
@@ -277,7 +403,7 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
           })}
           {divider !== null ? (
             <g>
-              <line className="now-divider" x1={divider} x2={divider} y1={PAD} y2={PAD + BOT_H} />
+              {dividerLine(H.bot)}
               <text
                 className="now-teal-text"
                 x={divider + 84 <= width ? divider + 6 : divider - 6}
@@ -289,19 +415,19 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
             </g>
           ) : null}
           {drawn.ticks.map((t) => (
-            <text key={t.i} className="now-axis" x={xAt(t.i)} y={PAD + BOT_H + 18} textAnchor="middle">
+            <text key={t.i} className="now-axis" x={xAt(t.i)} y={PAD + H.bot + 18} textAnchor="middle">
               {t.label}
             </text>
           ))}
-          {crosshair(PAD, PAD + BOT_H)}
-          {overlay(BOT_H + 2 * PAD)}
+          {crosshair(PAD, PAD + H.bot)}
+          {overlay(H.bot + 2 * PAD)}
         </svg>
         {tip ? <Tooltip x={xAt(active as number)} y={PAD + 4} containerWidth={width} title={tip.title} rows={tip.rows} note={tip.note} /> : null}
       </div>
 
       <div className="nowcast-foot">
         <p>
-          WHAT THE DATA SAYS ({asOf}): {label} {h.color.toUpperCase()} · {signed(a.current.pctVsAverage)}% vs avg
+          {label} {h.color.toUpperCase()} · {signed(a.current.pctVsAverage)}% vs avg ({asOf})
           {zones.length ? ` · grid zones on ${dateLabel(zones[0].current.date)}: ` : ""}
           {zones.map((z, i) => (
             <span key={z.area}>
@@ -310,7 +436,7 @@ export function RegimeNowcast({ area: a, timeline, areas, title, label }: Regime
             </span>
           ))}
         </p>
-        <p>red = above the historical average range · grey = within · green = below · range = avg ± 1 sd of the same period in the previous 5 years</p>
+        <p>red = above the usual range · grey = within · green = below</p>
       </div>
     </div>
   );

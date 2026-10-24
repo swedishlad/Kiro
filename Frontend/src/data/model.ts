@@ -309,6 +309,10 @@ export interface RangePoint {
   bandPct: number;
   /** filtered P(below, within, above), from data up to this point only */
   probs?: number[];
+  /** regimes.json v2.5+: the classified value: GWh that day (grid zones) or kWh per account (homes) */
+  value?: number;
+  /** regimes.json v2.5+: % vs a year earlier (grid: 7-day mean vs the same 7 days 52 weeks before) */
+  yoyPct?: number;
 }
 
 /** regimes.json v2.3+: the homes series' next 6 months */
