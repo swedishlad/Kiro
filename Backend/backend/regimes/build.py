@@ -18,6 +18,7 @@ import csv
 import datetime as dt
 import json
 from collections import Counter, defaultdict
+from math import erf, sqrt
 
 import numpy as np
 
@@ -33,6 +34,8 @@ ANCHORS = (-1.5, 0.0, 1.5)              # state means in standard deviations fro
 LOOKBACK_YEARS = 5
 Z_CLIP = 3.0                            # z is clipped for fitting only (outlier months must not set the spread)
 MONTHLY_SD = 0.6                        # MA_RES: ~130 months are too few to learn the spread; anchor it (agreement 63% -> 80%)
+SKILL_MIN = 0.01                        # ship the gap forecast at a horizon only if it beat the long-run mix by > 1% (walk-forward)
+MIN_PAIRS = {"month": 24, "day": 180}   # resolved past pairs needed before a forecast is fitted / scored
 COLORS = ["green", "grey", "red"]
 LABELS = ["good", "mid", "too much"]
 
@@ -159,13 +162,82 @@ def build_area(area, days, gwh):
         "timeline": timeline,
         "monthly": [{"ym": ym, **{c: round(cnt[c] / sum(cnt.values()), 4) for c in COLORS}}
                     for ym, cnt in sorted(monthly.items())],
-        "outlook": [{"days": int(round(k * per_step_days)), "probs": [round(float(v), 6) for v in
-                     cur @ np.linalg.matrix_power(final["A"], k)]} for k in steps],
+        "outlook": [],
         "agreementWithBandRule": round(float((rule == idx).mean()), 4),
     }
-    for row in out["transition"] + [out["current"]["probs"]] + [o["probs"] for o in out["outlook"]]:
+    for row in out["transition"] + [out["current"]["probs"]]:
         row[-1] = round(1.0 - sum(row[:-1]), 6)
+    # outlook + forecast: the AR(1) gap forecast where it beat the long-run mix walk-forward, else the long-run odds
+    for k in steps:
+        p, method, skill, n = gap_forecast(z, k, MIN_PAIRS[unit])
+        out["outlook"].append({"days": int(round(k * per_step_days)), "probs": rounded_probs(p), "method": method,
+                               "skillVsLongRunMix": round(skill, 4), "n": n})
+    if unit == "month":
+        out["forecast"] = []
+        for k in range(1, 7):
+            p, method, skill, n = gap_forecast(z, k, MIN_PAIRS[unit])
+            out["forecast"].append({"date": add_month(kd[-1], k).isoformat(), "probs": rounded_probs(p),
+                                    "color": COLORS[int(np.argmax(p))], "method": method,
+                                    "skillVsLongRunMix": round(skill, 4), "n": n})
     return out, {"dates": dates, "z": z, "probs": probs, "keep": keep}
+
+
+def _phi(x):
+    return 0.5 * (1.0 + erf(x / sqrt(2.0)))
+
+
+def ar_probs_at(zc, valid, i, k, min_pairs):
+    """P(below / within / above the range) k steps after index i, from an AR(1) of the gap fitted ONLY on pairs
+    (z_j, z_j+k) already resolved at i (j + k <= i). None if too few pairs."""
+    j = np.arange(0, i - k + 1)
+    j = j[valid[j] & valid[j + k]]
+    if len(j) < min_pairs:
+        return None
+    X = np.column_stack([np.ones(len(j)), zc[j]])
+    beta = np.linalg.lstsq(X, zc[j + k], rcond=None)[0]
+    sd = max(float(np.std(zc[j + k] - X @ beta)), 1e-6)
+    m = beta[0] + beta[1] * zc[i]
+    lo, hi = _phi((-1 - m) / sd), _phi((1 - m) / sd)
+    return np.array([lo, hi - lo, 1 - hi])
+
+
+def long_run_mix(rule, valid, i):
+    past = rule[:i + 1][valid[:i + 1]]
+    return np.bincount(past, minlength=3) / len(past)
+
+
+def gap_forecast(z, k, min_pairs):
+    """Walk-forward test of the AR(1) gap forecast vs the long-run mix at horizon k, then the forecast from the last
+    point. Returns (probs, method, skill vs long-run mix, n tests). Truth = above / within / below the range."""
+    valid = ~np.isnan(z)
+    zc = np.clip(np.nan_to_num(z), -Z_CLIP, Z_CLIP)
+    rule = np.where(np.nan_to_num(z) > 1, 2, np.where(np.nan_to_num(z) < -1, 0, 1))
+    b_ar, b_mix = [], []
+    for i in np.where(valid)[0]:
+        if i + k >= len(z) or not valid[i + k]:
+            continue
+        p = ar_probs_at(zc, valid, i, k, min_pairs)
+        if p is None:
+            continue
+        truth = np.eye(3)[rule[i + k]]
+        b_ar.append(((p - truth) ** 2).sum())
+        b_mix.append(((long_run_mix(rule, valid, i) - truth) ** 2).sum())
+    skill = 1 - np.mean(b_ar) / np.mean(b_mix) if b_ar else float("nan")
+    last = int(np.where(valid)[0][-1])
+    use_ar = bool(b_ar) and skill > SKILL_MIN
+    probs = ar_probs_at(zc, valid, last, k, min_pairs) if use_ar else long_run_mix(rule, valid, last)
+    return probs, ("ar1-gap" if use_ar else "long-run-mix"), float(skill), len(b_ar)
+
+
+def rounded_probs(p):
+    out = [round(float(q), 4) for q in p]
+    out[1] = round(1.0 - out[0] - out[2], 4)
+    return out
+
+
+def add_month(d, k):
+    m = d.month - 1 + k
+    return dt.date(d.year + m // 12, m % 12 + 1, 1)
 
 
 def load_all():
@@ -200,6 +272,7 @@ def main():
             "MA_RES: EIA-861M residential kWh per account (12-month mean of customers), monthly 2016-01 to 2026-08: the current light.",
             "Each day/month is compared with the same period in the previous 5 years only, so history is never re-coloured by later data.",
             "Weather is not removed: a heat wave or cold snap that pushes use above the range shows red.",
+            "outlook / forecast: an AR(1) model of the gap is used at a horizon only where it beat the long-run mix in a walk-forward test (homes: next 1-2 months; grid: next week); otherwise they show the long-run odds. HMM transitions alone lost to the long-run mix, so they are not used for the future.",
         ],
     }
     with open(build_path("regimes.json"), "w") as fh:

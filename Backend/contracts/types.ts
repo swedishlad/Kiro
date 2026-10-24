@@ -2,7 +2,7 @@
 // Changing anything here is an ORCHESTRATOR decision: bump CONTRACTS_VERSION and contracts/VERSION,
 // and log the change in research/CHANGELOG.md. JSON Schemas for the data files live next to this file.
 
-export const CONTRACTS_VERSION = "2.2.0";
+export const CONTRACTS_VERSION = "2.3.0";
 
 // ---------------------------------------------------------------- utilities
 export type UtilityId = "NG" | "EV_EAST" | "EV_WEST" | "UNITIL";
@@ -269,8 +269,19 @@ export interface AreaRegimes {
   current: { date: string; probs: [number, number, number]; color: RegimeColor; pctVsAverage: number; bandPct: number };
   timeline: RegimePoint[];                            // FILTERED states; pctVsAverage = % vs the historical average, bandPct = range half-width %
   monthly: { ym: YearMonth; green: number; grey: number; red: number }[];
-  outlook: { days: number; probs: [number, number, number] }[];
+  /** v2.3.0: from the tested forecaster: AR(1) of the gap where it beat the long-run mix walk-forward, else the long-run odds */
+  outlook: { days: number; probs: [number, number, number]; method: RegimeForecastMethod; skillVsLongRunMix: number; n: number }[];
+  forecast?: RegimeForecastPoint[];                   // MA_RES only: the next 6 months
   agreementWithBandRule: number;                      // share of points where the HMM colour = the plain above/within/below rule
+}
+export type RegimeForecastMethod = "ar1-gap" | "long-run-mix";
+export interface RegimeForecastPoint {
+  date: string;                                       // first day of the forecast month
+  probs: [number, number, number];                    // [P(below), P(within), P(above)] the range
+  color: RegimeColor;                                 // most likely
+  method: RegimeForecastMethod;
+  skillVsLongRunMix: number;                          // walk-forward Brier skill at this horizon (0.11 = 11% better)
+  n: number;                                          // number of walk-forward tests behind that skill
 }
 export interface RegimesFile {
   asOf: string;
