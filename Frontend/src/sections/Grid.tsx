@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { usePersistentState } from "../components/hooks.ts";
-import { LineChart } from "../components/LineChart.tsx";
+import { FanChart } from "../components/FanChart.tsx";
 import { RegimeNowcast } from "../components/RegimeNowcast.tsx";
 import { RANGE_LABELS, RANGE_SHORT, REGIMES, RegimeBadge, RegimeIcon, RegimeLegend, fromGrid, type Regime } from "../components/regime.tsx";
 import { RegimeShareColumns, RegimeStackBar } from "../components/Stacked.tsx";
 import { Card, ChartCard, Filter, Legend, Segmented } from "../components/ui.tsx";
-import { dateLabel, fmtNum, fmtPct, fmtSignedPct, ymLabel, ymShort } from "../data/format.ts";
-import { liveStatus, loadGrid, type GridBundle } from "../data/load.ts";
-import { ZONE_NAMES, type Area, type GridArea, type RegimeArea } from "../data/model.ts";
+import { dateLabel, fmtNum, fmtPct, fmtSignedPct, ymLabel } from "../data/format.ts";
+import { eia, liveStatus, loadGrid, perAccount, type GridBundle } from "../data/load.ts";
+import { ZONE_NAMES, type Area, type GridArea, type RangePoint, type RegimeArea } from "../data/model.ts";
+import { gridContext, homesContext, monthlyTotals, type DetailContext } from "../data/nowcast.ts";
 
 const AREAS: RegimeArea[] = ["MA_RES", "MA", "NEMA", "SEMA", "WCMA"];
 const AREA_LABEL: Record<RegimeArea, string> = { MA_RES: "Homes", MA: "MA grid", NEMA: "NEMA", SEMA: "SEMA", WCMA: "WCMA" };
@@ -19,6 +20,9 @@ const AREA_TITLE: Record<RegimeArea, string> = {
   SEMA: `${ZONE_NAMES.SEMA} — ISO-NE / EIA-930, daily`,
   WCMA: `${ZONE_NAMES.WCMA} — ISO-NE / EIA-930, daily`,
 };
+
+type View = "detailed" | "simple";
+const VIEWS: View[] = ["detailed", "simple"];
 
 const toProbs = (p: number[]): Record<Regime, number> => ({ low: p[0], mid: p[1], high: p[2] });
 const pct = (v: number) => fmtSignedPct(v / 100, 1);
@@ -33,10 +37,34 @@ function runLabel(a: GridArea, days: number): string {
   return a.unit === "day" ? `${fmtNum(days, 0)} days` : `${fmtNum(days / 30.44, 1)} months`;
 }
 
+/** The nowcast's table view: every point, plus the detailed panels' values when they are shown. */
+function nowcastTable(tl: RangePoint[], daily: boolean, d?: DetailContext) {
+  const at = new Map(tl.map((t, i) => [t.date, i]));
+  const dp = d?.unit === "GWh" ? 1 : 0;
+  const pick = (arr: (number | null)[] | undefined, t: RangePoint) => arr?.[at.get(t.date)!] ?? null;
+  return {
+    columns: [
+      { key: "d", label: daily ? "Date" : "Month", render: (t: RangePoint) => (daily ? t.date : ymLabel(t.date.slice(0, 7))), sort: (t: RangePoint) => t.date },
+      { key: "r", label: "Regime", render: (t: RangePoint) => <RegimeBadge regime={fromGrid(t.color)} labels={RANGE_LABELS} /> },
+      { key: "p", label: "vs average", align: "r" as const, render: (t: RangePoint) => pct(t.pctVsAverage), sort: (t: RangePoint) => t.pctVsAverage },
+      { key: "a", label: "P(above)", align: "r" as const, render: (t: RangePoint) => (t.probs ? fmtPct(t.probs[2]) : "—"), sort: (t: RangePoint) => t.probs?.[2] ?? t.pRed },
+      ...(d
+        ? [
+            { key: "v", label: d.unit === "kWh" ? "kWh / account" : "GWh", align: "r" as const, render: (t: RangePoint) => { const v = pick(d.value, t); return v === null ? "—" : fmtNum(v, dp); } },
+            { key: "u", label: `Usual range (${d.unit})`, align: "r" as const, render: (t: RangePoint) => { const lo = pick(d.lo, t); const hi = pick(d.hi, t); return lo === null || hi === null ? "—" : `${fmtNum(lo, dp)}–${fmtNum(hi, dp)}`; } },
+            { key: "y", label: "vs a year earlier", align: "r" as const, render: (t: RangePoint) => { const v = pick(d.yoy, t); return v === null ? "—" : fmtSignedPct(v); } },
+          ]
+        : []),
+    ],
+    rows: [...tl].reverse(),
+  };
+}
+
 export default function Grid() {
   const [bundle, setBundle] = useState<GridBundle | null>(null);
   const [area, setArea] = usePersistentState<RegimeArea>("grid-area", "MA_RES", AREAS);
   const [year, setYear] = useState("all");
+  const [view, setView] = usePersistentState<View>("nowcast-view", "detailed", VIEWS);
 
   useEffect(() => {
     let live = true;
@@ -47,13 +75,25 @@ export default function Grid() {
   }, []);
 
   const a = bundle?.regimes.areas.find((x) => x.area === area);
-  const years = useMemo(() => (a ? [...new Set(a.timeline.map((t) => t.date.slice(0, 4)))] : []), [a]);
+  // Two nowcasts: homes, and the grid (Massachusetts, or the zone picked under Series).
+  const gridKey: Area = area === "MA_RES" ? "MA" : area;
+  const homesArea = bundle?.regimes.areas.find((x) => x.area === "MA_RES");
+  const gridArea = bundle?.regimes.areas.find((x) => x.area === gridKey);
+  const years = useMemo(
+    () => [...new Set([...(homesArea?.timeline ?? []), ...(gridArea?.timeline ?? [])].map((t) => t.date.slice(0, 4)))].sort(),
+    [homesArea, gridArea],
+  );
   const yearSafe = years.includes(year) ? year : "all";
-  const timeline = useMemo(() => (a ? (yearSafe === "all" ? a.timeline : a.timeline.filter((t) => t.date.startsWith(yearSafe))) : []), [a, yearSafe]);
   const monthly = useMemo(() => (a ? (yearSafe === "all" ? a.monthly : a.monthly.filter((m) => m.ym.startsWith(yearSafe))) : []), [a, yearSafe]);
+  const homesTl = useMemo(() => (homesArea ? homesArea.timeline.filter((t) => yearSafe === "all" || t.date.startsWith(yearSafe)) : []), [homesArea, yearSafe]);
+  const gridTl = useMemo(() => (gridArea ? gridArea.timeline.filter((t) => yearSafe === "all" || t.date.startsWith(yearSafe)) : []), [gridArea, yearSafe]);
+  const homesDetail = useMemo(() => (view === "detailed" && homesTl.length ? homesContext(homesTl, eia, perAccount) : undefined), [view, homesTl]);
+  const gridDetail = useMemo(() => (view === "detailed" && gridTl.length ? gridContext(gridTl) : undefined), [view, gridTl]);
+  // Actual monthly load for the fan chart: the last two years of full months.
+  const fanHistory = useMemo(() => (gridArea ? monthlyTotals(gridArea.timeline).slice(-24) : []), [gridArea]);
 
   // The forecast covers the grid zones; homes (MA_RES) fall back to the statewide grid forecast.
-  const fcArea: Area = area === "MA_RES" ? "MA" : area;
+  const fcArea: Area = gridKey;
   const fc = bundle?.forecast.areas.find((x) => x.area === fcArea);
 
   const daily = a?.unit === "day";
@@ -64,9 +104,8 @@ export default function Grid() {
         <div>
           <h2 className="page-title">Is Massachusetts using more than usual?</h2>
           <p className="page-lede">
-            Each month (homes) or day (grid zones) is compared with the same period in the previous five years. Inside the usual range —
-            the average ± 1 standard deviation — is <strong>Within</strong>; above it is <strong>Above</strong>, below it{" "}
-            <strong>Below</strong>. A hidden Markov model smooths the call so one odd day doesn't flip it.
+            Each month (homes) or day (grid) against the same period in the previous five years: above the usual range is red, within
+            grey, below green.
           </p>
         </div>
       </div>
@@ -85,46 +124,33 @@ export default function Grid() {
             ))}
           </select>
         </Filter>
-        <span className="tile-meta">{AREA_TITLE[area]}</span>
+        <Filter label="Nowcast">
+          <Segmented label="Nowcast view" value={view} onChange={setView} options={[{ value: "detailed", label: "Detailed" }, { value: "simple", label: "Simple" }]} />
+        </Filter>
       </div>
 
-      {!bundle || !a || !fc ? (
+      {!bundle || !a || !fc || !homesArea || !gridArea ? (
         <div className="loading">Loading regimes and forecast…</div>
       ) : (
         <div className="grid">
+          <ChartCard className="span-12" title="Regime nowcast: homes" source="EIA-861M · filtered, no look-ahead" table={nowcastTable(homesTl, false, homesDetail)}>
+            <RegimeNowcast area={homesArea} timeline={homesTl} areas={bundle.regimes.areas} title={AREA_TITLE.MA_RES} label="Homes" detail={homesDetail} />
+          </ChartCard>
+
           <ChartCard
             className="span-12"
-            title="Regime nowcast"
-            subtitle="Top: how far use sat from the average of the same period in the previous five years, in standard deviations, each point marked with the model's call. Bottom: the model's filtered probability of each regime. Hover or use the arrow keys to read any point."
-            source={
-              daily
-                ? "ISO-NE (2017–2023) and EIA-930 daily load, all customer classes; weather is not removed, so a heat wave above the range shows red. Forward-filtered: each point uses only data up to it."
-                : "EIA-861M residential kWh per account (12-month mean of accounts). Forward-filtered: each point uses only data up to it. Forecast months use the tested gap model where it beat the long-run odds, otherwise the long-run odds (hatched)."
-            }
-            table={{
-              columns: [
-                { key: "d", label: daily ? "Date" : "Month", render: (t) => (daily ? t.date : ymLabel(t.date.slice(0, 7))), sort: (t) => t.date },
-                { key: "r", label: "Regime", render: (t) => <RegimeBadge regime={fromGrid(t.color)} labels={RANGE_LABELS} /> },
-                { key: "p", label: "vs average", align: "r", render: (t) => pct(t.pctVsAverage), sort: (t) => t.pctVsAverage },
-                { key: "z", label: "sd", align: "r", render: (t) => fmtNum(t.pctVsAverage / t.bandPct, 2), sort: (t) => t.pctVsAverage / t.bandPct },
-                { key: "b", label: "Usual range", align: "r", render: (t) => `±${fmtNum(t.bandPct, 1)}%` },
-                { key: "a", label: "P(above)", align: "r", render: (t) => (t.probs ? fmtPct(t.probs[2]) : "—"), sort: (t) => t.probs?.[2] ?? t.pRed },
-              ],
-              rows: [...timeline].reverse(),
-            }}
+            title={`Regime nowcast: ${gridKey === "MA" ? "Massachusetts grid" : ZONE_NAMES[gridKey]}`}
+            source="ISO-NE and EIA-930, all customer classes · weather not removed · filtered, no look-ahead"
+            table={nowcastTable(gridTl, true, gridDetail)}
           >
-            <RegimeNowcast area={a} timeline={timeline} areas={bundle.regimes.areas} title={AREA_TITLE[area]} label={AREA_LABEL[area]} />
+            <RegimeNowcast area={gridArea} timeline={gridTl} areas={bundle.regimes.areas} title={AREA_TITLE[gridKey]} label={AREA_LABEL[gridKey]} detail={gridDetail} />
           </ChartCard>
 
           <Card
             className="span-5"
             title={`${daily ? "Latest day" : "Latest month"}: ${daily ? dateLabel(a.current.date) : ymLabel(a.current.date.slice(0, 7))}`}
-            subtitle={
-              daily
-                ? "The latest day EIA has published (it posts ISO-NE zone load about 10 days late); refreshed daily."
-                : "Statewide residential use per account (EIA-861M, posted about two months late); refreshed daily."
-            }
-            source="Outlook: a gap model where it beat the long-run odds in a walk-forward test, otherwise the long-run odds. Not a weather forecast."
+            subtitle={daily ? "Grid data run about 10 days behind." : "Home data run about two months behind."}
+            source="Outlook: tested model where it beat the long-run odds."
           >
             <div className="stack">
               <div className="row">
@@ -145,7 +171,7 @@ export default function Grid() {
             </div>
           </Card>
 
-          <Card className="span-7" title="The three regimes" subtitle={`${AREA_TITLE[area]}: where each state sits, how long it lasts, how often it occurs.`}>
+          <Card className="span-7" title="The three regimes" subtitle={AREA_TITLE[area]}>
             <div className="table-wrap" style={{ maxHeight: "none" }}>
               <table className="data">
                 <caption className="sr-only">Regime statistics for {AREA_TITLE[area]}</caption>
@@ -216,8 +242,7 @@ export default function Grid() {
               </table>
             </div>
             <p className="tile-meta" style={{ marginTop: 10 }}>
-              The model agrees with the plain above / within / below rule {fmtPct(a.agreementWithBandRule)} of the time; the rest are short
-              excursions it treats as noise inside a longer regime.
+              Agrees with the plain above / within / below rule {fmtPct(a.agreementWithBandRule)} of the time.
             </p>
           </Card>
 
@@ -225,8 +250,8 @@ export default function Grid() {
             <ChartCard
               className="span-12"
               title="Share of days in each regime, by month"
-              subtitle="Above-range days sit on the baseline. 2020–2023 ran mostly within or below the late-2010s range (COVID, efficiency, rooftop solar); load has grown since 2024."
-              source="Forward-filtered: each day uses only data up to that day (leakage test: pass)."
+              subtitle="Above-range days sit on the baseline."
+              source="No look-ahead (leakage test: pass)."
               table={{
                 columns: [
                   { key: "m", label: "Month", render: (m) => ymLabel(m.ym), sort: (m) => m.ym },
@@ -251,8 +276,8 @@ export default function Grid() {
           <ChartCard
             className="span-8"
             title={`Next six months: ${fcArea === "MA" ? "statewide" : fcArea} grid load`}
-            subtitle={`Monte Carlo forecast, ${ymLabel(bundle.forecast.horizon[0])} – ${ymLabel(bundle.forecast.horizon[bundle.forecast.horizon.length - 1])}: median with the 10–90% range, against the same months a year earlier.${area === "MA_RES" ? " (No forecast for the homes series; showing the statewide grid.)" : ""}`}
-            source={`${fmtNum(bundle.forecast.nPaths)} simulated paths: past weather seasons × the zone's regime model × its recent load level, fit on daily load through ${dateLabel(liveStatus.gridThrough)} (refreshed daily).`}
+            subtitle={`Actual monthly load, then the forecast for ${ymLabel(bundle.forecast.horizon[0])} – ${ymLabel(bundle.forecast.horizon[bundle.forecast.horizon.length - 1])}.`}
+            source={`${fmtNum(bundle.forecast.nPaths)} simulated paths · refreshed daily`}
             table={{
               columns: [
                 { key: "m", label: "Month", render: (m) => ymLabel(m.ym) },
@@ -266,24 +291,21 @@ export default function Grid() {
           >
             <Legend
               items={[
+                { label: "Actual", color: "var(--ink)" },
                 { label: "Median forecast", color: "var(--series-1)" },
-                { label: "10–90% range", color: "var(--series-1)", key: "band" },
-                { label: "Same months a year earlier", color: "var(--ink-2)" },
+                { label: "50% range", color: "var(--series-1)", key: "band" },
+                { label: "90% range", color: "var(--fan-90)", key: "band" },
+                { label: `${fc.samplePaths.length} simulated paths`, color: "var(--fan-90)" },
               ]}
             />
-            <LineChart
-              x={fc.months.map((m) => ymShort(m.ym))}
-              xKind="category"
-              series={[
-                { id: "last", label: "Same months last year", color: "var(--ink-2)", values: fc.sameMonthsLastObservedGWh },
-                { id: "p50", label: "Median", color: "var(--series-1)", values: fc.months.map((m) => m.p50) },
-              ]}
-              band={{ label: "10–90% range", color: "var(--series-1)", lower: fc.months.map((m) => m.p10), upper: fc.months.map((m) => m.p90) }}
-              yFormat={(v) => fmtNum(v)}
-              valueFormat={(v) => `${fmtNum(v)} GWh`}
-              titleFor={(i) => ymLabel(fc.months[i].ym)}
-              height={260}
-              ariaLabel={`Six-month load forecast for ${fcArea}`}
+            <FanChart
+              history={fanHistory}
+              forecast={fc.months}
+              paths={fc.samplePaths}
+              lastYear={fc.sameMonthsLastObservedGWh}
+              dataThrough={liveStatus.gridThrough}
+              height={300}
+              ariaLabel={`Monthly grid load for ${fcArea}: actual history and the six-month forecast`}
             />
           </ChartCard>
 
@@ -302,12 +324,8 @@ export default function Grid() {
               <div className="note">
                 {bundle.forecast.backtest ? (
                   <>
-                    <strong>Tested before shown.</strong> Refit before each of the last {bundle.forecast.backtest.nWinters} winters (
-                    {bundle.forecast.backtest.winters}) and run on months it had not seen ({bundle.forecast.backtest.nMonths} zone-months): the
-                    80% range held the actual {fmtPct(bundle.forecast.backtest.cov80)} of the time (90% range:{" "}
-                    {fmtPct(bundle.forecast.backtest.cov90)}), and the median's error was {fmtPct(1 - bundle.forecast.backtest.maeVsNaive)}{" "}
-                    smaller than a “same month last year” guess. Six-month totals missed by {fmtNum(bundle.forecast.backtest.totalMaePct, 1)}% on
-                    average.
+                    <strong>Tested on {bundle.forecast.backtest.nWinters} past winters:</strong> the 80% range held the actual{" "}
+                    {fmtPct(bundle.forecast.backtest.cov80)} of the time.
                   </>
                 ) : (
                   <>
@@ -318,27 +336,14 @@ export default function Grid() {
                   </>
                 )}
               </div>
-              <ul className="prose" style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
-                {bundle.forecast.notes.map((n) => (
-                  <li key={n}>{n}</li>
-                ))}
-              </ul>
             </div>
           </Card>
 
-          <Card className="span-12" title="How to read this" source={bundle.regimes.method}>
+          <Card className="span-12" title="How to read this">
             <div className="prose">
-              <ul>
-                <li>
-                  <strong>Usual range:</strong> {bundle.regimes.definition.range}.
-                </li>
-                {bundle.regimes.notes.map((n) => (
-                  <li key={n}>{n}</li>
-                ))}
-              </ul>
               <p>
-                Zones: <strong>NEMA</strong> {ZONE_NAMES.NEMA}, <strong>SEMA</strong> {ZONE_NAMES.SEMA}, <strong>WCMA</strong>{" "}
-                {ZONE_NAMES.WCMA}. <strong>MA grid</strong> adds the three together.
+                <strong>Usual range:</strong> {bundle.regimes.definition.range}. Zones: <strong>NEMA</strong> {ZONE_NAMES.NEMA},{" "}
+                <strong>SEMA</strong> {ZONE_NAMES.SEMA}, <strong>WCMA</strong> {ZONE_NAMES.WCMA}; <strong>MA grid</strong> adds the three.
               </p>
             </div>
           </Card>

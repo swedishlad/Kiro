@@ -135,13 +135,17 @@ def build_area(area, days, gwh):
     share = np.bincount(idx, minlength=3) / len(idx)
     pct = (x - mean) / mean * 100
     band = sd / mean * 100
+    yoy = year_on_year(x, unit)
     kd = np.array(dates)[keep]
     timeline = []
-    for d, st, pr, v, w in zip(kd, idx, probs[keep], pct[keep], band[keep]):
+    for d, st, pr, v, w, val, yy in zip(kd, idx, probs[keep], pct[keep], band[keep], x[keep], yoy[keep]):
         pr3 = [round(float(q), 4) for q in pr]
         pr3[1] = round(1.0 - pr3[0] - pr3[2], 4)          # rounded probabilities still sum to exactly 1
-        timeline.append({"date": d.isoformat(), "color": COLORS[st], "pRed": pr3[2], "probs": pr3,
-                         "pctVsAverage": round(float(v), 2), "bandPct": round(float(w), 2)})
+        point = {"date": d.isoformat(), "color": COLORS[st], "pRed": pr3[2], "probs": pr3,
+                 "pctVsAverage": round(float(v), 2), "bandPct": round(float(w), 2), "value": round(float(val), 3)}
+        if not np.isnan(yy):
+            point["yoyPct"] = round(float(yy), 2)
+        timeline.append(point)
     monthly = defaultdict(Counter)
     for d, s in zip(kd, idx):
         monthly[f"{d.year}-{d.month:02d}"][COLORS[s]] += 1
@@ -180,6 +184,19 @@ def build_area(area, days, gwh):
                                     "color": COLORS[int(np.argmax(p))], "method": method,
                                     "skillVsLongRunMix": round(skill, 4), "n": n})
     return out, {"dates": dates, "z": z, "probs": probs, "keep": keep}
+
+
+def year_on_year(x, unit):
+    """% change vs a year earlier: daily = the 7-day mean vs the same 7 days 52 weeks before (same weekdays; one day
+    is too noisy), monthly = the same month a year before. NaN where the history is too short."""
+    out = np.full(len(x), np.nan)
+    if unit == "day":
+        roll = np.convolve(x, np.ones(7) / 7, mode="full")[:len(x)]
+        roll[:6] = np.nan
+        out[364:] = (roll[364:] / roll[:-364] - 1) * 100
+    else:
+        out[12:] = (x[12:] / x[:-12] - 1) * 100
+    return out
 
 
 def _phi(x):

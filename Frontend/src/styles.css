@@ -1967,6 +1967,9 @@ table.data tbody th {
   --now-muted: #7e9fb3;
   --now-teal: #2fe0b0;
   --now-line: #7f93ab;
+  --now-band: #26344b;
+  --now-up: #cc7f38;
+  --now-down: #3f88c8;
   --low: #14c46e;
   --mid: #5b6b82;
   --high: #c8403f;
@@ -2060,11 +2063,20 @@ table.data tbody th {
 .now-hatch {
   stroke: var(--now-bg);
 }
+.now-band {
+  fill: var(--now-band);
+}
+.now-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+}
 .nowcast-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 18px;
-  margin: 4px 0 2px 40px;
+  margin: 0 0 10px 40px;
   font-size: 12px;
 }
 .nowcast-legend > span {
@@ -2099,4 +2111,54 @@ table.data tbody th {
   .nowcast-legend {
     margin-left: 0;
   }
+}
+
+/* Forecast fan (components/FanChart.tsx): the design of Backend/viz/examples/05_forecast_fan.svg in the site's
+   tokens. Bands, paths and median share the forecast hue; actual history wears ink. */
+.fan-future {
+  fill: var(--series-1);
+  opacity: 0.04;
+}
+.fan-band-90 {
+  fill: var(--series-1);
+  opacity: 0.12;
+}
+.fan-band-50 {
+  fill: var(--series-1);
+  opacity: 0.24;
+}
+.fan-path {
+  stroke: var(--series-1);
+  stroke-width: 1;
+  opacity: 0.3;
+}
+.fan-median {
+  stroke: var(--series-1);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.fan-actual {
+  stroke: var(--ink);
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+.fan-seam {
+  fill: var(--ink);
+}
+.fan-divider {
+  stroke: var(--ink-muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.fan-reset {
+  stroke: var(--ink-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.fan-forecast-label {
+  fill: var(--series-1);
+  font-size: 11px;
+}
+:root {
+  --fan-90: color-mix(in srgb, var(--series-1) 38%, var(--surface));
 }

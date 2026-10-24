@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "fairwatt/regimes.schema.json",
- "title": "RegimesFile (data/build/regimes.json) v2.3.0",
+ "title": "RegimesFile (data/build/regimes.json) v2.5.0",
  "type": "object",
  "required": [
   "asOf",
@@ -325,7 +325,8 @@
         "pRed",
         "probs",
         "pctVsAverage",
-        "bandPct"
+        "bandPct",
+        "value"
        ],
        "properties": {
         "date": {
@@ -360,6 +361,13 @@
           "minimum": 0,
           "maximum": 1
          }
+        },
+        "value": {
+         "type": "number",
+         "exclusiveMinimum": 0
+        },
+        "yoyPct": {
+         "type": "number"
         }
        }
       }
