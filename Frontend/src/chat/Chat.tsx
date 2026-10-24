@@ -1,6 +1,6 @@
 // The Watt If assistant: a chat panel that streams answers from /api/chat (api/chat.ts), opened by a
-// launcher button or, on the home page, by asking in its prompt box. The conversation survives tab
-// changes and reloads within the browser session.
+// launcher button or, on the home and Welcome pages, by asking in their prompt box. The conversation
+// survives tab changes and reloads within the browser session.
 
 import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 
@@ -24,6 +24,7 @@ const GENERAL = [
 ];
 
 const BY_PAGE: Record<string, string> = {
+  welcome: "What can this site help me with?",
   bill: "Where is the supply rate on my bill?",
   data: "We use about 8,000 kWh a year. How does that compare?",
   regime: "Is Massachusetts using more electricity than usual right now?",
@@ -31,7 +32,7 @@ const BY_PAGE: Record<string, string> = {
   about: "Where does this site's data come from?",
 };
 
-/** Example questions the home page's prompt box cycles through as its placeholder. */
+/** Example questions the prompt box (home and Welcome pages) cycles through as its placeholder. */
 const PROMPT_HINTS = [
   "Where is the supply rate on my bill?",
   "What does basic service cost right now?",
@@ -44,7 +45,10 @@ const PROMPT_HINTS = [
 /** The mounted panel's way in for the prompt box: opens the panel and asks there. */
 let askInPanel: ((question: string) => void) | null = null;
 
-/** Whether the home page's prompt box has scrolled out of sight, which brings the launcher back there. */
+/** Pages with a prompt box, which stands in for the launcher until it scrolls away. */
+const PROMPT_PAGES = new Set(["bill", "welcome"]);
+
+/** Whether the page's prompt box has scrolled out of sight, which brings the launcher back there. */
 let promptAway = false;
 const promptWatchers = new Set<() => void>();
 
@@ -349,7 +353,7 @@ export function Chat({ page }: { page: string }) {
         aria-expanded={open}
         aria-controls="chat-panel"
         onClick={() => setOpen(true)}
-        hidden={open || (page === "bill" && !awayFromPrompt)}
+        hidden={open || (PROMPT_PAGES.has(page) && !awayFromPrompt)}
       >
         <ChatIcon />
         Ask Watt If
@@ -477,9 +481,9 @@ function SendIcon() {
 }
 
 /**
- * The home page's question box, in place of the floating launcher there until it scrolls away. Its
- * placeholder cycles through example questions, one per run of the hint's CSS animation; asking opens the
- * panel with the answer.
+ * The question box on the home and Welcome pages, in place of the floating launcher there until it scrolls
+ * away. Its placeholder cycles through example questions, one per run of the hint's CSS animation; asking
+ * opens the panel with the answer.
  */
 export function PromptBox() {
   const [draft, setDraft] = useState("");
