@@ -54,13 +54,13 @@ const SOURCES = [
 ];
 
 const ARTIFACTS = [
-  { file: "consumption_stats.json", used: "Typical account, RECS bands, seasonal shares (Overview, Usage, calculator)" },
-  { file: "hmm_regimes.json", used: `Monthly Low/Mid/High use regimes, ${hmm.timeline.length} months (Overview, Usage)` },
+  { file: "consumption_stats.json", used: "Typical account, RECS bands, seasonal shares (Bill check, Usage, calculator)" },
+  { file: "hmm_regimes.json", used: `Monthly Low/Mid/High use regimes, ${hmm.timeline.length} months (Usage)` },
   { file: "savings_model.json", used: "Current basic-service term and worked examples (Prices)" },
   { file: "map_consumption.json", used: "Traffic-light cut points and the modeled per-town level (Usage, Towns)" },
   { file: "live_status.json", used: `Data-through dates: grid ${liveStatus.gridThrough}, homes ${liveStatus.homesThrough} (Sources, Grid)` },
-  { file: "regimes.json", used: "Homes (monthly) and grid zones (daily) vs their usual range, outlooks (Overview, Regimes & forecast)" },
-  { file: "mc_forecast.json", used: "Six-month load forecast and its walk-forward test (Overview, Regimes & forecast)" },
+  { file: "regimes.json", used: "Homes (monthly) and grid zones (daily) vs their usual range, outlooks (Regimes & forecast)" },
+  { file: "mc_forecast.json", used: "Six-month load forecast and its walk-forward test (Regimes & forecast)" },
 ];
 
 export default function Sources() {
@@ -68,7 +68,7 @@ export default function Sources() {
     <>
       <div className="page-head">
         <div>
-          <h1 className="page-title">Data and methods</h1>
+          <h2 className="page-title">Data and methods</h2>
           <p className="page-lede">
             Every number on this site comes from a public source committed to this repository, through the Python backend in{" "}
             <code className="code">Backend/</code>. The dashboard reads the same files; nothing is fetched from a third-party API at

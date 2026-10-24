@@ -62,7 +62,7 @@ export default function Grid() {
     <>
       <div className="page-head">
         <div>
-          <h1 className="page-title">Is Massachusetts using more than usual?</h1>
+          <h2 className="page-title">Is Massachusetts using more than usual?</h2>
           <p className="page-lede">
             Each month (homes) or day (grid zones) is compared with the same period in the previous five years. Inside the usual range —
             the average ± 1 standard deviation — is <strong>Within</strong>; above it is <strong>Above</strong>, below it{" "}

@@ -67,16 +67,19 @@ and load zones, and how to read the dashboard.
 
 ## Sections
 
+Four tabs: Bill check (the home page), Energy data, Towns and About. Energy data stacks the Usage, Prices & savings and
+Regimes & forecast sections; About ends with Data & methods. The old section addresses (`#/usage`, `#/prices`, `#/grid`,
+`#/sources`) open the tab that holds them and scroll to the section; `#/overview` opens Bill check.
+
 | Tab | What it shows | Backend inputs |
 |---|---|---|
-| Overview | 12-month average price, KPI tiles, homes vs their usual range, basic-service rates, grid zones + 6-month forecast | `eia_ma_monthly.csv`, `consumption_stats.json`, `savings_model.json`, `regimes.json`, `mc_forecast.json` |
-| Usage | Monthly use per account since 2010 with HMM regimes, year-over-year sales, regime explainer, “a home like yours” estimator, RECS distribution and breakdowns | `eia_ma_monthly.csv`, `hmm_regimes.json`, `recs_ma.csv`, `consumption_stats.json`, `map_consumption.json` |
-| Prices & savings | Basic-service monthly rates by utility, all-in price vs supply rate, fixed terms, savings calculator | `snapshot/monthly_residential_cents_*.csv`, `snapshot/fixed_residential_cents_*.csv`, `savings_model.json` |
-| Bill check | Upload a photo of an electric bill (or paste a PDF's text): it is read in the browser with Tesseract.js, the viewer checks the fields, and the bill is compared with the typical Massachusetts account for that month, the average price and their utility's basic-service rate, followed by suggestions (switching supply, using less, community and rooftop solar, heat pumps) | `consumption_stats.json`, `eia_ma_monthly.csv`, `recs_ma.csv`, `snapshot/fixed_residential_cents_*.csv` |
-| Regimes & forecast | Homes (monthly) and ISO-NE zones (daily) vs the same period in the previous 5 years, outlook, transition matrix; six-month Monte Carlo forecast with its walk-forward test | `regimes.json`, `mc_forecast.json` |
+| Bill check (home page) | Upload a photo of an electric bill (or paste a PDF's text): it is read in the browser with Tesseract.js, the viewer checks the fields, and the bill is compared with the typical Massachusetts account for that month, the average price and their utility's basic-service rate, followed by suggestions (switching supply, using less, community and rooftop solar, heat pumps) | `consumption_stats.json`, `eia_ma_monthly.csv`, `recs_ma.csv`, `snapshot/fixed_residential_cents_*.csv` |
+| Energy data → Usage | Monthly use per account since 2010 with HMM regimes, year-over-year sales, regime explainer, “a home like yours” estimator, RECS distribution and breakdowns | `eia_ma_monthly.csv`, `hmm_regimes.json`, `recs_ma.csv`, `consumption_stats.json`, `map_consumption.json` |
+| Energy data → Prices & savings | Basic-service monthly rates by utility, all-in price vs supply rate, fixed terms, savings calculator | `snapshot/monthly_residential_cents_*.csv`, `snapshot/fixed_residential_cents_*.csv`, `savings_model.json` |
+| Energy data → Regimes & forecast | Homes (monthly) and ISO-NE zones (daily) vs the same period in the previous 5 years, outlook, transition matrix; six-month Monte Carlo forecast with its walk-forward test | `regimes.json`, `mc_forecast.json` |
 | Towns | Map of all 351 towns (load zone, population, growth), searchable table | `ma_towns.csv`, `map_consumption.json`, `src/geo/ma-towns.topo.json` |
-| Data & methods | Sources, methods, limits, rebuild steps | — |
 | About | What Watt If is and the team (Tae, Johan, Yuan, Lin; listed in `src/data/team.ts`) | — |
+| About → Data & methods | Sources, methods, limits, rebuild steps | — |
 | Assistant (every page) | Chat answers grounded in the knowledge base below | `server/knowledge.ts` (generated from all of the above) |
 
 ## Staying in sync with the backend

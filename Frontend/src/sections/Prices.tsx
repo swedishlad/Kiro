@@ -35,7 +35,7 @@ export default function Prices() {
     <>
       <div className="page-head">
         <div>
-          <h1 className="page-title">Prices and basic service</h1>
+          <h2 className="page-title">Prices and basic service</h2>
           <p className="page-lede">
             Basic service is the default electricity supply your utility buys for you at rates set every six months and approved by the
             Department of Public Utilities. Compare it with what homes pay overall, and check whether a competitive supplier saved you

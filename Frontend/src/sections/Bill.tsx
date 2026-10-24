@@ -65,7 +65,7 @@ function toInput(f: Form): { input: BillInput } | { missing: string[] } {
   };
 }
 
-type Status = { kind: "idle" } | { kind: "reading"; progress: OcrProgress } | { kind: "read"; found: number } | { kind: "error"; message: string };
+type Status = { kind: "idle" } | { kind: "reading"; progress: OcrProgress } | { kind: "read"; found: number; utility: boolean } | { kind: "error"; message: string };
 
 export default function Bill() {
   const [form, setForm] = useState<Form>(EMPTY);
@@ -85,7 +85,7 @@ export default function Bill() {
     const found = [parsed.fields.utility, parsed.fields.kwh, parsed.fields.totalDollars, parsed.fields.supplyCents, parsed.fields.periodEnd ?? parsed.fields.days].filter(
       (v) => v !== null,
     ).length;
-    setStatus({ kind: "read", found });
+    setStatus({ kind: "read", found, utility: parsed.fields.utility !== null });
   }
 
   async function readFile(file: File | undefined) {
@@ -121,18 +121,19 @@ export default function Bill() {
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1 className="page-title">Check your electric bill</h1>
-          <p className="page-lede">
-            Add a photo of your bill to see how your use and costs compare with Massachusetts homes, and what would lower them. The photo
-            is read on your device and never uploaded.
-          </p>
-        </div>
-      </div>
+      <header className="mission">
+        <h1 className="mission-title">Watt If helps Massachusetts households pay a fair price for electricity.</h1>
+        <p className="mission-lede">
+          Check your electric bill: add a photo to see how your use and costs compare with homes across the state, and what would lower
+          them. The photo is read on your device and never uploaded.
+        </p>
+        <p className="mission-scope">
+          <strong>Massachusetts bills only.</strong> Works for National Grid, Eversource and Unitil customers.
+        </p>
+      </header>
 
       <div className="grid">
-        <Card className="span-5 align-start" title="Your bill" subtitle="A clear photo or screenshot of the page with your usage and charges.">
+        <Card className="span-5 align-start" title="Your bill" subtitle="A clear photo or screenshot of a Massachusetts electric bill, on the page with your usage and charges.">
           <label
             className={`dropzone${dragging ? " is-dragging" : ""}${reading ? " is-busy" : ""}`}
             onDragOver={(e) => {
@@ -182,6 +183,12 @@ export default function Bill() {
                 ) : (
                   <>
                     Found <strong>{status.found} of 5</strong> details. Check them on the right and fix anything that's off.
+                    {!status.utility ? (
+                      <>
+                        {" "}
+                        No Massachusetts utility was named on it: Bill check only works for National Grid, Eversource and Unitil bills.
+                      </>
+                    ) : null}
                   </>
                 )}
               </p>
@@ -247,7 +254,8 @@ export default function Bill() {
           <div style={{ marginTop: 16 }}>
             <Callout>
               Your use is compared with the typical Massachusetts home in the same month, and your supply rate with your utility's
-              basic-service rate. The photo and the numbers stay in this browser; nothing is saved or sent anywhere.
+              basic-service rate. Town-run electric companies (municipal light plants, such as Braintree or Concord) have no basic
+              service, so only their usage comparison applies. The photo and the numbers stay in this browser.
             </Callout>
           </div>
         </Card>
