@@ -1790,191 +1790,55 @@ table.data tbody th {
 }
 
 /* ---------------------------------------------------------------------------------------------
-   First-visit intro (src/components/Intro.tsx): one page over Bill check. Below Bill check's
-   drop overlay (z-index 50), so a bill dragged in still shows where to drop it.
+   First-visit note (src/components/Intro.tsx): a small card in the bottom-left corner of Bill
+   check (the assistant's button has the right). It floats, so it gets the float shadow, and
+   eases in a moment after the page so it doesn't greet the visitor at the door.
    --------------------------------------------------------------------------------------------- */
-.intro-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  /* auto margins centre the card, and fall back to the top when it is taller than the window */
-  display: flex;
-  padding: 24px;
-  overflow-y: auto;
-  background: color-mix(in srgb, var(--page) 70%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  animation: intro-fade 0.2s ease-out;
-}
 .intro {
-  position: relative;
-  width: min(600px, 100%);
-  margin: auto;
-  padding: 40px;
-  border-radius: 24px;
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(420px, calc(100vw - 40px));
+  padding: 14px 14px 14px 18px;
+  border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--float-shadow);
-  animation: intro-rise 0.25s ease-out;
+  animation: intro-in 0.3s ease-out 0.8s both;
 }
-@keyframes intro-fade {
+@keyframes intro-in {
   from {
     opacity: 0;
+    transform: translateY(10px);
   }
-}
-@keyframes intro-rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-.intro-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--fill);
-  color: var(--ink-2);
-  cursor: pointer;
-}
-.intro-close:hover {
-  color: var(--ink);
-}
-.intro-eyebrow {
-  color: var(--accent-ink);
-  font-size: 15px;
-  font-weight: 600;
 }
 .intro-title {
-  margin-top: 6px;
-  font-size: 34px;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-}
-.intro-lede {
-  margin-top: 12px;
-  color: var(--ink-2);
-  font-size: 17px;
-  line-height: 1.45;
-}
-.intro-label {
-  margin-top: 24px;
-  font-weight: 600;
-}
-.intro-bill {
-  display: grid;
-  gap: 4px;
-  margin-top: 10px;
-  padding: 8px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-}
-.intro-bill-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--surface);
-  font-size: 15px;
-}
-.intro-bill-row > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.intro-mark {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-}
-.intro-small {
-  margin-top: 10px;
-  color: var(--ink-2);
-  font-size: 14px;
-}
-.intro-team {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--grid);
-  color: var(--ink-2);
-  font-size: 14px;
-}
-.intro-faces {
-  display: flex;
-  flex: none;
-  padding-left: 6px;
-}
-.intro-faces span {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  margin-left: -6px;
-  border-radius: 999px;
-  box-shadow: 0 0 0 2px var(--surface);
-  color: #fff;
-  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
 }
-.intro-actions {
-  margin-top: 24px;
+.intro-text {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.4;
 }
-.intro-go {
-  width: 100%;
-  padding: 13px 22px;
-  font-size: 17px;
+.intro-ok {
+  flex: none;
 }
 
 @media (max-width: 560px) {
-  .intro-backdrop {
-    padding: 0;
-  }
   .intro {
-    width: 100%;
-    min-height: 100%;
-    margin: 0;
-    padding: 56px 20px 0;
-    border-radius: 0;
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-  }
-  .intro-title {
-    font-size: 30px;
-  }
-  .intro-team {
-    align-items: flex-start;
-  }
-  /* the button stays in reach at the bottom of a phone screen */
-  .intro-actions {
-    position: sticky;
-    bottom: 0;
-    margin-top: auto;
-    padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
-    background: var(--surface);
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    gap: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .intro-backdrop,
   .intro {
     animation: none;
   }

@@ -103,8 +103,8 @@ export function App() {
   const route: RouteId = ROUTES.some((r) => r.id === raw) ? (raw as RouteId) : (section?.tab ?? "bill");
   const { choice } = useTheme();
 
-  // The intro opens over Bill check on a first visit to the home page (a deep link goes straight to its page),
-  // and from #/welcome, the old Welcome page's address. Closing it lands on Bill check.
+  // A first visit to the home page gets a small note on Bill check (a deep link goes straight to its page), as
+  // does #/welcome, the old Welcome page's address. Closing it, or leaving Bill check, puts it away for good.
   const [intro, setIntro] = useState(() => raw === "welcome" || (route === "bill" && !hasSeenIntro()));
   useEffect(() => {
     if (raw === "welcome") setIntro(true);
@@ -114,6 +114,9 @@ export function App() {
     setIntro(false);
     if (window.location.hash.replace(/^#\/?/, "").startsWith("welcome")) window.location.replace("#/bill");
   }, []);
+  useEffect(() => {
+    if (intro && route !== "bill") closeIntro();
+  }, [intro, route, closeIntro]);
 
   useEffect(() => {
     const label = section?.scroll ? section.label : ROUTES.find((r) => r.id === route)!.label;
@@ -124,10 +127,10 @@ export function App() {
 
   return (
     <>
-      <a className="skip-link" href="#main" inert={intro}>
+      <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <header className="topbar" inert={intro}>
+      <header className="topbar">
         <div className="topbar-inner">
           <div className="brand-row">
             <a className="brand" href="#/bill" style={{ color: "inherit", textDecoration: "none" }}>
@@ -148,7 +151,7 @@ export function App() {
           </nav>
         </div>
       </header>
-      <main id="main" tabIndex={-1} inert={intro}>
+      <main id="main" tabIndex={-1}>
         <Suspense fallback={<div className="loading">Loading…</div>}>
           {route === "bill" && <Bill />}
           {route === "data" && <EnergyData />}
@@ -157,15 +160,13 @@ export function App() {
           {route === "about" && <About />}
         </Suspense>
       </main>
-      <footer className="footer" inert={intro}>
+      <footer className="footer">
         <span>Public data: U.S. EIA (Form 861M, RECS 2020), Mass.gov DPU basic service rates, ISO New England, U.S. Census, MassGIS / LMEC town boundaries.</span>
         <span>
           Supply-side dollar figures only · <a href="#/sources">How these numbers are made</a>
         </span>
       </footer>
-      <div inert={intro}>
-        <Chat page={route} />
-      </div>
+      <Chat page={route} />
       {intro ? <Intro onClose={closeIntro} /> : null}
     </>
   );
