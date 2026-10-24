@@ -1,5 +1,6 @@
 import { Card } from "../components/ui.tsx";
 import { TEAM } from "../data/team.ts";
+import Sources from "./Sources.tsx";
 
 // Avatars take the categorical slots in order, so each person keeps the same colour in both themes.
 const AVATAR_COLORS = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--series-4)"];
@@ -50,11 +51,14 @@ export default function About() {
               assistant answers from a knowledge base built from the same files.
             </p>
             <p>
-              Sources, methods and limits are on <a href="#/sources">Data & methods</a>.
+              Sources, methods and limits are in <a href="#/sources">Data and methods</a> below.
             </p>
           </div>
         </Card>
       </div>
+      <section id="sec-sources" className="page-section page-section-break" aria-label="Data and methods">
+        <Sources />
+      </section>
     </>
   );
 }

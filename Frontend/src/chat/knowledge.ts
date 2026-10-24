@@ -111,14 +111,15 @@ function siteSection(): string {
 
 FairWatt is a free, public dashboard about Massachusetts residential electricity: what homes use, what they pay, what basic service costs, and whether use is running above or below its usual range. Every number comes from public data (U.S. EIA, Mass.gov DPU, ISO New England, U.S. Census, MassGIS) processed by the project's Python backend. The site has no user accounts and cannot see anyone's bill, meter or utility account; it does not sell electricity or sign anyone up.
 
-Tabs (the site uses hash links, so link to them exactly as written):
-- [Overview](#/overview): the 12-month average price with a bar per year since 2010; tiles for the typical home's yearly use, residential sales, number of accounts, the current basic-service fixed rates and homes vs their usual range; monthly use per account for the last 5 years; basic-service rates by utility; each grid zone's latest day and six-month forecast.
+The site has four tabs: Bill check, Energy data, Towns and About. Energy data holds the Usage, Prices & savings and Regimes & forecast sections; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it.
+- [Bill check](#/bill) (the home page): a visitor adds a photo of their Massachusetts electric bill (National Grid, Eversource or Unitil), or pastes a PDF bill's text. It is read in their browser and never uploaded, so you cannot see it. They check the numbers it read (utility, kWh, bill month, total, supply rate, days) and see their use vs the typical Massachusetts home that month, their cost and all-in ¢/kWh vs the state average, their supply rate vs their utility's basic-service rate, and suggestions: switching supply back to basic service, a Mass Save assessment, community or rooftop solar, heat pumps. Usage is only published statewide, so the comparison is Massachusetts-wide plus the visitor's own utility, not their town.
+- [Energy data](#/data): the three sections below on one page.
 - [Usage](#/usage): monthly use per residential account since 2010 with the Low / Mid / High use regimes, sales vs a year earlier, what the regimes mean, the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel).
 - [Prices & savings](#/prices): basic-service monthly rates by utility since 2005, the all-in average price vs the supply rate, fixed-option terms, and the "Did your supplier save you money?" calculator with a month-by-month breakdown.
 - [Regimes & forecast](#/grid): homes (monthly) and the ISO-NE grid zones (daily) compared with the same period in the previous 5 years, the outlook, how the three regimes behave, and the six-month Monte Carlo load forecast with its walk-forward test.
 - [Towns](#/towns): a map and searchable table of all 351 cities and towns with county, ISO-NE load zone, 2020 and 2024 population and growth.
-- [Data & methods](#/sources): sources, how each number is made, limits, and how to rebuild.
 - [About](#/about): what FairWatt is and the team that builds it: ${TEAM.slice(0, -1).join(", ")} and ${TEAM[TEAM.length - 1]}.
+- [Data & methods](#/sources) (on the About tab): sources, how each number is made, limits, and how to rebuild.
 
 Interactive tools:
 - "A home like yours" ([Usage](#/usage)): pick home type, size, main heating fuel and household size; it returns the median yearly kWh of similar surveyed homes and their P10–P90 range. When fewer than ${MIN_HOMES} surveyed homes match every answer it drops the least important answers (household size first, then heating fuel, then home type) and says so. Visitors can also type their own yearly kWh (the sum of 12 bills) to see what share of Massachusetts homes they use more than.
@@ -137,7 +138,7 @@ function termsSection(): string {
 - **Typical home (typical account)**: statewide residential sales ÷ the 12-month average number of accounts (EIA-861M). It includes apartments and seasonal homes.
 - **A home like yours / P10, P50, P90**: weighted percentiles of yearly use from the 552 Massachusetts homes in EIA's 2020 Residential Energy Consumption Survey (RECS). 10% of similar homes use less than P10, half use less than P50 (the median) and 90% use less than P90. These are ranges for similar homes, not a reading of anyone's meter.
 - **Low / Mid / High (use regimes, Usage tab)**: a 3-state hidden Markov model over monthly kWh per account. It mostly follows the season: summer months and January are High, spring and fall Low.
-- **Below / Within / Above range (usual-range regimes, Overview and Regimes & forecast tabs)**: each month (homes) or day (grid zones) is compared with the same period in the previous 5 years; the usual range is that average ± 1 standard deviation. A hidden Markov model smooths the call so one odd day doesn't flip it. Colours always come with a shape and a word: green ▼ Below, grey ● Within, red ▲ Above. Weather is not removed, so a heat wave or cold snap that pushes use up shows as Above.
+- **Below / Within / Above range (usual-range regimes, Regimes & forecast section)**: each month (homes) or day (grid zones) is compared with the same period in the previous 5 years; the usual range is that average ± 1 standard deviation. A hidden Markov model smooths the call so one odd day doesn't flip it. Colours always come with a shape and a word: green ▼ Below, grey ● Within, red ▲ Above. Weather is not removed, so a heat wave or cold snap that pushes use up shows as Above.
 - **Load zones**: ISO New England splits Massachusetts into ${ZONES.map((z) => `${z} (${ZONE_NAMES[z]})`).join(", ")}. Zone load includes businesses as well as homes. "MA grid" is the three zones added together.
 - **Modeled / simulated**: produced by a model rather than measured, such as the town-level figures and the forecast. The site labels these.`;
 }
@@ -170,7 +171,7 @@ function headlineSection(d: KnowledgeInputs): string {
       .map((a) => `${a.area} ${fmtNum(a.total.p50 / 1000, 1)} TWh (${fmtNum(a.total.p10 / 1000, 1)}–${fmtNum(a.total.p90 / 1000, 1)})`)
       .join(", ")}.`,
   ];
-  return `## Headline numbers (Overview tab)\n\n${lines.join("\n")}`;
+  return `## Headline numbers\n\n${lines.join("\n")}`;
 }
 
 function yearsSection(d: KnowledgeInputs): string {
