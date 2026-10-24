@@ -33,6 +33,7 @@ build, then upload `dist/`.
 | Overview | 12-month average price, KPI tiles, homes vs their usual range, basic-service rates, grid zones + 6-month forecast | `eia_ma_monthly.csv`, `consumption_stats.json`, `savings_model.json`, `regimes.json`, `mc_forecast.json` |
 | Usage | Monthly use per account since 2010 with HMM regimes, year-over-year sales, regime explainer, “a home like yours” estimator, RECS distribution and breakdowns | `eia_ma_monthly.csv`, `hmm_regimes.json`, `recs_ma.csv`, `consumption_stats.json`, `map_consumption.json` |
 | Prices & savings | Basic-service monthly rates by utility, all-in price vs supply rate, fixed terms, savings calculator | `snapshot/monthly_residential_cents_*.csv`, `snapshot/fixed_residential_cents_*.csv`, `savings_model.json` |
+| Bill check | Upload a photo of an electric bill (or paste a PDF's text): it is read in the browser with Tesseract.js, the viewer checks the fields, and the bill is compared with the typical Massachusetts account for that month, the average price and their utility's basic-service rate, followed by suggestions (switching supply, using less, community and rooftop solar, heat pumps) | `consumption_stats.json`, `eia_ma_monthly.csv`, `recs_ma.csv`, `snapshot/fixed_residential_cents_*.csv` |
 | Regimes & forecast | Homes (monthly) and ISO-NE zones (daily) vs the same period in the previous 5 years, outlook, transition matrix; six-month Monte Carlo forecast with its walk-forward test | `regimes.json`, `mc_forecast.json` |
 | Towns | Map of all 351 towns (load zone, population, growth), searchable table | `ma_towns.csv`, `map_consumption.json`, `src/geo/ma-towns.topo.json` |
 | Data & methods | Sources, methods, limits, rebuild steps | — |
@@ -60,6 +61,18 @@ src/
   sections/    one file per tab; all but Overview are lazy-loaded
   geo/         351-town TopoJSON (MassGIS boundaries via LMEC, simplified to 6%)
 ```
+
+## Bill reader (OCR)
+
+- `npm run dev` and `npm run build` first run `scripts/copy-ocr-assets.mjs`, which copies the
+  Tesseract.js worker, its WebAssembly core and the English model from `node_modules` into
+  `public/ocr/` (git-ignored). The page loads them from this site only, so no CDN is contacted and
+  the bill photo never leaves the browser. About 7 MB is downloaded once, only on the Bill check tab.
+- `src/data/bill.ts` turns bill text into fields (utility, kWh, total, supply rate, billing period),
+  keeping the line each came from; `src/data/billCompare.ts` does the comparison and picks the
+  suggestions. Both are pure and covered by `src/data/bill.test.ts`.
+- Usage and price are only published statewide, so the comparison is with the typical Massachusetts
+  account and the bill's own utility's basic-service rate, and the page says so.
 
 ## Design notes
 
