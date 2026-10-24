@@ -5,7 +5,7 @@ import { KwhHistogram } from "../components/Histogram.tsx";
 import { usePersistentState } from "../components/hooks.ts";
 import { LineChart } from "../components/LineChart.tsx";
 import { RangeChart } from "../components/RangeChart.tsx";
-import { REGIMES, REGIME_META, RegimeBadge, RegimeIcon, RegimeLegend, fromHmm, fromLevel } from "../components/regime.tsx";
+import { LEVEL_LABELS, REGIMES, RegimeBadge, RegimeIcon, RegimeLegend, fromHmm, fromLevel } from "../components/regime.tsx";
 import { Callout, Card, ChartCard, Filter, Legend, Segmented } from "../components/ui.tsx";
 import { RANGES, RANGE_LABEL, sliceRange, type Range } from "../data/derive.ts";
 import { MONTHS, fmtNum, fmtPct, fmtSignedPct, ymLabel } from "../data/format.ts";
@@ -144,9 +144,10 @@ export default function Usage() {
               );
             })}
             <p className="note">
-              The model keys on the level of use, not the calendar, so the regimes mostly track the seasons: <strong>High</strong> months
-              are summer air-conditioning and mid-winter peaks, <strong>Low</strong> months are spring and autumn. A peak month that
-              lands in Mid or Low, or a shoulder month in High, is the one worth a closer look.
+              This model keys on the level of use, so its regimes mostly track the seasons: <strong>High</strong> months are summer
+              air-conditioning and mid-winter peaks, <strong>Low</strong> months are spring and autumn. To see whether a month was unusual
+              for its time of year, use <a href="#/grid">Regimes &amp; forecast</a>, which compares each month with the same month in the
+              previous five years.
             </p>
             <TransitionTable />
           </div>
@@ -170,7 +171,7 @@ function TransitionTable() {
               <th key={r} scope="col" className="r">
                 <span className="row" style={{ gap: 4, justifyContent: "flex-end" }}>
                   <RegimeIcon regime={r} />
-                  {REGIME_META[r].label}
+                  {LEVEL_LABELS[r]}
                 </span>
               </th>
             ))}
@@ -182,7 +183,7 @@ function TransitionTable() {
               <th scope="row" style={{ fontWeight: 500 }}>
                 <span className="row" style={{ gap: 4 }}>
                   <RegimeIcon regime={REGIMES[i]} />
-                  {REGIME_META[REGIMES[i]].label}
+                  {LEVEL_LABELS[REGIMES[i]]}
                 </span>
               </th>
               {row.map((p, j) => (

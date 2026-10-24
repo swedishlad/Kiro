@@ -223,26 +223,6 @@ export const SQFT_LABELS: Record<SqftBucket, string> = {
   "3000+": "3,000+ sq ft",
 };
 
-// ----------------------------------------------------------------------------- ISO-NE daily
-
-export interface DailyLoad {
-  date: string;
-  zone: Zone;
-  rtMwh: number;
-  peakMw: number;
-  tempF: number;
-}
-
-export function parseDaily(text: string): DailyLoad[] {
-  return parseCsv(text).map((r) => ({
-    date: r.date,
-    zone: r.zone as Zone,
-    rtMwh: req(r.rt_mwh),
-    peakMw: req(r.peak_mw),
-    tempF: req(r.temp_f),
-  }));
-}
-
 // ----------------------------------------------------------------------------- JSON artifacts
 
 export interface Band {
@@ -316,28 +296,74 @@ export interface HmmRegimes {
 
 export type GridColor = "green" | "grey" | "red";
 
+/** regimes.json areas: the three ISO-NE zones and MA (daily), plus MA_RES = homes (monthly, EIA). */
+export type RegimeArea = Area | "MA_RES";
+
+export interface RangePoint {
+  date: string;
+  color: GridColor;
+  pRed: number;
+  /** consumption vs the historical average of the same period in the previous 5 years, % */
+  pctVsAverage: number;
+  /** half-width of the historical average range (±1 sd), % */
+  bandPct: number;
+}
+
 export interface GridArea {
-  area: Area;
+  area: RegimeArea;
+  unit: "day" | "month";
   states: {
     color: GridColor;
     label: string;
-    meanResidualGWh: number;
-    sdResidualGWh: number;
+    meanSdFromAverage: number;
+    sdWithinState: number;
     expectedDurationDays: number;
     shareOfDays: number;
   }[];
   transition: number[][];
-  current: { date: string; probs: number[]; color: GridColor };
-  timeline: { date: string; color: GridColor; pRed: number }[];
+  current: RangePoint & { probs: number[] };
+  timeline: RangePoint[];
   monthly: { ym: string; green: number; grey: number; red: number }[];
   outlook: { days: number; probs: number[] }[];
+  agreementWithBandRule: number;
 }
 
 export interface GridRegimes {
   asOf: string;
   method: string;
   series: string;
+  definition: { red: string; grey: string; green: string; range: string };
   areas: GridArea[];
   leakageTest: string;
+  notes: string[];
+}
+
+export interface Quantiles {
+  p5: number;
+  p10: number;
+  p25: number;
+  p50: number;
+  p75: number;
+  p90: number;
+  p95: number;
+}
+
+export interface McForecast {
+  asOf: string;
+  horizon: string[];
+  nPaths: number;
+  seed: number;
+  method: string;
+  levelAdjustment: { source: string; ratio: number };
+  areas: {
+    area: Area;
+    unit: string;
+    months: (Quantiles & { ym: string })[];
+    total: Quantiles;
+    samplePaths: number[][];
+    /** the same calendar months in the last observed season (2022-23), scaled to today's level */
+    sameMonthsLastObservedGWh: number[];
+  }[];
+  calibration: { trainEnd: string; test: string; nMonths: number; cov80: number; cov90: number; maeVsNaive: number };
   notes: string[];
 }

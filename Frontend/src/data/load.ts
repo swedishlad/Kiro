@@ -1,5 +1,5 @@
-// Bundles the backend's committed artifacts. Small files load eagerly; the big ISO-NE ones
-// (daily load, grid regimes, town geometry) are split into lazy chunks — see loadGrid/loadGeo.
+// Bundles the backend's committed artifacts. Small files load eagerly; the bigger ones (regimes,
+// forecast, town geometry) are split into lazy chunks — see loadGrid/loadGeo.
 
 import eiaCsv from "@backend/build/eia_ma_monthly.csv?raw";
 import eiaTotalCsv from "@backend/build/eia_ma_total_monthly.csv?raw";
@@ -13,7 +13,6 @@ import monthlyRatesCsv from "@backend/snapshot/monthly_residential_cents_2026-07
 
 import {
   kwhPerAccountTrailing,
-  parseDaily,
   parseEia,
   parseEiaTotal,
   parseFixedRates,
@@ -24,8 +23,8 @@ import {
   type GridRegimes,
   type HmmRegimes,
   type MapConsumption,
+  type McForecast,
   type SavingsModel,
-  type Zone,
 } from "./model.ts";
 import { termSpans } from "./savings.ts";
 
@@ -44,12 +43,6 @@ export const hmm = hmmJson as HmmRegimes;
 /** Regime per month, keyed by YYYY-MM. */
 export const hmmByYm = new Map(hmm.timeline.map((t) => [t.period, t]));
 
-/** Population (2024) per ISO-NE load zone — the weights the backend uses for MA temperature. */
-export const zonePop2024: Record<Zone, number> = towns.reduce(
-  (acc, t) => ((acc[t.zone] += t.pop2024), acc),
-  { NEMA: 0, SEMA: 0, WCMA: 0 } as Record<Zone, number>,
-);
-
 export async function loadMapConsumption(): Promise<MapConsumption> {
   const mod = await import("@backend/build/map_consumption.json");
   return mod.default as MapConsumption;
@@ -57,15 +50,15 @@ export async function loadMapConsumption(): Promise<MapConsumption> {
 
 export interface GridBundle {
   regimes: GridRegimes;
-  daily: ReturnType<typeof parseDaily>;
+  forecast: McForecast;
 }
 
 let gridPromise: Promise<GridBundle> | null = null;
 export function loadGrid(): Promise<GridBundle> {
-  gridPromise ??= Promise.all([
-    import("@backend/build/regimes.json"),
-    import("@backend/build/isone_ma_daily.csv?raw"),
-  ]).then(([r, d]) => ({ regimes: r.default as unknown as GridRegimes, daily: parseDaily(d.default) }));
+  gridPromise ??= Promise.all([import("@backend/build/regimes.json"), import("@backend/build/mc_forecast.json")]).then(([r, f]) => ({
+    regimes: r.default as unknown as GridRegimes,
+    forecast: f.default as unknown as McForecast,
+  }));
   return gridPromise;
 }
 
