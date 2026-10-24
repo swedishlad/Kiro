@@ -42,6 +42,9 @@ except ImportError:
     HAS_CPP_MC = False
     fairwatt_mc_cpp = None  # type: ignore
 
+# Paths the NumPy fallback advances at once (its normals take n x days x 8 bytes: ~58 MB at 20 years).
+_PY_CHUNK_PATHS = 1000
+
 
 def _simulate_grid_decarb_python(
     initial_moer_g_co2e_per_kwh: float,
@@ -57,37 +60,63 @@ def _simulate_grid_decarb_python(
     num_years: int = DEFAULT_ANALYSIS_YEARS,
     base_seed: int = DEFAULT_MC_SEED,
 ):
-    """Pure Python fallback for simulate_grid_decarb."""
+    """Pure Python (NumPy) fallback for simulate_grid_decarb.
+
+    Advances a chunk of paths together. Each path still draws its normals in path-major order and
+    does the same float operations as a path-by-path loop, so the result is bit-identical to that
+    loop whatever the chunk size (tests/climate/test_mc_decarb.py pins this).
+    """
     if num_paths <= 0 or num_years <= 0:
         raise ValueError("num_paths and num_years must be positive")
     if initial_moer_g_co2e_per_kwh < 0 or annual_kwh < 0:
         raise ValueError("moer and annual_kwh must be non-negative")
+    # Same input contract as the C++ engine's validate_inputs.
+    if theta < 0 or sigma < 0 or solar_kwh_yr < 0 or battery_kwh < 0:
+        raise ValueError("theta, sigma, solar_kwh_yr and battery_kwh must be non-negative")
+    for name, rate in (
+        ("annual_decarb_rate", annual_decarb_rate),
+        ("solar_degradation_rate_yr", solar_degradation_rate_yr),
+        ("battery_fade_rate_yr", battery_fade_rate_yr),
+    ):
+        if not 0.0 <= rate <= 1.0:
+            raise ValueError(f"{name} must be in [0, 1], got {rate}")
+    if num_years > 50:
+        raise ValueError("num_years must be in [1, 50]")
 
     rng = np.random.default_rng(base_seed)
     dt = 1.0 / DAYS_PER_YEAR
     sqrt_dt = math.sqrt(dt)
     daily_base_kwh = annual_kwh / DAYS_PER_YEAR
+    noise_scale = sigma * sqrt_dt
+    num_days = num_years * DAYS_PER_YEAR
+
+    # Long-run mean for every simulated day, with math.exp as in the scalar recurrence.
+    mu = [
+        initial_moer_g_co2e_per_kwh * math.exp(-annual_decarb_rate * (y + d / DAYS_PER_YEAR))
+        for y in range(num_years)
+        for d in range(DAYS_PER_YEAR)
+    ]
+    # Net daily load and the share the battery leaves on the grid, per year.
+    yearly_load = []
+    for y in range(num_years):
+        solar_factor = (1.0 - solar_degradation_rate_yr) ** y
+        battery_factor = (1.0 - battery_fade_rate_yr) ** y
+        daily_solar = (solar_kwh_yr / DAYS_PER_YEAR) * solar_factor
+        bat_fraction = min(0.20 * battery_factor, 1.0) if battery_kwh > 0 else 0.0
+        yearly_load.append((max(0.0, daily_base_kwh - daily_solar), 1.0 - bat_fraction))
 
     all_cumulative = np.zeros((num_years, num_paths), dtype=float)
 
-    for p in range(num_paths):
-        c_t = initial_moer_g_co2e_per_kwh
-        cum_g = 0.0
-        for y in range(num_years):
-            solar_factor = (1.0 - solar_degradation_rate_yr) ** y
-            battery_factor = (1.0 - battery_fade_rate_yr) ** y
-            daily_solar = (solar_kwh_yr / DAYS_PER_YEAR) * solar_factor
-            bat_fraction = min(0.20 * battery_factor, 1.0) if battery_kwh > 0 else 0.0
-            net_kwh = max(0.0, daily_base_kwh - daily_solar)
-
-            for d in range(DAYS_PER_YEAR):
-                t_yr = y + d / DAYS_PER_YEAR
-                mu_t = initial_moer_g_co2e_per_kwh * math.exp(-annual_decarb_rate * t_yr)
-                z = rng.standard_normal()
-                c_t = max(0.0, c_t + theta * (mu_t - c_t) * dt + sigma * sqrt_dt * z)
-                cum_g += net_kwh * c_t * (1.0 - bat_fraction)
-
-            all_cumulative[y, p] = cum_g / GRAMS_PER_METRIC_TON
+    for start in range(0, num_paths, _PY_CHUNK_PATHS):
+        n = min(_PY_CHUNK_PATHS, num_paths - start)
+        z = np.ascontiguousarray(rng.standard_normal((n, num_days)).T)
+        c_t = np.full(n, float(initial_moer_g_co2e_per_kwh))
+        cum_g = np.zeros(n)
+        for y, (net_kwh, grid_share) in enumerate(yearly_load):
+            for i in range(y * DAYS_PER_YEAR, (y + 1) * DAYS_PER_YEAR):
+                c_t = np.maximum(0.0, c_t + theta * (mu[i] - c_t) * dt + noise_scale * z[i])
+                cum_g += net_kwh * c_t * grid_share
+            all_cumulative[y, start : start + n] = cum_g / GRAMS_PER_METRIC_TON
 
     yearly_median = []
     yearly_p05 = []

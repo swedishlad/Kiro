@@ -1465,6 +1465,31 @@ table.data tbody th {
   justify-self: start;
 }
 
+/* Climate: the numbered key under the abatement cost curve */
+.macc-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 14px;
+}
+.macc-list li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 1px 8px;
+}
+.macc-rank {
+  font-weight: 600;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.macc-meta {
+  grid-column: 2;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
 @media (max-width: 560px) {
   .topbar-inner {
     padding-top: 10px;

@@ -1,5 +1,5 @@
 // Bundles the backend's committed artifacts. Small files load eagerly; the bigger ones (regimes,
-// forecast, town geometry) are split into lazy chunks — see loadGrid/loadGeo.
+// forecast, climate scenarios, town geometry) are split into lazy chunks — see loadGrid/loadClimate/loadGeo.
 
 import eiaCsv from "@backend/build/eia_ma_monthly.csv?raw";
 import eiaTotalCsv from "@backend/build/eia_ma_total_monthly.csv?raw";
@@ -20,6 +20,7 @@ import {
   parseMonthlyRates,
   parseRecs,
   parseTowns,
+  type ClimateArtifact,
   type ConsumptionStats,
   type GridRegimes,
   type HmmRegimes,
@@ -64,6 +65,13 @@ export function loadGrid(): Promise<GridBundle> {
     forecast: f.default as unknown as McForecast,
   }));
   return gridPromise;
+}
+
+let climatePromise: Promise<ClimateArtifact> | null = null;
+/** The Climate API's answers for every household scenario (backend/climate/build.py). */
+export function loadClimate(): Promise<ClimateArtifact> {
+  climatePromise ??= import("@backend/build/climate_dashboard.json").then((m) => m.default as unknown as ClimateArtifact);
+  return climatePromise;
 }
 
 export interface TownTopology {

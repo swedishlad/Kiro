@@ -17,6 +17,7 @@ Everything is committed under `Backend/`. The site (`Frontend/`) bundles `Backen
 | `data/build/eia_ma_monthly.csv`, `eia_ma_total_monthly.csv`, `ma_towns.csv`, `recs_ma.csv` | `reference/ingest_usage.py`, `reference/build_towns.py` | Verified inputs (G-DATA-3, G-DATA-5) | several tabs |
 | `data/snapshot/*_residential_cents_2026-07-02.csv` | Mass.gov snapshot (G-DATA-1) | Basic-service rates 2005 – Jan 2027 | Prices & savings |
 | `Frontend/src/geo/ma-towns.topo.json` | the frontend | Town shapes for the map | Towns |
+| `data/build/climate_dashboard.json` | `backend/climate/build.py` | The Climate API's answer (`POST /api/climate/dashboard`, schema `contracts/climate_dashboard.schema.json`) for every household scenario the tab offers (`options`: monthly kWh × flexible kWh a day × battery kWh; the rest at `apiDefaults`), plus the model `assumptions`. Regional ISO-NE emissions profile and the seeded NumPy Monte Carlo, so it rebuilds the same on any machine. Not part of the daily refresh (no live inputs) | Climate |
 
 ## New since the site was written (ready to wire in)
 
