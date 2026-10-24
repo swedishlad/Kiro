@@ -39,6 +39,24 @@ function fakeClient(deltas: string[], finish = "STOP", fail?: Error, failEarly =
   return { client: client as unknown as ChatClient, calls };
 }
 
+/** A client that yields `deltas`, then stalls until its abort signal fires, as a hung API call would. */
+function stalledClient(deltas: string[]): ChatClient {
+  const client = {
+    models: {
+      async generateContentStream(params: Params) {
+        const signal = params.config.abortSignal as AbortSignal;
+        const stalled = new Promise<never>((_, reject) => signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
+        if (deltas.length === 0) await stalled;
+        return (async function* () {
+          for (const text of deltas) yield { text, candidates: [{}] };
+          await stalled;
+        })();
+      },
+    },
+  };
+  return client as unknown as ChatClient;
+}
+
 let ip = 0;
 function post(body: unknown): Request {
   return new Request("http://localhost/api/chat", {
@@ -124,6 +142,23 @@ test("handleChat reports truncation, refusals and API failures in the stream", a
     assert.deepEqual(offline, [{ type: "error", message: "The assistant couldn't be reached. Please try again." }]);
   } finally {
     console.error = original;
+  }
+});
+
+test("handleChat ends a stalled answer before the function's time limit", async () => {
+  const saved = LIMITS.answerMs;
+  LIMITS.answerMs = 20;
+  const original = console.error;
+  console.error = () => {};
+  try {
+    assert.deepEqual(await events(await handleChat(post(ask("q")), stalledClient([]))), [{ type: "error", message: "The assistant took too long to answer. Please try again." }]);
+    assert.deepEqual(await events(await handleChat(post(ask("q")), stalledClient(["Basic service "]))), [
+      { type: "text", text: "Basic service " },
+      { type: "done", truncated: true },
+    ]);
+  } finally {
+    console.error = original;
+    LIMITS.answerMs = saved;
   }
 });
 
