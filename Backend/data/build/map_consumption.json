@@ -1,0 +1,2471 @@
+{
+  "basis": "statewide-model",
+  "generated": "2026-10-24",
+  "modeled": true,
+  "note": "No verified per-town consumption source exists; level is the statewide RECS weighted model. Classes reflect state distribution bands, not measured town differences.",
+  "thresholds": {
+    "greenMax": 4814.67,
+    "greyMax": 7966.61,
+    "rule": "GREEN <= P33 < GREY <= P66 < RED (weighted terciles of RECS MA annual kWh)",
+    "unit": "annual kWh"
+  },
+  "towns": [
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 1
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 2
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 3
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 4
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 5
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 6
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 7
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 8
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 9
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 10
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 11
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 12
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 13
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 14
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 15
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 16
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 17
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 18
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 19
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 20
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 21
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 22
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 23
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 24
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 25
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 26
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 27
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 28
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 29
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 30
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 31
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 32
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 33
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 34
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 35
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 36
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 37
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 38
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 39
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 40
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 41
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 42
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 43
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 44
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 45
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 46
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 47
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 48
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 49
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 50
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 51
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 52
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 53
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 54
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 55
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 56
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 57
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 58
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 59
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 60
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 61
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 62
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 63
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 64
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 65
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 66
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 67
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 68
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 69
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 70
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 71
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 72
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 73
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 74
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 75
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 76
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 77
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 78
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 79
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 80
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 81
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 82
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 83
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 84
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 85
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 86
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 87
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 88
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 89
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 90
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 91
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 92
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 93
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 94
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 95
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 96
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 97
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 98
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 99
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 100
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 101
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 102
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 103
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 104
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 105
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 106
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 107
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 108
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 109
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 110
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 111
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 112
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 113
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 114
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 115
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 116
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 117
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 118
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 119
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 120
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 121
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 122
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 123
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 124
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 125
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 126
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 127
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 128
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 129
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 130
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 131
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 132
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 133
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 134
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 135
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 136
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 137
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 138
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 139
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 140
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 141
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 142
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 143
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 144
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 145
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 146
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 147
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 148
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 149
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 150
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 151
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 152
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 153
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 154
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 155
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 156
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 157
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 158
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 159
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 160
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 161
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 162
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 163
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 164
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 165
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 166
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 167
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 168
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 169
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 170
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 171
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 172
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 173
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 174
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 175
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 176
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 177
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 178
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 179
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 180
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 181
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 182
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 183
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 184
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 185
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 186
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 187
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 188
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 189
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 190
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 191
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 192
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 193
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 194
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 195
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 196
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 197
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 198
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 199
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 200
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 201
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 202
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 203
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 204
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 205
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 206
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 207
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 208
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 209
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 210
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 211
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 212
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 213
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 214
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 215
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 216
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 217
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 218
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 219
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 220
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 221
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 222
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 223
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 224
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 225
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 226
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 227
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 228
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 229
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 230
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 231
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 232
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 233
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 234
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 235
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 236
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 237
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 238
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 239
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 240
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 241
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 242
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 243
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 244
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 245
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 246
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 247
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 248
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 249
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 250
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 251
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 252
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 253
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 254
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 255
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 256
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 257
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 258
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 259
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 260
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 261
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 262
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 263
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 264
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 265
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 266
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 267
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 268
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 269
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 270
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 271
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 272
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 273
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 274
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 275
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 276
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 277
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 278
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 279
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 280
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 281
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 282
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 283
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 284
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 285
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 286
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 287
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 288
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 289
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 290
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 291
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 292
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 293
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 294
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 295
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 296
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 297
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 298
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 299
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 300
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 301
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 302
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 303
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 304
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 305
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 306
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 307
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 308
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 309
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 310
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 311
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 312
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 313
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 314
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 315
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 316
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 317
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 318
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 319
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 320
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 321
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 322
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 323
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 324
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 325
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 326
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 327
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 328
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 329
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 330
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 331
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 332
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 333
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 334
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 335
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 336
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 337
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 338
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 339
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 340
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 341
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 342
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 343
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 344
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 345
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 346
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 347
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 348
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 349
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 350
+    },
+    {
+      "annualKwhModel": 5990.09,
+      "census": null,
+      "class": "GREY",
+      "name": null,
+      "townId": 351
+    }
+  ]
+}
