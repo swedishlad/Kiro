@@ -22,8 +22,8 @@ const POP_DARK = ["#13304f", "#184f95", "#256abf", "#3987e5", "#6da7ec", "#9ec5f
 
 // Diverging growth: orange = shrinking, blue = growing, neutral grey midpoint; three steps per arm.
 const GROWTH_BREAKS = [-0.04, -0.02, -0.005, 0.005, 0.02, 0.04];
-const GROWTH_LIGHT = ["#c9501f", "#ef9a6e", "#f6cdb7", "#e6e5e0", "#b7d3f6", "#5598e7", "#1c5cab"];
-const GROWTH_DARK = ["#f0956a", "#b8521f", "#6b3418", "#383835", "#1c4a80", "#2f74c9", "#86b6ef"];
+const GROWTH_LIGHT = ["#c9501f", "#ef9a6e", "#f6cdb7", "#e5e5ea", "#b7d3f6", "#5598e7", "#1c5cab"];
+const GROWTH_DARK = ["#f0956a", "#b8521f", "#6b3418", "#3a3a3c", "#1c4a80", "#2f74c9", "#86b6ef"];
 
 function classOf(v: number, breaks: number[]): number {
   let i = 0;
