@@ -1,9 +1,8 @@
 import { Suspense, lazy, useEffect } from "react";
 
 import { Chat } from "./chat/Chat.tsx";
-import { hasBeenWelcomed, setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./components/hooks.ts";
+import { setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./components/hooks.ts";
 
-const Welcome = lazy(() => import("./sections/Welcome.tsx"));
 const Bill = lazy(() => import("./sections/Bill.tsx"));
 const EnergyData = lazy(() => import("./sections/EnergyData.tsx"));
 const Regime = lazy(() => import("./sections/Regime.tsx"));
@@ -11,7 +10,6 @@ const Towns = lazy(() => import("./sections/Towns.tsx"));
 const About = lazy(() => import("./sections/About.tsx"));
 
 const ROUTES = [
-  { id: "welcome", label: "Welcome" },
   { id: "bill", label: "Bill check" },
   { id: "data", label: "Energy data" },
   { id: "regime", label: "Regime" },
@@ -21,24 +19,22 @@ const ROUTES = [
 
 type RouteId = (typeof ROUTES)[number]["id"];
 
-/** The bare address opens the Welcome page until this browser has seen it, then Bill check (the home page). */
-const HOME: RouteId = hasBeenWelcomed() ? "bill" : "welcome";
-
 /**
  * Section addresses. Usage, Prices & savings and Data & methods used to be tabs and are now sections of a
  * combined tab; their old links (which the assistant also writes) open that tab and scroll to the section, as
- * #/climate does for the Climate section. Regimes & forecast and the use levels are sections of the Regime tab.
- * The old Overview address opens the landing page.
+ * #/climate does for the Climate section. Regimes & forecast is the Regime tab's section.
+ * The old Overview and Welcome addresses open the landing page; the old use-levels address opens the Regime tab.
  */
 const SECTIONS: Record<string, { tab: RouteId; label: string; scroll: boolean } | undefined> = {
   usage: { tab: "data", label: "Usage", scroll: true },
   prices: { tab: "data", label: "Prices & savings", scroll: true },
   grid: { tab: "regime", label: "Regimes & forecast", scroll: true },
   hourly: { tab: "data", label: "Hour by hour", scroll: true },
-  levels: { tab: "regime", label: "Use levels", scroll: true },
+  levels: { tab: "regime", label: "Regime", scroll: false },
   climate: { tab: "data", label: "Climate", scroll: true },
   sources: { tab: "about", label: "Data & methods", scroll: true },
   overview: { tab: "bill", label: "Bill check", scroll: false },
+  welcome: { tab: "bill", label: "Bill check", scroll: false },
 };
 
 /**
@@ -103,19 +99,14 @@ function ThemeIcon({ choice }: { choice: ThemeChoice }) {
 }
 
 export function App() {
-  const raw = useHashRoute(HOME);
+  const raw = useHashRoute("bill");
   const section = SECTIONS[raw];
   const route: RouteId = ROUTES.some((r) => r.id === raw) ? (raw as RouteId) : (section?.tab ?? "bill");
   const { choice } = useTheme();
 
   useEffect(() => {
     const label = section?.scroll ? section.label : ROUTES.find((r) => r.id === route)!.label;
-    document.title =
-      route === "bill"
-        ? "Watt-If? · Check your Massachusetts electric bill"
-        : route === "welcome"
-          ? "Welcome to Watt-If? · Your guide to Massachusetts electricity"
-          : `${label} · Watt-If?`;
+    document.title = route === "bill" ? "Watt-If? · Check your Massachusetts electric bill" : `${label} · Watt-If?`;
     if (section?.scroll) return scrollToSection(raw);
     window.scrollTo({ top: 0 });
   }, [raw, route, section]);
@@ -148,7 +139,6 @@ export function App() {
       </header>
       <main id="main" tabIndex={-1}>
         <Suspense fallback={<div className="loading">Loading…</div>}>
-          {route === "welcome" && <Welcome />}
           {route === "bill" && <Bill />}
           {route === "data" && <EnergyData />}
           {route === "regime" && <Regime />}
