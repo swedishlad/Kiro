@@ -1549,6 +1549,443 @@ table.data tbody th {
 }
 
 /* ---------------------------------------------------------------------------------------------
+   Welcome — the onboarding page (src/sections/Welcome.tsx): hello, what you get, three steps,
+   a tour of the tabs, the prompt box, promises and FAQ
+   --------------------------------------------------------------------------------------------- */
+.welcome-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .welcome-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+.welcome-hello {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px 5px 6px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+.welcome-hello .brand-mark {
+  width: 22px;
+  height: 22px;
+}
+.welcome-title {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  margin-top: 18px;
+}
+.welcome-lede {
+  color: var(--ink-2);
+  font-size: 19px;
+  line-height: 1.45;
+  max-width: 580px;
+  margin-top: 16px;
+}
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+/* Pill buttons: a filled accent for the main step, a grey fill for the other */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+.btn:hover {
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+.btn-secondary {
+  background: var(--fill);
+  color: var(--ink);
+}
+.btn-secondary:hover {
+  background: var(--baseline);
+}
+
+.welcome-trust {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.welcome-trust li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The example result beside the hello: Bill check's comparison bars on a smaller card */
+.welcome-preview {
+  margin: 0;
+  display: grid;
+  gap: 16px;
+}
+.welcome-preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.welcome-preview-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.welcome-preview-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--fill);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.welcome-preview-title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  margin-bottom: -10px;
+}
+.welcome-preview-verdict {
+  color: var(--ink-2);
+  font-size: 15px;
+}
+.welcome-preview-verdict strong {
+  color: var(--ink);
+}
+.welcome-preview .compare-bar {
+  grid-template-columns: 96px minmax(0, 1fr) 72px;
+}
+.welcome-tip {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-wash);
+}
+.welcome-tip-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-ink);
+}
+.welcome-tip-title {
+  font-weight: 600;
+}
+.welcome-tip-text {
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.welcome-preview-foot {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.welcome-section {
+  margin-top: 72px;
+  scroll-margin-top: 72px;
+}
+.welcome-section-head {
+  max-width: 720px;
+  margin-bottom: 20px;
+}
+.welcome-section-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.welcome-section-lede {
+  color: var(--ink-2);
+  font-size: 17px;
+  margin-top: 6px;
+}
+.welcome-section .prompt-box {
+  margin-top: 0;
+}
+
+.welcome-benefits {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+.benefit {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.benefit-q {
+  font-size: 21px;
+}
+.benefit p {
+  color: var(--ink-2);
+}
+
+.welcome-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 800px) {
+  .welcome-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.step {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.step-num {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+.step-title {
+  font-size: 19px;
+}
+.step p {
+  color: var(--ink-2);
+}
+.welcome-scope {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  font-size: 14px;
+}
+.welcome-scope strong {
+  color: var(--accent-ink);
+}
+
+.welcome-features {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+.feature {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.feature-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.feature-title {
+  font-size: 19px;
+}
+.feature-kicker {
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.feature-text {
+  flex: 1 1 auto;
+  color: var(--ink-2);
+}
+.feature-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* A button that reads as a link (the tour's "Ask a question") */
+.link-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--accent-ink);
+  font-weight: inherit;
+  cursor: pointer;
+}
+.link-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* iOS-style app icons: a white line glyph on a rounded colour tile */
+.icon-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  color: #fff;
+}
+.icon-tile svg {
+  width: 26px;
+  height: 26px;
+}
+.icon-tile.is-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+.icon-tile.is-small svg {
+  width: 21px;
+  height: 21px;
+}
+
+.welcome-promises {
+  display: grid;
+  gap: 28px 32px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.promise {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.promise .icon-tile {
+  margin-bottom: 6px;
+}
+.promise-title {
+  font-size: 17px;
+}
+.promise p {
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.faq {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.faq details {
+  border-bottom: 1px solid var(--grid);
+}
+.faq details:last-child {
+  border-bottom: 0;
+}
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: "+";
+  flex: none;
+  color: var(--accent-ink);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+}
+.faq details[open] summary::after {
+  content: "−";
+}
+.faq details p {
+  color: var(--ink-2);
+  max-width: 760px;
+  padding-bottom: 18px;
+}
+
+.welcome-cta {
+  padding: 48px 24px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+}
+.welcome-cta .welcome-actions {
+  justify-content: center;
+  margin-top: 24px;
+}
+
+@media (max-width: 640px) {
+  .welcome-title {
+    font-size: 34px;
+  }
+  .welcome-lede {
+    font-size: 17px;
+  }
+  .welcome-section {
+    margin-top: 56px;
+  }
+  .welcome-section-title {
+    font-size: 24px;
+  }
+  .welcome-section-lede {
+    font-size: 15px;
+  }
+  .welcome-benefits,
+  .welcome-steps,
+  .welcome-features {
+    gap: 14px;
+  }
+  .welcome-features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .welcome-scope {
+    border-radius: 12px;
+  }
+  .welcome-cta {
+    padding: 36px 16px;
+  }
+  .btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
    Assistant (src/chat/Chat.tsx)
    --------------------------------------------------------------------------------------------- */
 .footer {

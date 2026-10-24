@@ -34,6 +34,7 @@ export const LIMITS = {
  * methods is a section of About.
  */
 const PAGES: Record<string, string> = {
+  welcome: "Welcome",
   bill: "Bill check",
   data: "Energy data",
   usage: "Usage",
