@@ -29,6 +29,7 @@ const BY_PAGE: Record<string, string> = {
   grid: "What does “Above range” mean?",
   towns: "Which load zone is Worcester in?",
   sources: "Where does this site's data come from?",
+  about: "Who builds FairWatt?",
 };
 
 function suggestionsFor(page: string): string[] {

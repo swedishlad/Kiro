@@ -5,6 +5,7 @@
 import { calendarYears, trailing12 } from "../data/derive.ts";
 import { addMonths, dateLabel, fmtNum, fmtPct, fmtSignedPct, ymLabel } from "../data/format.ts";
 import { estimateHome, MIN_HOMES, type HomeAnswers } from "../data/homes.ts";
+import { TEAM } from "../data/team.ts";
 import {
   HEAT_FUELS,
   HOME_TYPES,
@@ -117,6 +118,7 @@ Tabs (the site uses hash links, so link to them exactly as written):
 - [Regimes & forecast](#/grid): homes (monthly) and the ISO-NE grid zones (daily) compared with the same period in the previous 5 years, the outlook, how the three regimes behave, and the six-month Monte Carlo load forecast with its walk-forward test.
 - [Towns](#/towns): a map and searchable table of all 351 cities and towns with county, ISO-NE load zone, 2020 and 2024 population and growth.
 - [Data & methods](#/sources): sources, how each number is made, limits, and how to rebuild.
+- [About](#/about): what FairWatt is and the team that builds it: ${TEAM.slice(0, -1).join(", ")} and ${TEAM[TEAM.length - 1]}.
 
 Interactive tools:
 - "A home like yours" ([Usage](#/usage)): pick home type, size, main heating fuel and household size; it returns the median yearly kWh of similar surveyed homes and their P10–P90 range. When fewer than ${MIN_HOMES} surveyed homes match every answer it drops the least important answers (household size first, then heating fuel, then home type) and says so. Visitors can also type their own yearly kWh (the sum of 12 bills) to see what share of Massachusetts homes they use more than.
