@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "fairwatt/regimes.schema.json",
- "title": "RegimesFile (data/build/regimes.json) v2.2.0",
+ "title": "RegimesFile (data/build/regimes.json) v2.3.0",
  "type": "object",
  "required": [
   "asOf",
@@ -389,7 +389,10 @@
        "type": "object",
        "required": [
         "days",
-        "probs"
+        "probs",
+        "method",
+        "skillVsLongRunMix",
+        "n"
        ],
        "properties": {
         "days": {
@@ -405,6 +408,19 @@
           "minimum": 0,
           "maximum": 1
          }
+        },
+        "method": {
+         "enum": [
+          "ar1-gap",
+          "long-run-mix"
+         ]
+        },
+        "skillVsLongRunMix": {
+         "type": "number"
+        },
+        "n": {
+         "type": "integer",
+         "minimum": 0
         }
        }
       }
@@ -413,6 +429,57 @@
       "type": "number",
       "minimum": 0,
       "maximum": 1
+     },
+     "forecast": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "type": "object",
+       "required": [
+        "date",
+        "probs",
+        "color",
+        "method",
+        "skillVsLongRunMix",
+        "n"
+       ],
+       "properties": {
+        "date": {
+         "type": "string",
+         "format": "date"
+        },
+        "probs": {
+         "type": "array",
+         "minItems": 3,
+         "maxItems": 3,
+         "items": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         }
+        },
+        "color": {
+         "enum": [
+          "green",
+          "grey",
+          "red"
+         ]
+        },
+        "method": {
+         "enum": [
+          "ar1-gap",
+          "long-run-mix"
+         ]
+        },
+        "skillVsLongRunMix": {
+         "type": "number"
+        },
+        "n": {
+         "type": "integer",
+         "minimum": 0
+        }
+       }
+      }
      }
     }
    }

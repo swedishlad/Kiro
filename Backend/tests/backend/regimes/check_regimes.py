@@ -99,5 +99,27 @@ for a in doc["areas"]:
         check(f"{a['area']}: monthly timeline 2016-01 .. 2026-08",
               a["timeline"][0]["date"] == "2016-01-01" and a["timeline"][-1]["date"] == "2026-08-01")
 
+# 4. future regime: tested forecaster, no look-ahead, honest method choice
+zc = np.clip(np.nan_to_num(z), -B.Z_CLIP, B.Z_CLIP)
+months, xm = B.load_residential()
+mean, sd = B.monthly_band(months, xm)
+zm = (xm - mean) / sd
+vm = ~np.isnan(zm)
+zmc = np.clip(np.nan_to_num(zm), -B.Z_CLIP, B.Z_CLIP)
+i_cut = int(np.where([m == dt.date(2021, 6, 1) for m in months])[0][0])
+full = B.ar_probs_at(zmc, vm, i_cut, 1, B.MIN_PAIRS["month"])
+trunc = B.ar_probs_at(zmc[:i_cut + 1], vm[:i_cut + 1], i_cut, 1, B.MIN_PAIRS["month"])
+check("forecast: AR(1) gap forecast at t ignores data after t", np.array_equal(full, trunc))
+for a in doc["areas"]:
+    for o in a["outlook"]:
+        good = (o["method"] == "ar1-gap") == (o["skillVsLongRunMix"] > B.SKILL_MIN)
+        check(f"{a['area']}: outlook +{o['days']}d uses the model only where it beat the long-run mix", good,
+              f"{o['method']} skill {o['skillVsLongRunMix']:+.1%}")
+homes = next(a for a in doc["areas"] if a["area"] == "MA_RES")
+fc = homes.get("forecast", [])
+check("MA_RES: 6-month forecast present, months follow the last data month",
+      len(fc) == 6 and fc[0]["date"] == "2026-09-01" and fc[-1]["date"] == "2027-02-01")
+check("MA_RES: forecast probabilities sum to 1", all(abs(sum(f["probs"]) - 1) < 1e-9 for f in fc))
+
 print("G-HMM:", "PASS" if ok else "FAIL")
 sys.exit(0 if ok else 1)

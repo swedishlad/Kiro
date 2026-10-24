@@ -383,11 +383,29 @@ def example_nowcast(doc, area):
         bot.stackplot(dd, probs[:, 0], probs[:, 1], probs[:, 2],
                       colors=[NOW_STATE["green"][0], NOW_STATE["grey"][0], NOW_STATE["red"][0]], linewidth=0,
                       step="mid" if a["unit"] == "month" else None)
+        fc = a.get("forecast", [])
+        if fc:
+            fd = [dt.date.fromisoformat(f["date"]) for f in fc]
+            fp = np.array([f["probs"] for f in fc])
+            bottom = np.zeros(len(fc))
+            for j, c in enumerate(("green", "grey", "red")):
+                for t, f in enumerate(fc):
+                    model = f["method"] == "ar1-gap"
+                    bot.bar(fd[t], fp[t, j], bottom=bottom[t], width=26, color=NOW_STATE[c][0], alpha=0.9 if model else 0.45,
+                            hatch=None if model else "///", edgecolor=NOW_BG, linewidth=0.6)
+                bottom += fp[:, j]
+            for ax_ in (top, bot):
+                ax_.axvline(dd[-1] + dt.timedelta(days=15), color=NOW_TEAL, lw=1.1)
+            bot.text(dd[-1] + dt.timedelta(days=22), 1.03, "forecast →", color=NOW_TEAL, fontsize=8.5, **mono)
+            nxt = " · ".join(f"{dt.date.fromisoformat(f['date']).strftime('%b')} {f['color']} ({f['probs'][2]:.0%} red)"
+                             for f in fc if f["method"] == "ar1-gap")
+            fig.text(0.035, 0.815, f"next: {nxt} · after that: long-run odds (no forecast beat history beyond "
+                     f"{sum(f['method'] == 'ar1-gap' for f in fc)} months; hatched)", color=NOW_TEAL, fontsize=9.5, **mono)
         bot.set_ylim(0, 1)
         bot.set_yticks([0, 0.5, 1], ["0%", "50%", "100%"])
         bot.set_ylabel("P(state)", fontsize=8.5)
         handles = [plt.Rectangle((0, 0), 1, 1, color=NOW_STATE[c][0]) for c in ("red", "grey", "green")]
-        leg = top.legend(handles, ["too much", "mid", "good"], loc="lower left", bbox_to_anchor=(0, 1.02), ncol=3,
+        leg = bot.legend(handles, ["too much", "mid", "good"], loc="lower left", bbox_to_anchor=(0, 1.0), ncol=3,
                          frameon=False, fontsize=9, handlelength=3)
         for t in leg.get_texts():
             t.set_color(NOW_INK)
