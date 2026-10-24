@@ -20,7 +20,7 @@ test("server/knowledge.ts is up to date with Backend/data", () => {
   assert.equal(KNOWLEDGE, markdown); // the template-literal escaping round-trips
 });
 
-test("the knowledge base carries the figures the Overview shows", () => {
+test("the knowledge base carries the headline figures", () => {
   const ttm = trailing12(inputs.eia);
   assert.ok(markdown.includes(`**${fmtNum(ttm.priceCents, 1)}¢/kWh**`));
   assert.ok(markdown.includes(`**${fmtNum(inputs.consumptionStats.typicalAccount.annualKwh)} kWh a year**`));
@@ -32,5 +32,5 @@ test("the knowledge base covers every month, town and tab", () => {
   // one month-by-month row per EIA month
   assert.equal((markdown.match(/^\| [A-Z][a-z]{2} \d{4}\*? \| \d+\.\d{2} \| [\d,]+ \| [\d,]+ \|/gm) ?? []).length, inputs.eia.length);
   for (const t of inputs.towns) assert.ok(markdown.includes(`| ${t.name} | ${t.county} | ${t.zone} |`), t.name);
-  for (const tab of ["overview", "usage", "prices", "grid", "towns", "sources"]) assert.ok(markdown.includes(`(#/${tab})`), tab);
+  for (const tab of ["bill", "data", "usage", "prices", "grid", "towns", "about", "sources"]) assert.ok(markdown.includes(`(#/${tab})`), tab);
 });

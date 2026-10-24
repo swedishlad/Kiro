@@ -25,15 +25,20 @@ export const LIMITS = {
   windowMs: 10 * 60_000,
 };
 
-/** The site's tabs (src/App.tsx routes), so the assistant knows what the visitor is looking at. */
+/**
+ * The site's tabs and section addresses (src/App.tsx), so the assistant knows what the visitor is
+ * looking at. Usage, Prices & savings and Regimes & forecast are sections of Energy data; Data &
+ * methods is a section of About.
+ */
 const PAGES: Record<string, string> = {
-  overview: "Overview",
+  bill: "Bill check",
+  data: "Energy data",
   usage: "Usage",
   prices: "Prices & savings",
   grid: "Regimes & forecast",
   towns: "Towns",
-  sources: "Data & methods",
   about: "About",
+  sources: "Data & methods",
 };
 
 const INSTRUCTIONS = `You are the assistant on FairWatt, a public website about Massachusetts residential electricity. Visitors are mostly Massachusetts residents trying to understand their electricity use and prices, whether basic service or a competitive supplier is the better deal for them, and what the site's charts mean. Answer the way a knowledgeable, plain-spoken guide to this site would.
