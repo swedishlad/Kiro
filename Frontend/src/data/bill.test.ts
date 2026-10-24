@@ -5,9 +5,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { billMonth, inferBillMonth, parseBillText } from "./bill.ts";
+import { billMonth, inferBillMonth, parseBillReadings, parseBillText } from "./bill.ts";
 import { buildReport, compareBill, suggestionsFor, type Reference } from "./billCompare.ts";
-import { textLines } from "./pdf.ts";
+import { ocrRows } from "./ocr.ts";
+import { textLines } from "./textLayout.ts";
 import { parseEia, parseFixedRates, parseRecs, type ConsumptionStats } from "./model.ts";
 import { termSpans } from "./savings.ts";
 
@@ -135,8 +136,9 @@ test("rebuilds PDF text runs into lines in reading order", () => {
     { str: "grid", x: 112, y: 700, width: 20, height: 12 },
     { str: "   ", x: 300, y: 650, width: 10, height: 10 },
   ];
-  assert.equal(textLines(runs), "nationalgrid\nTotal Energy Used 610 kWh\nAmount Due $233.67");
-  const { fields } = parseBillText(textLines(runs));
+  const down = runs.map((r) => ({ ...r, y: -r.y }));
+  assert.equal(textLines(down), "nationalgrid\nTotal Energy Used 610 kWh\nAmount Due $233.67");
+  const { fields } = parseBillText(textLines(down));
   assert.equal(fields.utility, "NG");
   assert.equal(fields.kwh, 610);
   assert.equal(fields.totalDollars, 233.67);
@@ -145,6 +147,194 @@ test("rebuilds PDF text runs into lines in reading order", () => {
 test("takes the supply rate from the supply total when no per-kWh rate is printed", () => {
   const { fields } = parseBillText("National Grid\nTotal usage 500 kWh\nSupply Services\nTotal Supply Services $95.00\nAmount Due $180.00");
   assert.equal(fields.supplyCents, 19);
+});
+
+// ----------------------------------------------------------------------------- real layouts
+// Laid out as the utilities print them (line order and labels from real bills' PDF text and OCR
+// output); names, numbers and amounts are made up.
+
+const NG_REAL = `nationalgrid
+SERVICE FOR BILLING PERIOD PAGE 1 of 2
+JANE Q CUSTOMER Dec 21, 2025 to Jan 23, 2026
+ACCOUNT NUMBER PLEASE PAY BY AMOUNT DUE
+55210-31907 Feb 20, 2026 $ 396.05
+DATE BILL ISSUED
+Jan 28, 2026
+Previous Balance 250.91
+Payment Received on DEC 30 ( Check) - 78.95
+Balance Forward 171.96
+Current Charges + 224.09
+Amount Due $ 396.05
+SERVICE PERIOD Dec 21 - Jan 23 NUMBER OF DAYS IN PERIOD 33 METER NUMBER 0012345678
+Energy 12962 Actual 12303 Actual 659 1 659 kWh
+Total Energy 659 kWh
+Delivery Services
+Customer Charge 7.00
+Dist Chg 0.08176 x 659 kWh 53.88
+Transition Charge -0.00083 x 659 kWh -0.55
+Total Delivery Services $ 115.90
+Supply Services
+SUPPLIER National Grid
+Basic Service Fixed 0.16418 x 659 kWh 108.19
+Total Supply Services $ 108.19`;
+
+const EV_REAL = `Eversource
+Account Number: 5112 345 6789 Total Amount Due
+Statement Date: 08/08/24 $243.81
+by 09/03/24
+Service from 07/09/24 - 08/06/24 29 Days Next read date on or about: Sep 09, 2024
+Electric Account Summary
+Amount Due On 07/03/24 $180.20
+Last Payment Received On 07/28/24 -$180.20
+Balance Forward $0.00
+Current Charges/Credits
+Electric Supply Services $104.55
+Delivery Services $139.26
+Total Current Charges $243.81
+Total Amount Due $243.81
+Meter Current Previous Current Reading
+Number Read Read Usage Type
+7744123 92285 91549 736 Actual
+www.eversource.com Customer Charge $10.00
+Pay by Phone: 888-783-6618 Distribution Charge 736 kWh X .08318 $61.22
+Transition Charge 736 kWh X -.00361 -$2.66
+Subtotal Delivery Services $139.26
+Supplier (Eversource) (Basic Svc Fixed)
+Oct Nov Dec Jan
+Generation Service Charge 736 kWh X .14205 $104.55
+826 999 1107 924
+Subtotal Supplier Services $104.55
+Total Cost of Electricity $243.81`;
+
+test("National Grid: this period's charges, not an amount due that carries an unpaid balance", () => {
+  const { fields } = parseBillText(NG_REAL);
+  assert.equal(fields.utility, "NG");
+  assert.equal(fields.kwh, 659);
+  assert.equal(fields.totalDollars, 224.09);
+  assert.equal(fields.supplyCents, 16.418, "rate first: 0.16418 x 659 kWh");
+  assert.equal(fields.periodStart, "2025-12-21");
+  assert.equal(fields.periodEnd, "2026-01-23");
+  assert.equal(fields.days, 33);
+  assert.equal(fields.statementDate, "2026-01-28");
+  assert.equal(fields.supplyDollars, 108.19);
+  assert.equal(fields.deliveryDollars, 115.9);
+});
+
+test("National Grid's year-less service period is dated by the bill's issue date, across New Year", () => {
+  const { fields } = parseBillText("National Grid\nDATE BILL ISSUED\nJan 28, 2026\nSERVICE PERIOD Dec 21 - Jan 23 NUMBER OF DAYS IN PERIOD 33\nTotal Energy 659 kWh");
+  assert.equal(fields.periodStart, "2025-12-21");
+  assert.equal(fields.periodEnd, "2026-01-23");
+  assert.equal(fields.days, 33);
+});
+
+test("Eversource: the previous bill's 'Amount Due On' is skipped; quantity-first bare rates; both ends counted", () => {
+  const { fields } = parseBillText(EV_REAL);
+  assert.equal(fields.utility, "EV_EAST");
+  assert.equal(fields.kwh, 736, "usage-chart numbers have no kWh and are not usage");
+  assert.equal(fields.totalDollars, 243.81);
+  assert.equal(fields.supplyCents, 14.205, "736 kWh X .14205");
+  assert.equal(fields.days, 29, "the printed count, one more than the dates' difference");
+  assert.equal(billMonth(fields.periodStart, fields.periodEnd), "2024-07");
+  assert.equal(fields.supplyDollars, 104.55);
+  assert.equal(fields.deliveryDollars, 139.26);
+});
+
+test("Eversource West: named before National Grid's 'Massachusetts Electric', and its decimal kWh", () => {
+  const { fields } = parseBillText(`Western Massachusetts Electric Company
+Total Amount Due by 05/02/23 $73.83
+Service from 03/03/23 - 04/03/23 32 Days
+Supplier (RATE R-1 - BASIC FIXED)
+Generation Srvc Chrg 149.90kWh X $0.10650 $15.96
+Subtotal Supplier Services $15.96
+Total Current Charges $73.83`);
+  assert.equal(fields.utility, "EV_WEST");
+  assert.equal(fields.kwh, 149.9);
+  assert.equal(fields.supplyCents, 10.65);
+  assert.equal(fields.totalDollars, 73.83);
+});
+
+test("a four-digit usage keeps its supply rate", () => {
+  const { fields } = parseBillText("National Grid\nElectricity Supply 0.14990 x 1184 kWh 177.48\nTotal Supply Services $ 177.48");
+  assert.equal(fields.kwh, 1184);
+  assert.equal(fields.supplyCents, 14.99);
+});
+
+// ----------------------------------------------------------------------------- OCR output
+
+test("folds OCR misreadings: S for $, a lost decimal point, O for 0, kWn for kWh", () => {
+  const { fields } = parseBillText(`nationalgrld
+BILLING PERIOD Jan5,2026 to Feb 4, 2026
+Total Energy 612 KWn
+Current Charges +22399
+Amount Due S223.99
+Basic Service Fixed O.18930 x 612 kWh 115.85`);
+  assert.equal(fields.utility, "NG");
+  assert.equal(fields.kwh, 612);
+  assert.equal(fields.totalDollars, 223.99);
+  assert.equal(fields.supplyCents, 18.93);
+  assert.equal(fields.periodStart, "2026-01-05");
+});
+
+test("pairs a column of labels with the column of amounts OCR read after it", () => {
+  // Real OCR output of a dim photo of an Eversource bill: the summary's labels, a heading from the
+  // next column, then the amounts, and charge lines whose amounts were lost.
+  const { fields } = parseBillText(`Eversource Toi Amount Dye
+Account Number: 5112 345 6789 $282.76
+Statement Date: 04/14/26 by 05/05/26
+Service from 03/11/26 - 04/10/26 31 Days Next read date on or about: May 11, 2026
+ELECTRIC ACCOUNT SUMMARY
+Amount Due On 03/13/26 $260.02
+Last Payment Received On 03/28/26 -$260.02
+Balance Forward $0.00
+Current Charges/Credits
+Electric Supply Services
+Delivery Services
+Total Current Charges
+Total Amount Due
+MONTHLY KWH USE
+$131.13
+$151.63
+$282.76 Meter Number Current Read Previous Read Current Usage Reading Type
+$282.76 7744123 32724 31877 847 Actual
+Distribution Charge 847 kWh X .08318
+Transition Charge 847 kWh X -,00361
+Subtotal Delivery Services
+SUPPLIER (EVERSOURCE) (BASIC SVC FIXED)
+Generation Service Charge 847 kWh X .15482
+Subtotal Supplier Services`);
+  assert.equal(fields.totalDollars, 282.76);
+  assert.equal(fields.supplyDollars, 131.13);
+  assert.equal(fields.deliveryDollars, 151.63);
+  assert.equal(fields.supplyCents, 15.482);
+  assert.equal(fields.kwh, 847);
+  assert.equal(fields.days, 31);
+});
+
+test("a second reading fills gaps, and the supply rate is checked against both readings' totals", () => {
+  const first = "Unitil\nService Period: 11/14/2025 to 12/15/2025 (31 days)\nDistribution Charge 455 kWh @ $0.06312 $28.72\nTotal Delivery Service $66.73";
+  // The supply line was lost in both; under the supply heading sits a delivery rate.
+  const second = "Unitil\nSUPPLY SERVICE\n455 kWh @ $0.06312\nTotal Amount Due $159.60\nService Period: 11/15/2025 to 12/15/2025";
+  const { fields } = parseBillReadings([first, second]);
+  assert.equal(fields.totalDollars, 159.6, "filled from the second reading");
+  assert.equal(fields.periodStart, "2025-11-14", "the first reading's period stands");
+  assert.ok(Math.abs(fields.supplyCents! - 20.41) < 0.01, `(total − delivery) ÷ kWh, not the delivery rate: ${fields.supplyCents}`);
+  assert.deepEqual(parseBillReadings([first, ""]).fields, parseBillText(first).fields);
+});
+
+test("rebuilds rows from OCR words on a tilted page, so a label meets its amount across the gap", () => {
+  const tilt = 0.035; // about 2°
+  const line = (x0: number, y0: number, words: [string, number, number][]) => ({
+    baseline: { x0, y0, x1: x0 + 500, y1: y0 + 500 * tilt, has_baseline: true },
+    rowAttributes: { row_height: 30 },
+    words: words.map(([text, a, b]) => ({ text, bbox: { x0: a, y0: y0 - 25, x1: b, y1: y0 + 3 } })),
+  });
+  const rows = ocrRows([
+    line(100, 1000, [["Total", 100, 180], ["Supply", 190, 280], ["Services", 290, 420]]),
+    line(100, 1045, [["Delivery", 100, 220], ["Services", 230, 360]]),
+    // the amount, far right on the first row: lower on the image because of the tilt
+    line(1800, 1000 + 1700 * tilt, [["$177.48", 1800, 1950]]),
+  ]);
+  assert.equal(rows, "Total Supply Services $177.48\nDelivery Services");
 });
 
 test("compares a high summer bill with an expensive supplier and suggests switching", () => {
