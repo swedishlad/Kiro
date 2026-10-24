@@ -23,6 +23,8 @@ export const LIMITS = {
   /** per client IP, per function instance: a cost guard, not a security boundary */
   requestsPerWindow: 20,
   windowMs: 10 * 60_000,
+  /** under the function's 60 s limit (vercel.json), so a slow answer ends with a message instead of being cut off */
+  answerMs: 50_000,
 };
 
 /** The site's tabs (src/App.tsx routes), so the assistant knows what the visitor is looking at. */
@@ -164,6 +166,12 @@ export async function handleChat(request: Request, client: ChatClient, today = n
       const send = (event: ChatEvent) => {
         if (open) controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       };
+      let answered = false;
+      let late = false;
+      const deadline = setTimeout(() => {
+        late = true;
+        aborted.abort();
+      }, LIMITS.answerMs);
       try {
         const chunks = await client.models.generateContentStream({
           model: MODEL,
@@ -181,7 +189,10 @@ export async function handleChat(request: Request, client: ChatClient, today = n
         let model: string | undefined;
         for await (const chunk of chunks) {
           const text = chunk.text;
-          if (text) send({ type: "text", text });
+          if (text) {
+            answered = true;
+            send({ type: "text", text });
+          }
           finish = chunk.candidates?.[0]?.finishReason ?? finish;
           blocked = chunk.promptFeedback?.blockReason ?? blocked;
           usage = chunk.usageMetadata ?? usage;
@@ -192,11 +203,16 @@ export async function handleChat(request: Request, client: ChatClient, today = n
         );
         send(blocked || (finish && BLOCKED.has(finish)) ? { type: "refusal" } : { type: "done", truncated: finish === FinishReason.MAX_TOKENS });
       } catch (err) {
-        if (!aborted.signal.aborted) {
+        if (late) {
+          // Keep what already arrived; with nothing yet, say so rather than leave the visitor waiting.
+          console.error(`chat: no complete answer within ${LIMITS.answerMs / 1000} s (answered=${answered})`);
+          send(answered ? { type: "done", truncated: true } : { type: "error", message: "The assistant took too long to answer. Please try again." });
+        } else if (!aborted.signal.aborted) {
           console.error("chat: request failed", err);
           send({ type: "error", message: failureMessage(err) });
         }
       } finally {
+        clearTimeout(deadline);
         if (open) controller.close();
         open = false;
       }
