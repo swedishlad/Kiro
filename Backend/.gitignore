@@ -1,3 +1,4 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+docs/img/tests/_*.npz

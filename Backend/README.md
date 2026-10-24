@@ -11,7 +11,9 @@ The web frontend is built separately and consumes the committed JSON artifacts u
 | Money-you-could-have-saved (vs basic-service rate) | `src/backend/savings_model.py`, `build_savings.py` | `data/build/savings_model.json` |
 | Per-town map data (green/grey/red traffic light) | `src/backend/map_consumption.py`, `build_map.py` | `data/build/map_consumption.json` |
 | HMM 3-state energy-use regime model | `src/hmm/` | `data/build/hmm_regimes.json` |
-| Walk-forward / Monte Carlo forecast | `backend/`, `forecast_mc_core.py` | `data/build/regimes.json` |
+| HMM regimes on **weather-adjusted daily** load (ISO-NE zones; walk-forward, forward-filtered; green/grey/red) | `backend/regimes/` | `data/build/regimes.json` |
+| Walk-forward-calibrated **Monte Carlo**, 6 months (Nov 2026 – Apr 2027), per zone + MA | `backend/forecast/mc.py` | `data/build/mc_forecast.json` |
+| Monte Carlo core on the EIA monthly series (in progress) | `forecast_mc_core.py` | — |
 
 ## Data
 
@@ -24,11 +26,16 @@ The web frontend is built separately and consumes the committed JSON artifacts u
 - Per-town consumption level is a statewide model (`modeled: true`) — there is no verified per-town usage source in the data, so this is labeled honestly rather than invented.
 - HMM states are sorted by mean consumption: GREEN (low) < GREY (mid) < RED (high), seed 42 for reproducibility.
 - Savings are the supply portion only; positive = saved, negative = overpaid.
+- Two HMMs live here. `src/hmm/` classifies the raw monthly kWh level, so its colors largely follow the season (July red, April green). `backend/regimes/` classifies daily load **after removing what weather and the recent normal explain**, with no look-ahead; its red state appears in every calendar month. Method, tests and charts: `research/regimes.md`, `research/mc_backtest.md`, `docs/img/tests/`.
 
 ## Verify
 
 ```bash
-python3 -m pytest tests -q
+python3 -m pytest tests -q                         # stats, savings, map, src/hmm
+python3 tests/backend/regimes/check_regimes.py     # G-HMM: leakage, ordering, not-seasonal checks
+python3 tests/backend/forecast/check_mc.py         # Monte Carlo: walk-forward calibration, leakage, reproducibility
+python3 tests/backend/make_test_charts.py          # charts of the test results -> docs/img/tests/
+# rebuild: python3 -m backend.regimes.build  then  python3 -m backend.forecast.mc
 ```
 
 40 tests (32 backend + 8 HMM).
