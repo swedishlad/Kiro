@@ -265,6 +265,7 @@ select {
 
 .theme-toggle {
   order: 3;
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -285,9 +286,10 @@ select {
 /* The section tabs read as one centred segmented control */
 .tabs {
   order: 2;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   display: flex;
-  justify-content: center;
+  /* "safe" keeps the first tab reachable when the row is narrower than its tabs and scrolls */
+  justify-content: safe center;
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -485,6 +487,11 @@ main {
   .span-3 {
     grid-column: span 12;
   }
+}
+
+/* A card keeps its own height instead of stretching to a taller neighbour in the same row */
+.align-start {
+  align-self: start;
 }
 
 .card {
@@ -1167,7 +1174,219 @@ table.data tbody th {
   margin-top: 4px;
 }
 
-@media (max-width: 760px) {
+/* ---------------------------------------------------------------------------------------------
+   Bill check — upload, read, compare, suggest
+   --------------------------------------------------------------------------------------------- */
+.dropzone {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  min-height: 220px;
+  padding: 24px 16px;
+  text-align: center;
+  background: var(--surface-2);
+  border: 2px dashed var(--baseline);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.dropzone:hover,
+.dropzone.is-dragging {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+}
+.dropzone:focus-within {
+  outline: 3px solid color-mix(in srgb, var(--focus) 50%, transparent);
+  outline-offset: 2px;
+}
+.dropzone.is-busy {
+  cursor: progress;
+  opacity: 0.7;
+}
+.dropzone-glyph {
+  margin-bottom: 8px;
+}
+.dropzone-preview {
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  object-fit: contain;
+}
+.dropzone-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-ink);
+}
+.dropzone-hint {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+.progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--fill);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 200ms ease;
+}
+
+.disclosure summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--accent-ink);
+}
+.disclosure[open] summary {
+  margin-bottom: 8px;
+}
+.textarea {
+  width: 100%;
+  resize: vertical;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.raw-text {
+  max-height: 220px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.field-optional {
+  color: var(--ink-muted);
+}
+.field-hint.evidence {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.field-missing {
+  color: var(--bad-text);
+}
+
+.verdict {
+  font-size: 19px;
+  line-height: 1.4;
+  max-width: 820px;
+  margin-bottom: 20px;
+}
+
+.compare {
+  display: grid;
+  gap: 18px 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 800px) {
+  .compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.compare-row {
+  display: grid;
+  gap: 6px;
+}
+.compare-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.compare-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+.compare-bar {
+  display: grid;
+  grid-template-columns: minmax(84px, 30%) minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.compare-name {
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.compare-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--fill);
+  overflow: hidden;
+}
+.compare-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--muted-series);
+}
+.compare-fill.is-you {
+  background: var(--accent);
+}
+.compare-value {
+  text-align: right;
+  color: var(--ink);
+}
+
+.suggestion-groups {
+  display: grid;
+  gap: 24px;
+}
+.suggestion-group-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-bottom: 4px;
+}
+.suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.suggestion {
+  display: grid;
+  gap: 4px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--grid);
+}
+.suggestion:last-child {
+  border-bottom: 0;
+}
+.suggestion-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.suggestion.is-save .suggestion-title {
+  color: var(--accent-ink);
+}
+.suggestion-why {
+  color: var(--ink);
+  font-size: 15px;
+}
+.suggestion-how {
+  color: var(--ink-2);
+  font-size: 14px;
+  max-width: 820px;
+}
+.suggestion-link {
+  font-size: 14px;
+  justify-self: start;
+}
+
+@media (max-width: 900px) {
   .topbar-inner {
     padding-top: 10px;
     padding-bottom: 8px;
