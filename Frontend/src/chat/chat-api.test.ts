@@ -57,20 +57,6 @@ function stalledClient(deltas: string[]): ChatClient {
   return client as unknown as ChatClient;
 }
 
-/** A client whose nth call goes to the nth of `clients`. */
-function inTurn(...clients: ChatClient[]) {
-  const calls: Params[] = [];
-  const client = {
-    models: {
-      generateContentStream(params: Params) {
-        calls.push(params);
-        return (clients[calls.length - 1].models.generateContentStream as (p: Params) => unknown)(params);
-      },
-    },
-  };
-  return { client: client as unknown as ChatClient, calls };
-}
-
 let ip = 0;
 function post(body: unknown): Request {
   return new Request("http://localhost/api/chat", {
@@ -113,9 +99,9 @@ test("handleChat sends the knowledge base and streams the answer", async () => {
     { type: "done", truncated: false },
   ]);
   const p = calls[0];
-  assert.equal(p.model, "gemini-flash-latest");
+  assert.equal(p.model, "gemini-flash-lite-latest");
   assert.equal(p.config.maxOutputTokens, 8000);
-  assert.deepEqual(p.config.thinkingConfig, { thinkingLevel: "LOW" });
+  assert.equal(p.config.thinkingConfig, undefined);
   assert.ok(p.config.abortSignal instanceof AbortSignal);
   // shared prefix first (instructions, then the knowledge base), per-request context last
   const sys = p.config.systemInstruction;
@@ -176,46 +162,16 @@ test("handleChat ends a stalled answer before the function's time limit", async 
   }
 });
 
-test("handleChat hands an overloaded, over-quota or slow model's question to the next model", async () => {
-  const overloaded = new ApiError({ message: "UNAVAILABLE", status: 503 });
-  const saved = LIMITS.startMs;
-  LIMITS.startMs = 20;
-  const original = console.warn;
-  console.warn = () => {};
-  try {
-    for (const first of [fakeClient([], "STOP", overloaded, true).client, fakeClient([], "STOP", new ApiError({ message: "RESOURCE_EXHAUSTED", status: 429 }), true).client, stalledClient([])]) {
-      const { client, calls } = inTurn(first, fakeClient(["Lite answer."]).client);
-      assert.deepEqual(await events(await handleChat(post(ask("q")), client)), [{ type: "text", text: "Lite answer." }, { type: "done", truncated: false }]);
-      assert.deepEqual(
-        calls.map((c) => [c.model, c.config.thinkingConfig]),
-        [
-          ["gemini-flash-latest", { thinkingLevel: "LOW" }],
-          ["gemini-flash-lite-latest", undefined],
-        ],
-      );
-    }
-  } finally {
-    console.warn = original;
-    LIMITS.startMs = saved;
-  }
-});
-
-test("handleChat keeps to one model once text has arrived, and for configuration errors", async () => {
-  const original = { error: console.error, warn: console.warn };
-  console.error = console.warn = () => {};
+test("handleChat sends an overloaded model's error after one attempt", async () => {
+  const original = console.error;
+  console.error = () => {};
   try {
     const overloaded = new ApiError({ message: "UNAVAILABLE", status: 503 });
-    const partial = inTurn(fakeClient(["par"], "STOP", overloaded).client, fakeClient(["other"]).client);
-    assert.deepEqual(await events(await handleChat(post(ask("q")), partial.client)), [{ type: "text", text: "par" }, { type: "error", message: "The assistant is busy right now. Please try again in a minute." }]);
-    assert.equal(partial.calls.length, 1);
-    const badKey = inTurn(fakeClient([], "STOP", new ApiError({ message: "API key not valid", status: 400 }), true).client, fakeClient(["other"]).client);
-    assert.deepEqual(await events(await handleChat(post(ask("q")), badKey.client)), [{ type: "error", message: "The assistant isn't available right now." }]);
-    assert.equal(badKey.calls.length, 1);
-    const allBusy = inTurn(fakeClient([], "STOP", overloaded, true).client, fakeClient([], "STOP", overloaded, true).client);
-    assert.deepEqual(await events(await handleChat(post(ask("q")), allBusy.client)), [{ type: "error", message: "The assistant is busy right now. Please try again in a minute." }]);
-    assert.equal(allBusy.calls.length, 2);
+    const { client, calls } = fakeClient([], "STOP", overloaded, true);
+    assert.deepEqual(await events(await handleChat(post(ask("q")), client)), [{ type: "error", message: "The assistant is busy right now. Please try again in a minute." }]);
+    assert.equal(calls.length, 1);
   } finally {
-    Object.assign(console, original);
+    console.error = original;
   }
 });
 
