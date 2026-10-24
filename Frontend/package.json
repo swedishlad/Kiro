@@ -11,9 +11,11 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "test": "node --test \"src/**/*.test.ts\""
+    "test": "node --test \"src/**/*.test.ts\"",
+    "knowledge": "node scripts/knowledge.ts"
   },
   "dependencies": {
+    "@google/genai": "2.31.0",
     "@tesseract.js-data/eng": "1.0.0",
     "d3-array": "3.2.4",
     "d3-geo": "3.1.1",

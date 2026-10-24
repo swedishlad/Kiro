@@ -1,0 +1,44 @@
+{
+ "builtAt": "2026-10-24T17:06:55Z",
+ "gridThrough": "2026-10-14",
+ "homesThrough": "2026-08",
+ "forecastHorizon": [
+  "2026-11",
+  "2027-04"
+ ],
+ "schedule": "daily, GitHub Actions (.github/workflows/refresh-data.yml); a commit only when new data arrives",
+ "sources": [
+  {
+   "id": "S17",
+   "name": "ISO-NE hourly load by MA load zone (SMD)",
+   "from": "2017-01-01",
+   "to": "2023-12-31"
+  },
+  {
+   "id": "S19",
+   "name": "EIA-930 hourly demand by ISO-NE subregion (published ~10 days late)",
+   "from": "2024-01-01",
+   "to": "2026-10-14"
+  },
+  {
+   "id": "S20",
+   "name": "Open-Meteo daily mean temperature, bias-corrected to ISO-NE's zone points",
+   "from": "2024-01-01",
+   "to": "2026-10-14"
+  },
+  {
+   "id": "S15",
+   "name": "EIA-861M monthly retail sales, Massachusetts (published ~2 months late)",
+   "from": "2010-01",
+   "to": "2026-08"
+  }
+ ],
+ "gates": [
+  "G-LIVE",
+  "G-HMM",
+  "G-FC",
+  "G-CITY",
+  "schemas",
+  "pytest"
+ ]
+}

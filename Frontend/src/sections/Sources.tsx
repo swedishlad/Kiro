@@ -1,6 +1,6 @@
 import { Card, DataTable } from "../components/ui.tsx";
 import { fmtNum } from "../data/format.ts";
-import { consumptionStats, eia, hmm, recs, savingsModel, towns } from "../data/load.ts";
+import { consumptionStats, eia, hmm, liveStatus, recs, savingsModel, towns } from "../data/load.ts";
 
 const SOURCES = [
   {
@@ -13,7 +13,7 @@ const SOURCES = [
     file: "data/build/eia_ma_total_monthly.csv",
     what: "All-sector totals for context",
     source: "U.S. EIA, Form EIA-861M",
-    coverage: "2010-01 – 2026-08",
+    coverage: `${eia[0].ym} – ${eia[eia.length - 1].ym}`,
   },
   {
     file: "data/snapshot/monthly_residential_cents_2026-07-02.csv",
@@ -34,10 +34,10 @@ const SOURCES = [
     coverage: "2020 (one survey year)",
   },
   {
-    file: "data/build/isone_ma_daily.csv",
-    what: "Daily real-time load and temperature for NEMA, SEMA, WCMA (input to the grid regimes and forecast)",
-    source: "ISO New England",
-    coverage: "2017-01-01 – 2023-12-31",
+    file: "data/build/grid_daily.csv",
+    what: "Daily load and temperature for NEMA, SEMA, WCMA (input to the grid regimes and forecast), refreshed daily",
+    source: "ISO New England to 2023, then U.S. EIA-930 load (published ~10 days late) + Open-Meteo temperature",
+    coverage: `2017-01-01 – ${liveStatus.gridThrough}`,
   },
   {
     file: "data/build/ma_towns.csv",
@@ -58,6 +58,7 @@ const ARTIFACTS = [
   { file: "hmm_regimes.json", used: `Monthly Low/Mid/High use regimes, ${hmm.timeline.length} months (Overview, Usage)` },
   { file: "savings_model.json", used: "Current basic-service term and worked examples (Prices)" },
   { file: "map_consumption.json", used: "Traffic-light cut points and the modeled per-town level (Usage, Towns)" },
+  { file: "live_status.json", used: `Data-through dates: grid ${liveStatus.gridThrough}, homes ${liveStatus.homesThrough} (Sources, Grid)` },
   { file: "regimes.json", used: "Homes (monthly) and grid zones (daily) vs their usual range, outlooks (Overview, Regimes & forecast)" },
   { file: "mc_forecast.json", used: "Six-month load forecast and its walk-forward test (Overview, Regimes & forecast)" },
 ];
@@ -71,7 +72,8 @@ export default function Sources() {
           <p className="page-lede">
             Every number on this site comes from a public source committed to this repository, through the Python backend in{" "}
             <code className="code">Backend/</code>. The dashboard reads the same files; nothing is fetched from a third-party API at
-            runtime.
+            runtime. The “Ask FairWatt” assistant answers from a knowledge base built from these files and sends your questions to
+            Google's Gemini API to write its replies.
           </p>
         </div>
       </div>
@@ -175,6 +177,7 @@ python3 -m pytest tests -q
 
 cd ../Frontend
 npm install
+npm run knowledge # the assistant's knowledge base
 npm test          # parity checks against the artifacts
 npm run build     # static site in Frontend/dist`}</pre>
           </div>

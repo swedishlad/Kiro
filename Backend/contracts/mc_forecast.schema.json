@@ -47,7 +47,10 @@
    ],
    "properties": {
     "source": {
-     "const": "S15 all-sector"
+     "enum": [
+      "S15 all-sector",
+      "none: observed load"
+     ]
     },
     "ratio": {
      "type": "number",
@@ -238,6 +241,81 @@
    "type": "array",
    "items": {
     "type": "string"
+   }
+  },
+  "backtest": {
+   "type": "object",
+   "required": [
+    "winters",
+    "nWinters",
+    "nMonths",
+    "cov80",
+    "cov90",
+    "maeVsNaive",
+    "totalBiasPct",
+    "totalMaePct",
+    "totalCov80"
+   ],
+   "properties": {
+    "winters": {
+     "type": "string"
+    },
+    "nWinters": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "nMonths": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "cov80": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 1
+    },
+    "cov90": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 1
+    },
+    "maeVsNaive": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    },
+    "totalBiasPct": {
+     "type": "number"
+    },
+    "totalMaePct": {
+     "type": "number",
+     "minimum": 0
+    },
+    "totalCov80": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 1
+    }
+   }
+  },
+  "recentLevel": {
+   "type": "object",
+   "required": [
+    "NEMA",
+    "SEMA",
+    "WCMA"
+   ],
+   "additionalProperties": {
+    "type": "number"
+   }
+  },
+  "levelSdPct": {
+   "type": "object",
+   "required": [
+    "NEMA",
+    "SEMA",
+    "WCMA"
+   ],
+   "additionalProperties": {
+    "type": "number"
    }
   }
  }

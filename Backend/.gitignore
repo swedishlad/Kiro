@@ -12,3 +12,13 @@ data/raw/
 *.tsbuildinfo
 test-results/
 playwright-report/
+# C++/CMake output only (anchored: a bare 'build/' would also hide data/build/, which the site reads)
+/build/
+*.so
+*.dylib
+dist/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.coverage
+data/build/*.new

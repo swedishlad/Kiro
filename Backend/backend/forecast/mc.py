@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
-"""D3: walk-forward-calibrated Monte Carlo, 6 months (2026-11 .. 2027-04), per MA load zone -> data/build/mc_forecast.json.
+"""D3: walk-forward-calibrated Monte Carlo, the 6 full months after the last observed day, per MA load zone
+-> data/build/mc_forecast.json. The horizon moves forward by itself as the daily refresh (backend/live/) adds data.
 
 Spec: docs/specs/mc-forecast.md. Per path:
-  weather   one historical Nov-Apr season (2017-18 .. 2022-23), shifted -7..+7 days, shared by all zones
+  weather   the same 6 calendar months of one past year (every year whose window the data covers), shifted -7..+7
+            days, shared by all zones
   expected  rolling 2-year weather model (temperature, weekend, calendar month), the residual's definition of normal
-  regimes   a 3-state HMM (tied sd) fit here on the zone's walk-forward residual in % vs that model, started from its
-            stationary distribution; daily load = expected x (1 + residual% / 100). Not the regimes.json HMM, whose
-            states are in sd from the historical average.
-  level     x EIA all-sector sales, 12 months to 2026-08 / 2023 (= 1.0435): ISO-NE files stop at 2023-12
+  regimes   a 3-state HMM (tied sd) fit here on the zone's walk-forward residual in % vs that model, centred on zero
+            and started from its stationary distribution; daily load = expected x level x (1 + residual% / 100). Not
+            the regimes.json HMM, whose states are in sd from the historical average.
+  level     1 + the zone's mean walk-forward residual over the last 365 days: the 2-year model is centred a year back
+            and lags a trend; this carries it to today. Each path also draws one level shock (shared by the zones),
+            sd = how much that level moved over the following 6 months at every past month start: weather and
+            day-to-day regimes alone left the bands too narrow (80% band held 69% of months, 6-month totals 43%,
+            rolling backtest). Load itself is observed to the last published day (ISO-NE 2017-2023, then EIA-930),
+            so the snapshot-era x1.0435 EIA ratio is retired.
 Calibration: fit everything on data <= 2021-10-31, simulate Nov 2021-Apr 2022 and Nov 2022-Apr 2023 on their real
 calendars, score 36 zone-months. A leakage test proves those forecasts ignore data after the cut.
+Backtest: the same refit on Oct 31 before every complete winter since 2019-20 (it grows by one winter a year).
 Run from the kit root after the regimes build:  python3 -m backend.forecast.mc
 """
 import csv
@@ -18,15 +26,15 @@ import json
 
 import numpy as np
 
-from backend.common import (ZONES, build_path, design, fit_weather, load_daily, month_dummies,
+from backend.common import (ZONES, add_month, build_path, design, fit_weather, load_daily, month_dummies, month_starts,
                             walk_forward_residuals, weekend_flags, with_ma, zone_population)
 from backend.regimes.hmm import fit as hmm_fit
 from backend.regimes.hmm import stationary
 
 SEED = 20261024
 N_PATHS = 10_000
-HORIZON_START, HORIZON_END = dt.date(2026, 11, 1), dt.date(2027, 4, 30)
-SEASONS = list(range(2017, 2023))          # season y = Nov 1 y .. Apr 30 y+1
+N_MONTHS = 6
+LEVEL_DAYS = 365
 TRAIN_END = dt.date(2021, 10, 31)
 TEST_WINDOWS = [(dt.date(2021, 11, 1), dt.date(2022, 4, 30)), (dt.date(2022, 11, 1), dt.date(2023, 4, 30))]
 QK = [5, 10, 25, 50, 75, 90, 95]
@@ -45,26 +53,41 @@ def regressors(days, temps):
 
 
 def level_ratio(path=None):
+    """EIA all-sector sales, last 12 months / calendar 2023 (S15): how far today's load sits above ISO-NE's last year."""
     rows = list(csv.DictReader(open(path or build_path("eia_ma_total_monthly.csv"), newline="")))
-    pick = lambda f: sum(float(r["total_sales_mwh"]) for r in rows if f(int(r["year"]), int(r["month"])))
-    return round(pick(lambda y, m: (y == 2025 and m >= 9) or (y == 2026 and m <= 8)) / pick(lambda y, m: y == 2023), 4)
+    last12 = sorted(rows, key=lambda r: (int(r["year"]), int(r["month"])))[-12:]
+    return round(sum(float(r["total_sales_mwh"]) for r in last12) /
+                 sum(float(r["total_sales_mwh"]) for r in rows if r["year"] == "2023"), 4)
 
 
-def season_temps(days, temp, seasons, n_days):
-    """{season: {zone: temps covering Nov 1 - SHIFT .. Nov 1 + n_days + SHIFT}}."""
+def horizon(last_day):
+    """First and last day of the N_MONTHS full calendar months after the month of the last observed day."""
+    return add_month(last_day, 1), add_month(last_day, N_MONTHS + 1) - dt.timedelta(1)
+
+
+def weather_years(days, start_month, n_days):
+    """Every year y whose window (start_month 1st of y - SHIFT .. + n_days + SHIFT) lies inside the data."""
+    return [y for y in range(days[0].year, days[-1].year + 1)
+            if dt.date(y, start_month, 1) - dt.timedelta(SHIFT) >= days[0]
+            and dt.date(y, start_month, 1) + dt.timedelta(n_days + SHIFT - 1) <= days[-1]]
+
+
+def season_temps(days, temp, seasons, n_days, start_month=11):
+    """{season: {zone: temps covering start_month 1st - SHIFT .. + n_days + SHIFT}}."""
     pos = {d: i for i, d in enumerate(days)}
     out = {}
     for y in seasons:
-        i = pos[dt.date(y, 11, 1)] - SHIFT
+        i = pos[dt.date(y, start_month, 1)] - SHIFT
         out[y] = {z: temp[z][i:i + n_days + 2 * SHIFT] for z in ZONES}
     return out
 
 
-def simulate(rng, cal_days, seasons, temps_by_season, betas, regimes, level, n_paths):
-    """Return {zone: daily GWh (paths x days)} for the calendar `cal_days`."""
+def simulate(rng, cal_days, seasons, temps_by_season, betas, regimes, level, n_paths, level_sd=None):
+    """Return {zone: daily GWh (paths x days)} for the calendar `cal_days`. level / level_sd: scalar or {zone: value}."""
     n = len(cal_days)
     s_idx = rng.integers(0, len(seasons), n_paths)
     shift = rng.integers(-SHIFT, SHIFT + 1, n_paths)
+    xi = rng.standard_normal(n_paths)                                         # one level shock per path, all zones
     cols = (SHIFT + shift)[:, None] + np.arange(n)[None, :]
     out = {}
     for z in ZONES:
@@ -80,7 +103,9 @@ def simulate(rng, cal_days, seasons, temps_by_season, betas, regimes, level, n_p
                 u = rng.random(n_paths)
                 state = (u[:, None] > cum[state]).sum(axis=1).clip(0, 2)
             eps[:, d] = mu[state] + sd[state] * rng.standard_normal(n_paths)
-        out[z] = expected * (1.0 + eps / 100.0) * level
+        lv = level[z] if isinstance(level, dict) else level
+        sd_l = (level_sd or {}).get(z, 0.0)
+        out[z] = expected * (1.0 + eps / 100.0) * (lv * (1.0 + sd_l * xi / 100.0))[:, None]
     return out
 
 
@@ -97,9 +122,11 @@ def quantiles(x):
 
 
 def fit_inputs(days, gwh, temp, end):
-    """Expected-load betas (730 days to `end`) and tied 3-state HMMs on walk-forward residuals to `end`. No data after `end`."""
+    """Expected-load betas (730 days to `end`), tied 3-state HMMs on walk-forward residuals to `end` (centred on zero),
+    each zone's level (1 + mean residual over the last LEVEL_DAYS) and level sd (in %: at every past month start, the
+    mean residual of the next 181 days minus that of the LEVEL_DAYS before; sd over those). No data after `end`."""
     keep = days <= end
-    d, betas, regs = days[keep], {}, {}
+    d, betas, regs, levels, level_sd = days[keep], {}, {}, {}, {}
     lo = max(0, len(d) - 730)
     for z in ZONES:
         y, t = gwh[z][keep], temp[z][keep]
@@ -107,23 +134,57 @@ def fit_inputs(days, gwh, temp, end):
         betas[z] = fit_weather(X[lo:], y[lo:])
         r = walk_forward_residuals(d, y, X, start=dt.date(2018, 1, 1), pct=True)  # %: simulate() divides by 100
         p = hmm_fit(r[d >= dt.date(2018, 1, 1)], seed=SEED, n_init=8, tied=True)
-        regs[z] = {"mu": p["mu"], "sd": p["sd"], "A": p["A"]}
-    return betas, regs
+        regs[z] = {"mu": p["mu"] - stationary(p["A"]) @ p["mu"], "sd": p["sd"], "A": p["A"]}
+        levels[z] = 1.0 + float(np.nanmean(r[-LEVEL_DAYS:])) / 100.0
+        i0 = int(np.argmax(~np.isnan(r)))
+        moves = [np.mean(r[i:i + 181]) - np.mean(r[i - LEVEL_DAYS:i]) for i in month_starts(d, d[0])
+                 if i - LEVEL_DAYS >= i0 and i + 181 <= len(r)]
+        level_sd[z] = float(np.std(moves)) if len(moves) >= 3 else 0.0
+    return betas, regs, levels, level_sd
 
 
 def calibration_forecasts(days, gwh, temp, n_paths=4000):
     """Forecast quantiles for the two test windows using only data <= TRAIN_END (deterministic given SEED)."""
-    betas, regs = fit_inputs(days, gwh, temp, TRAIN_END)
-    seasons = [y for y in SEASONS if dt.date(y + 1, 5, 7) <= TRAIN_END]
+    betas, regs, levels, level_sd = fit_inputs(days, gwh, temp, TRAIN_END)
+    seasons = [y for y in weather_years(days, 11, 181) if dt.date(y + 1, 5, 7) <= TRAIN_END]
     out = []
     for w, (a, b) in enumerate(TEST_WINDOWS):
         cal = date_range(a, b)
         temps = season_temps(days, temp, seasons, len(cal))
-        sim = simulate(np.random.default_rng(SEED + w), cal, seasons, temps, betas, regs, 1.0, n_paths)
+        sim = simulate(np.random.default_rng(SEED + w), cal, seasons, temps, betas, regs, levels, n_paths, level_sd)
         for z in ZONES:
             keys, m = monthly(cal, sim[z])
             out.append({"zone": z, "months": keys, "q": np.percentile(m, QK, axis=0)})
     return out, seasons
+
+
+def backtest_winters(days):
+    """Every Nov-Apr since 2019-20 (a year of residuals before it) whose actuals are complete."""
+    return [w for w in range(2019, days[-1].year) if dt.date(w + 1, 4, 30) <= days[-1]]
+
+
+def backtest(days, gwh, temp, n_paths=2000):
+    """Rolling origin: refit on data <= Oct 31 before each winter, forecast its Nov-Apr, score months and totals."""
+    fc, totals = [], []
+    for w in backtest_winters(days):
+        end = dt.date(w, 10, 31)
+        betas, regs, levels, level_sd = fit_inputs(days, gwh, temp, end)
+        cal = date_range(dt.date(w, 11, 1), dt.date(w + 1, 4, 30))
+        seasons = weather_years(days[days <= end], 11, len(cal))
+        temps = season_temps(days, temp, seasons, len(cal))
+        sim = simulate(np.random.default_rng(SEED + w), cal, seasons, temps, betas, regs, levels, n_paths, level_sd)
+        for z in ZONES:
+            keys, m = monthly(cal, sim[z])
+            fc.append({"zone": z, "months": keys, "q": np.percentile(m, QK, axis=0)})
+            q = dict(zip(QK, np.percentile(m.sum(axis=1), QK)))
+            act = actual_monthly(days, gwh, z, keys).sum()
+            totals.append({"winter": w, "zone": z, "errPct": (act / q[50] - 1) * 100, "in80": q[10] <= act <= q[90]})
+    calib, _ = score(days, gwh, fc)
+    ws = backtest_winters(days)
+    return {"winters": f"{ws[0]}-{ws[0] + 1 - 2000:02d} .. {ws[-1]}-{ws[-1] + 1 - 2000:02d}", "nWinters": len(ws),
+            **calib, "totalBiasPct": round(float(np.mean([t["errPct"] for t in totals])), 2),
+            "totalMaePct": round(float(np.mean([abs(t["errPct"]) for t in totals])), 2),
+            "totalCov80": round(float(np.mean([t["in80"] for t in totals])), 4)}
 
 
 def actual_monthly(days, gwh, z, keys):
@@ -154,12 +215,13 @@ def score(days, gwh, fc):
 def main():
     days, gwh, temp = load_daily()
     gwh, temp = with_ma(gwh, temp, zone_population())
-    level = level_ratio()
-    cal = date_range(HORIZON_START, HORIZON_END)
-    betas, regs = fit_inputs(days, gwh, temp, days[-1])
-    temps = season_temps(days, temp, SEASONS, len(cal))
-    sim = simulate(np.random.default_rng(SEED), cal, SEASONS, temps, betas, regs, level, N_PATHS)
-    last_obs = date_range(dt.date(2022, 11, 1), dt.date(2023, 4, 30))
+    start, end = horizon(days[-1])
+    cal = date_range(start, end)
+    years = weather_years(days, start.month, len(cal))
+    betas, regs, levels, level_sd = fit_inputs(days, gwh, temp, days[-1])
+    temps = season_temps(days, temp, years, len(cal), start.month)
+    sim = simulate(np.random.default_rng(SEED), cal, years, temps, betas, regs, levels, N_PATHS, level_sd)
+    last_obs = date_range(add_month(start, -12), add_month(end, -12 + 1) - dt.timedelta(1))   # same months, a year earlier
     areas, ma_paths, ma_last = [], 0, 0
     for z in ZONES + ["MA"]:
         if z == "MA":
@@ -167,7 +229,7 @@ def main():
         else:
             keys, paths = monthly(cal, sim[z])
             _, last = monthly(last_obs, gwh[z][[d in set(last_obs) for d in days]][None, :])
-            last = last[0] * level
+            last = last[0]
             ma_paths, ma_last = ma_paths + paths, ma_last + last
         months = [{"ym": f"{y}-{m:02d}", **q} for (y, m), q in zip(keys, quantiles(paths))]
         areas.append({"area": z, "unit": "GWh", "months": months, "total": quantiles(paths.sum(axis=1)[:, None])[0],
@@ -175,27 +237,40 @@ def main():
                       "sameMonthsLastObservedGWh": [round(float(v), 3) for v in last]})
     fc, cal_seasons = calibration_forecasts(days, gwh, temp)
     calib, rows = score(days, gwh, fc)
+    bt = backtest(days, gwh, temp)
     doc = {
         "asOf": dt.date.today().isoformat(),
         "horizon": [f"{y}-{m:02d}" for y, m in keys],
         "nPaths": N_PATHS, "seed": SEED,
-        "method": ("weather-season bootstrap (2017-18..2022-23, +/-7 days) x rolling 2-year weather model x 3-state HMM "
-                   "regime-switching residual (tied sd) x EIA all-sector level ratio"),
-        "levelAdjustment": {"source": "S15 all-sector", "ratio": level},
+        "method": (f"weather bootstrap (the same months of {years[0]}..{years[-1]}, +/-7 days) x rolling 2-year weather "
+                   f"model fit to {days[-1]} x 3-state HMM regime-switching residual (tied sd)"),
+        "levelAdjustment": {"source": "none: observed load", "ratio": 1.0},
+        "recentLevel": {z: round(levels[z], 4) for z in ZONES},
+        "levelSdPct": {z: round(level_sd[z], 3) for z in ZONES},
         "areas": areas,
         "calibration": {"trainEnd": TRAIN_END.isoformat(), "test": "2021-11..2022-04 and 2022-11..2023-04",
                         **calib},
+        "backtest": bt,
         "notes": [
-            "Regional load of all customer classes; ISO-NE data ends 2023-12, so the level is carried to 2026 by EIA sales.",
+            f"Regional load of all customer classes, observed daily through {days[-1]} (ISO-NE 2017-2023, then EIA-930). "
+            f"The horizon is the {N_MONTHS} full months after the last observed day and moves forward as data arrives.",
+            f"sameMonthsLastObservedGWh = the load actually observed in the same months a year earlier "
+            f"({last_obs[0]:%Y-%m} .. {last_obs[-1]:%Y-%m}).",
             f"Calibration fit only on data <= {TRAIN_END.isoformat()}, weather from seasons {cal_seasons[0]}-{cal_seasons[-1] + 1}.",
             "MA = the three zones summed per path; zone residuals are simulated independently (MA spread may be too narrow).",
+            f"recentLevel = 1 + each zone's mean miss of the 2-year weather model over the last {LEVEL_DAYS} days (carries a load "
+            f"trend to today); levelSdPct = how far that level has moved over 6 months, drawn once per path. backtest = the same method refit before each winter {bt['winters']}: 80% range held "
+            f"{bt['cov80']:.0%} of {bt['nMonths']} zone-months; 6-month total off by {bt['totalMaePct']:.1f}% on average.",
         ],
     }
     with open(build_path("mc_forecast.json"), "w") as fh:
         json.dump(doc, fh, separators=(",", ":"))
     with open(build_path("mc_calibration_rows.json"), "w") as fh:
         json.dump(rows, fh, indent=1)
-    print("level ratio", level, "| calibration", doc["calibration"])
+    print("horizon", doc["horizon"][0], "..", doc["horizon"][-1], "| weather years", years, "| levels", doc["recentLevel"],
+          "| level sd %", doc["levelSdPct"])
+    print("calibration", doc["calibration"])
+    print("backtest", bt)
     for a in areas:
         print(a["area"], "6-month total p10/p50/p90:", a["total"]["p10"], a["total"]["p50"], a["total"]["p90"],
               "| last observed", round(sum(a["sameMonthsLastObservedGWh"]), 1))

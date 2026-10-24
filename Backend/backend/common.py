@@ -1,7 +1,8 @@
 """Shared loaders and the daily weather model for the FairWatt backend (regimes, Monte Carlo).
 
-Data: data/build/isone_ma_daily.csv (ISO-NE RT demand by MA load zone, 2017-2023; G-DATA-4) and
-data/build/ma_towns.csv (zone population 2024; G-DATA-5). Daily GWh = rt_mwh / 1000.
+Data: data/build/grid_daily.csv (daily load by MA load zone: ISO-NE RT demand 2017-2023, G-DATA-4, then EIA-930 from
+2024 to the latest published day, refreshed by backend/live/, G-LIVE) and data/build/ma_towns.csv (zone population
+2024; G-DATA-5). Daily GWh = rt_mwh / 1000.
 Area "MA" = the three zones summed per day; its temperature is the zone temperatures weighted by 2024 population.
 
 Weather model (docs/specs/regimes.md §2): GWh ~ 1 + HDD + CDD + weekend + HDD^2/100 + CDD^2/100, base 65 F.
@@ -24,7 +25,7 @@ def build_path(name):
 
 def load_daily(path=None):
     """Return (days, gwh, temp): days = np.array of datetime.date; gwh/temp = {zone: np.array}, aligned by day."""
-    rows = list(csv.DictReader(open(path or build_path("isone_ma_daily.csv"), newline="")))
+    rows = list(csv.DictReader(open(path or build_path("grid_daily.csv"), newline="")))
     dates = sorted({r["date"] for r in rows})
     idx = {d: i for i, d in enumerate(dates)}
     gwh = {z: np.full(len(dates), np.nan) for z in ZONES}
@@ -80,6 +81,12 @@ def month_starts(days, start):
             seen.add(key)
             out.append(i)
     return out
+
+
+def add_month(d, k):
+    """First day of the month k months after d's month (k may be negative)."""
+    m = d.month - 1 + k
+    return dt.date(d.year + m // 12, m % 12 + 1, 1)
 
 
 def month_dummies(days):

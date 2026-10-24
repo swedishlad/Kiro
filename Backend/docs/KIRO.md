@@ -8,10 +8,11 @@
 
 | Kiro feature | How we used it | Why this fits the job |
 |---|---|---|
-| **Steering** (`.kiro/steering/`) | Five always-on files: product, tech, file ownership, **verified ground-truth numbers**, agent rules | Agents can't invent numbers; every agent starts from the same facts. Gate scripts re-derive those numbers from data, so a typo fails a gate |
+| **Steering** (`.kiro/steering/`) | Six always-on files: product, tech, file ownership, **verified ground-truth numbers**, agent rules, and **live data** (`live-data.md`: `data/build/` is regenerated daily, never hand-edited, never hard-code a data date) | Agents can't invent numbers; every agent starts from the same facts. Gate scripts re-derive those numbers from data, so a typo fails a gate |
 | **Spec** (`.kiro/specs/fairwatt-home/`) | Requirements (EARS acceptance criteria), design, and a 10-group task list. Each task names the agent that runs it; the orchestrator ticks tasks as gates pass | One plan, visible and checkable; pre-written from our design doc so no credits went to generating it |
 | **Custom agents and sub-agents** (`.kiro/agents/`) | An orchestrator delegates to workers by name: calc-engine, forecaster, ui-builder, copy-compliance, verifier, release (data-ingest and geo-map on standby) | Parallel work on disjoint files; an **independent verifier** that never edits product code and can block release |
 | **Hooks** (`.kiro/hooks/`) | `guard-git` blocks commands that would break a shared working tree; `validate-build` checks every generated data file against its JSON Schema the moment it is saved | Rules enforced mechanically instead of by reminder |
+| **Gates as the contract for automation** | The same gates the agents must pass (G-LIVE, G-HMM, G-FC, G-CITY, schemas, pytest, frontend tests) run every day in `.github/workflows/refresh-data.yml` before any refreshed number is committed | What an agent was held to on build day keeps holding after the event |
 | **Autopilot + trusted commands** | Autopilot on; test, build and data commands allow-listed | Parallel agents never stall waiting for approval |
 | **GitHub from Kiro** | Every commit is prefixed with its agent (`calc-engine: estimator fit (G-EST: pass)`) | The commit log doubles as evidence of who did what |
 

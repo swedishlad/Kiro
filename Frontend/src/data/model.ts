@@ -361,9 +361,32 @@ export interface McForecast {
     months: (Quantiles & { ym: string })[];
     total: Quantiles;
     samplePaths: number[][];
-    /** the same calendar months in the last observed season (2022-23), scaled to today's level */
+    /** the same calendar months a year earlier, as observed (live data) */
     sameMonthsLastObservedGWh: number[];
   }[];
   calibration: { trainEnd: string; test: string; nMonths: number; cov80: number; cov90: number; maeVsNaive: number };
+  /** rolling origin: refit before every complete winter since 2019-20 (grows a winter a year) */
+  backtest?: {
+    winters: string;
+    nWinters: number;
+    nMonths: number;
+    cov80: number;
+    cov90: number;
+    maeVsNaive: number;
+    totalBiasPct: number;
+    totalMaePct: number;
+    totalCov80: number;
+  };
   notes: string[];
+}
+
+/** data/build/live_status.json: written by the daily refresh only after every backend gate passed */
+export interface LiveStatus {
+  builtAt: string;
+  gridThrough: string;
+  homesThrough: string;
+  forecastHorizon: [string, string];
+  schedule: string;
+  sources: { id: string; name: string; from: string; to: string }[];
+  gates: string[];
 }
