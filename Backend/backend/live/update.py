@@ -6,7 +6,8 @@ Usage (backend root):  python3 -m backend.live.update            (--no-fetch: re
              backend.live.fetch_eia861m (EIA-861M -> staged data/build/eia_ma_*monthly.csv.new)
   2 verify   G-LIVE (backend.live.verify_live); only then do the staged EIA files replace the build copies
   3 rebuild  backend.regimes.build -> backend.forecast.mc -> backend.towns.build
-  4 gates    G-HMM, G-FC (Monte Carlo), G-CITY, schemas (.kiro/hooks/validate_build.py), backend pytest
+  4 gates    G-HMM, G-FC (Monte Carlo), G-CITY, schemas (.kiro/hooks/validate_build.py), pytest on tests/backend and
+             tests/hmm (tests/climate covers the FastAPI climate service, reads no data/build file, needs its own deps)
   5 status   data/build/live_status.json: what the site shows as "data through ..."
 Any failure exits non-zero before the status file is written. .github/workflows/refresh-data.yml runs this every
 day, then the frontend tests and build, and commits data/build/ only if all of it passed and new data arrived.
@@ -29,7 +30,7 @@ STEPS = [
     ("gate G-FC", [PY, "tests/backend/forecast/check_mc.py"]),
     ("gate G-CITY", [PY, "tests/backend/towns/check_towns.py"]),
     ("gate schemas", [PY, ".kiro/hooks/validate_build.py"]),
-    ("gate pytest", [PY, "-m", "pytest", "tests", "-q"]),
+    ("gate pytest", [PY, "-m", "pytest", "tests/backend", "tests/hmm", "-q"]),   # the suites that read data/build
 ]
 
 

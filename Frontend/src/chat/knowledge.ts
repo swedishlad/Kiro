@@ -160,7 +160,7 @@ function headlineSection(d: KnowledgeInputs): string {
     `- Basic service fixed rates, ${ymLabel(termFrom)} – ${ymLabel(termTo)} (supply only): ${UTILITIES.map((u) => `${u.name} ${fmtNum(sm.basicServiceRatesCents[u.id], 3)}¢`).join(", ")}.`,
     `- Basic service monthly option for ${ymLabel(winterYm)} (newest published month, winter peak): ${UTILITIES.map((u) => `${u.name} ${cents(monthlyRates[u.id].find((p) => p.ym === winterYm)?.cents ?? null)}¢`).join(", ")}.`,
     `- Homes vs their usual range, ${ymLabel(homes.current.date.slice(0, 7))}: **${RANGE_WORD[homes.current.color]}**, ${pctPoints(homes.current.pctVsAverage)} vs the same month in the previous 5 years (usual range ±${fmtNum(homes.current.bandPct, 1)}%).`,
-    `- Grid zones on ${dateLabel(regimes.areas[0].current.date)} (the last ISO-NE day in the data): ${regimes.areas
+    `- Grid zones on ${dateLabel(regimes.areas[0].current.date)} (the latest day EIA has published; refreshed daily): ${regimes.areas
       .filter((a) => a.area !== "MA_RES")
       .map((a) => `${a.area} ${RANGE_WORD[a.current.color]} (${pctPoints(a.current.pctVsAverage)})`)
       .join(", ")}.`,
@@ -332,7 +332,7 @@ ${table(
 function rangeRegimeSection(d: KnowledgeInputs): string {
   const r = d.regimes;
   const areas: RegimeArea[] = r.areas;
-  const label = (a: RegimeArea) => (a.area === "MA_RES" ? "Homes (statewide residential use per account, monthly, EIA)" : a.area === "MA" ? "MA grid (three zones added, daily, ISO-NE)" : `${a.area}: ${ZONE_NAMES[a.area as keyof typeof ZONE_NAMES]} (daily, ISO-NE)`);
+  const label = (a: RegimeArea) => (a.area === "MA_RES" ? "Homes (statewide residential use per account, monthly, EIA)" : a.area === "MA" ? "MA grid (three zones added, daily, ISO-NE / EIA-930)" : `${a.area}: ${ZONE_NAMES[a.area as keyof typeof ZONE_NAMES]} (daily, ISO-NE / EIA-930)`);
   const blocks = areas.map((a) => {
     const daily = a.unit === "day";
     const when = daily ? dateLabel(a.current.date) : ymLabel(a.current.date.slice(0, 7));
@@ -372,7 +372,7 @@ ${blocks.join("\n\n")}
 
 ### Share of days below / within / above range, by month (grid zones)
 
-2020–2023 ran mostly within or below the late-2010s range (COVID, efficiency, rooftop solar).
+2020–2023 ran mostly within or below the late-2010s range (COVID, efficiency, rooftop solar); load has grown since 2024 (EIA-930).
 
 ${table(["Month", ...zoneAreas.map((a) => `${a.area} below / within / above`)], monthsYm.map((m) => [ymLabel(m), ...zoneAreas.map((a) => share(a, m))]))}`;
 }
@@ -380,15 +380,21 @@ ${table(["Month", ...zoneAreas.map((a) => `${a.area} below / within / above`)], 
 function forecastSection(d: KnowledgeInputs): string {
   const f = d.forecast;
   const c = f.calibration;
+  const b = f.backtest;
+  const gridThrough = d.regimes.areas.find((a) => a.unit === "day")?.current.date;
   const blocks = f.areas.map((a) => {
     const name = a.area === "MA" ? "Massachusetts (three zones added)" : `${a.area}: ${ZONE_NAMES[a.area]}`;
     const rows = a.months.map((m, i) => [ymLabel(m.ym), fmtNum(m.p10), fmtNum(m.p50), fmtNum(m.p90), fmtNum(a.sameMonthsLastObservedGWh[i])]);
-    return `### ${name}\n\nSix-month total: median ${fmtNum(a.total.p50)} GWh, 80% range ${fmtNum(a.total.p10)}–${fmtNum(a.total.p90)} GWh, 90% range ${fmtNum(a.total.p5)}–${fmtNum(a.total.p95)} GWh.\n\n${table(["Month", "P10 GWh", "Median GWh", "P90 GWh", "Same month, last observed winter (2022-23) at today's level"], rows)}`;
+    return `### ${name}\n\nSix-month total: median ${fmtNum(a.total.p50)} GWh, 80% range ${fmtNum(a.total.p10)}–${fmtNum(a.total.p90)} GWh, 90% range ${fmtNum(a.total.p5)}–${fmtNum(a.total.p95)} GWh.\n\n${table(["Month", "P10 GWh", "Median GWh", "P90 GWh", "Same month a year earlier (observed)"], rows)}`;
   });
   return `## Six-month grid load forecast, ${ymLabel(f.horizon[0])} – ${ymLabel(f.horizon[f.horizon.length - 1])} (Regimes & forecast tab)
 
-- What it is: ${fmtNum(f.nPaths)} simulated paths (${f.method}); level carried to today with EIA sales (ratio ${fmtNum(f.levelAdjustment.ratio, 4)}) because the ISO-NE files end in 2023. All customer classes (homes and businesses), not a household bill. There is no separate forecast for the homes series.
-- Tested before shown: fit only on data to ${dateLabel(c.trainEnd)}, then run on two winters it never saw (${c.test}, ${c.nMonths} zone-months). The 80% range held the actual ${fmtPct(c.cov80)} of the time (90% range: ${fmtPct(c.cov90)}), and the median's error was ${fmtPct(1 - c.maeVsNaive)} smaller than a "same month last year" guess. It is a simulation, never a promise.
+- What it is: ${fmtNum(f.nPaths)} simulated paths (${f.method}), on daily load observed through ${gridThrough ? dateLabel(gridThrough) : "the latest published day"} (ISO-NE 2017–2023, then EIA-930; refreshed daily). Each path carries the recent load level and its uncertainty. All customer classes (homes and businesses), not a household bill. There is no separate forecast for the homes series.
+- ${
+    b
+      ? `Tested before shown: refit before each of the last ${b.nWinters} winters (${b.winters}) and run on months it had not seen (${b.nMonths} zone-months). The 80% range held the actual ${fmtPct(b.cov80)} of the time (90% range: ${fmtPct(b.cov90)}), the median's error was ${fmtPct(1 - b.maeVsNaive)} smaller than a "same month last year" guess, and six-month totals missed by ${fmtNum(b.totalMaePct, 1)}% on average.`
+      : `Tested before shown: fit only on data to ${dateLabel(c.trainEnd)}, then run on two winters it never saw (${c.test}, ${c.nMonths} zone-months). The 80% range held the actual ${fmtPct(c.cov80)} of the time (90% range: ${fmtPct(c.cov90)}), and the median's error was ${fmtPct(1 - c.maeVsNaive)} smaller than a "same month last year" guess.`
+  } It is a simulation, never a promise.
 ${f.notes.map((n) => `- ${n}`).join("\n")}
 
 ${blocks.join("\n\n")}`;
@@ -418,20 +424,21 @@ ${table(["Town", "County", "Zone", "Pop. 2020", "Pop. 2024", "Change"], rows)}`;
 
 function sourcesSection(d: KnowledgeInputs): string {
   const { eia, recs, towns } = d;
+  const gridThrough = d.regimes.areas.find((a) => a.unit === "day")?.current.date;
   return `## Sources and limits (Data & methods tab)
 
 Sources:
 - U.S. EIA Form EIA-861M: Massachusetts residential revenue, sales, accounts, average price and kWh per account, ${ymLabel(eia[0].ym)} – ${ymLabel(eia[eia.length - 1].ym)} (2026 preliminary).
 - Mass.gov DPU "Basic Service Rates" (retrieved 2 Jul 2026): monthly and fixed-option residential rates by utility, 2005 – Jan 2027.
 - U.S. EIA Residential Energy Consumption Survey 2020: ${recs.length} Massachusetts homes with yearly kWh, size, heating fuel, home type, household size and survey weight.
-- ISO New England: daily load and temperature for NEMA, SEMA and WCMA, 2017 – 2023.
+- ISO New England (2017 – 2023), then U.S. EIA-930 (2024 – ${gridThrough ? dateLabel(gridThrough) : "latest"}, published ~10 days late) with Open-Meteo temperature: daily load for NEMA, SEMA and WCMA, refreshed daily.
 - U.S. Census Bureau: population of the ${towns.length} towns, 2020 and 2024. MassGIS (via the Leventhal Map & Education Center) town boundaries.
 
 Limits worth knowing:
 - RECS 2020 is one COVID-year survey of ${recs.length} homes; its bands are wide on purpose.
 - EIA revises preliminary months (all of 2026 so far), so recent values can change.
 - There is no verified per-town usage data, so towns are never coloured by consumption.
-- ISO-NE load includes businesses as well as homes, and the files end on 31 Dec 2023.
+- Grid load includes businesses as well as homes, and EIA publishes it about 10 days late.
 - Usual-range regimes don't remove weather: a heat wave above the range counts as Above.
 - The forecast simulates zones independently, so the statewide band is probably too narrow.
 - Town-to-zone assignment is approximate.
