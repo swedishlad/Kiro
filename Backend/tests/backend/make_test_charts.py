@@ -178,16 +178,20 @@ def chart_fan(mcdoc):
         ax.fill_between(x, q["p10"], q["p90"], color=BLUE[1], lw=0, label="p10-p90")
         ax.fill_between(x, q["p25"], q["p75"], color=BLUE[2], lw=0, label="p25-p75")
         ax.plot(x, q["p50"], color=BLUE[3], lw=2, label="median")
-        ax.scatter(x, a["sameMonthsLastObservedGWh"], color=INK, s=18, zorder=3, label="Nov 2022-Apr 2023 x 1.0435")
-        ax.axvline(2.5, color=INK2, lw=1)
-        ax.text(2.55, ax.get_ylim()[1], " Feb 1 rate reset", va="top", fontsize=7.5, color=INK2)
+        ax.scatter(x, a["sameMonthsLastObservedGWh"], color=INK, s=18, zorder=3, label="same months a year earlier (observed)")
+        for j, mm in enumerate(m):                               # basic-service rates reset on Feb 1 and Aug 1
+            if j and mm["ym"][5:] in ("02", "08"):
+                ax.axvline(j - 0.5, color=INK2, lw=1)
+                ax.text(j - 0.45, ax.get_ylim()[1], f" {'Feb' if mm['ym'][5:] == '02' else 'Aug'} 1 rate reset", va="top",
+                        fontsize=7.5, color=INK2)
         ax.set_xticks(x, [mm["ym"] for mm in m], fontsize=8)
         t = a["total"]
         ax.set_title(f"{a['area']}: 6-month total {t['p50']:,.0f} GWh (80% range {t['p10']:,.0f}-{t['p90']:,.0f})", loc="left", fontsize=9)
         ax.set_ylabel("GWh per month")
     h, l = axes.flat[0].get_legend_handles_labels()
     fig.legend(h, l, loc="lower center", ncol=5, frameon=False, fontsize=8, bbox_to_anchor=(0.5, -0.04))
-    fig.suptitle(f"Monte Carlo forecast, Nov 2026 - Apr 2027 ({mcdoc['nPaths']:,} paths; grey lines = 20 sample paths)",
+    h0, h1 = (dt.datetime.strptime(mcdoc["horizon"][k], "%Y-%m").strftime("%b %Y") for k in (0, -1))
+    fig.suptitle(f"Monte Carlo forecast, {h0} - {h1} ({mcdoc['nPaths']:,} paths; grey lines = 20 sample paths)",
                  x=0.01, ha="left", fontsize=10.5, fontweight="bold")
     fig.tight_layout()
     save(fig, "mc_forecast_fan.png")
@@ -262,7 +266,7 @@ def example_fan(mcdoc):
 
 def example_map(doc):
     """Hue = the town's zone regime (vs the historical average range); shade strength = the town's modeled annual
-    consumption (zone 2023 load x EIA level ratio x population share), log scale: darker = more energy."""
+    consumption (towns_metrics.json: the zone's load over the last 365 days x population share), log scale: darker = more energy."""
     geo_path = os.path.join("data", "raw", "mass-municipalities.geojson")
     towns_path = build_path("ma_towns.csv")
     if not (os.path.exists(geo_path) and os.path.exists(towns_path)):
@@ -270,15 +274,9 @@ def example_map(doc):
         return
     import csv
     from matplotlib.collections import PolyCollection
-    from backend.forecast.mc import level_ratio
     towns = {r["geoid"]: r for r in csv.DictReader(open(towns_path))}
-    zpop = defaultdict(int)
-    for r in towns.values():
-        zpop[r["zone_approx"]] += int(r["pop2024"])
-    daily = list(csv.DictReader(open(build_path("isone_ma_daily.csv"))))
-    zload = {z: sum(float(r["rt_mwh"]) for r in daily if r["zone"] == z and r["date"].startswith("2023")) * level_ratio()
-             for z in ("NEMA", "SEMA", "WCMA")}
-    mwh = {g: zload[r["zone_approx"]] * int(r["pop2024"]) / zpop[r["zone_approx"]] for g, r in towns.items()}
+    annual = {t["townId"]: t["modeledAnnualMWh"] for t in json.load(open(build_path("towns_metrics.json")))["towns"]}
+    mwh = {g: annual[int(r["town_id"])] for g, r in towns.items()}
     lo, hi = np.log10(min(mwh.values())), np.log10(max(mwh.values()))
     surf = np.array(matplotlib.colors.to_rgb(SURF))
 

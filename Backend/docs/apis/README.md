@@ -10,5 +10,6 @@
 | 06 | Town-level utility and aggregation data | Unknown | Unknown | Build | human (optional) | **[U] nothing found yet** | [06](06-map-layer-candidate-sources.md) |
 | 07 | ISO-NE, EIA API, OCR, LLM, Energy Switch MA | — | Keys needed | — | none | Deliberately not used at runtime | [07](07-apis-considered-not-used.md) |
 | 08 | EIA RECS 2020 microdata + EIA-861M (static files, no key) | Static files | None | Build | data-ingest | [V] snapshot ships (G-DATA-3) | [08](08-eia-usage-data.md) |
+| 11 | EIA-930 grid load + Open-Meteo temperature + EIA-861M refresh (no keys) | Static files / JSON | None | **Daily, in CI** (not in the browser) | backend/live | [V] G-LIVE, refreshed daily | [11](11-live-grid-data.md) |
 
 **At runtime the app makes zero external API calls.** It fetches only its own static JSON from `/data/`. That is a design constraint, not an accident: no keys to leak, nothing to rate-limit, nothing that breaks during the judging window.

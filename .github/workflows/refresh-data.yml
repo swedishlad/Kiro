@@ -1,0 +1,75 @@
+# Daily live refresh of the backend calculations (Backend/backend/live/update.py).
+# Pulls the newest public data (EIA-930 grid load, Open-Meteo temperature, EIA-861M monthly sales), re-runs the
+# regimes, Monte Carlo and 351-town builds, runs every backend gate, regenerates the "Ask FairWatt" knowledge base,
+# runs the frontend tests and build, and commits Backend/data/build/ + Frontend/server/knowledge.ts only if all of it
+# passed and new data arrived. Any failure = no commit: the site keeps the last good numbers. The push redeploys it.
+name: Refresh live data
+
+on:
+  schedule:
+    - cron: "17 14 * * *"          # daily, 10:17 Boston (EDT)
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Backend/backend/live/**"
+      - ".github/workflows/refresh-data.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Python dependencies (pinned)
+        run: pip install numpy==2.1.3 openpyxl==3.1.5 jsonschema==4.23.0 pytest==8.3.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Fetch, verify, rebuild, gate (fails closed)
+        working-directory: Backend
+        run: python3 -m backend.live.update
+
+      - name: Assistant knowledge, frontend tests and build on the new data
+        working-directory: Frontend
+        run: |
+          npm ci
+          npm run knowledge
+          npm test
+          npm run build
+
+      - name: Commit the refreshed data (only when new data arrived)
+        run: |
+          if git diff --quiet -- Backend/data/build/grid_daily.csv Backend/data/build/eia_ma_monthly.csv Backend/data/build/eia_ma_total_monthly.csv; then
+            echo "No new data published since the last refresh: nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Backend/data/build Frontend/server/knowledge.ts
+          grid=$(python3 -c "import json; print(json.load(open('Backend/data/build/live_status.json'))['gridThrough'])")
+          homes=$(python3 -c "import json; print(json.load(open('Backend/data/build/live_status.json'))['homesThrough'])")
+          git commit -m "data: live refresh (grid through $grid, homes through $homes; all gates pass)"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 15
+          done
+          exit 1

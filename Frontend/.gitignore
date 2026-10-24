@@ -3,3 +3,5 @@ dist/
 *.tsbuildinfo
 .vite/
 public/ocr/
+.env*.local
+.vercel/
