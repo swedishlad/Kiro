@@ -122,7 +122,7 @@ export default function Bill() {
   return (
     <>
       <header className="mission">
-        <h1 className="mission-title">Watt If helps Massachusetts households pay a fair price for electricity.</h1>
+        <h1 className="mission-title">Watt-if you paid a fair price for every watt?</h1>
         <p className="mission-lede">
           Check your electric bill: add a photo to see how your use and costs compare with homes across the state, and what would lower
           them. The photo is read on your device and never uploaded.
