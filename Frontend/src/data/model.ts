@@ -390,3 +390,95 @@ export interface LiveStatus {
   sources: { id: string; name: string; from: string; to: string }[];
   gates: string[];
 }
+
+// ----------------------------------------------------------------------------- climate (POST /api/climate/dashboard)
+
+/** The Climate API's request body (Backend/backend/climate/schemas.py · ClimateDashboardRequest). */
+export interface ClimateRequest {
+  bill_id: string | null;
+  total_monthly_kwh: number;
+  zip_code: string;
+  utility_node: string | null;
+  hourly_usage_kwh: number[] | null;
+  billing_days: number;
+  shiftable_load_kwh: number;
+  max_battery_capacity_kwh: number;
+  max_grid_draw_kw: number;
+  carbon_vs_cost_weight: number;
+  scc_usd_per_ton: number;
+  num_paths: number;
+  mc_seed: number;
+}
+
+/** The household inputs the Climate tab varies; every other input stays at the API default. */
+export type ClimateScenarioKey = Pick<ClimateRequest, "total_monthly_kwh" | "shiftable_load_kwh" | "max_battery_capacity_kwh">;
+
+export const CLIMATE_KEYS: readonly (keyof ClimateScenarioKey)[] = ["total_monthly_kwh", "shiftable_load_kwh", "max_battery_capacity_kwh"];
+
+export interface ClimateMaccItem {
+  intervention_name: string;
+  abatement_cost_usd_per_ton: number;
+  annual_tons_abated: number;
+  annual_net_financial_savings_usd: number;
+}
+
+export interface ClimateAsset {
+  asset_name: string;
+  capex_usd: number;
+  annual_hardware_deflation_rate: number;
+  marginal_abatement_cost_usd_per_ton: number;
+  co2_averted_lifetime_tons_median: number;
+  co2_averted_lifetime_tons_p05: number;
+  co2_averted_lifetime_tons_p95: number;
+  delay_cost_metric_tons_per_yr: number;
+  recommendation: "INSTALL NOW" | "HOLD & WAIT";
+  deferral_analysis: { defer_years: number; net_option_value_usd: number }[];
+}
+
+/** The Climate API's response (ClimateDashboardResponse; Backend/contracts/climate_dashboard.schema.json). */
+export interface ClimateDashboard {
+  summary: {
+    current_annual_metric_tons: number;
+    lifetime_co2_liability_metric_tons: number;
+    best_case_reduction_pct: number;
+    social_carbon_damage_yr_usd: number;
+    /** annual t CO2e abated per $1,000 of capex, x100 */
+    portfolio_carbon_yield_pct: number;
+  };
+  now_arbitrage: {
+    average_grid_intensity_g_co2e_per_kwh: number;
+    marginal_peak_intensity_g_co2e_per_kwh: number;
+    schedulable_reductions_annual_metric_tons: number;
+    hourly_series: { hour: number; baseline_load_kwh: number; optimized_load_kwh: number; emissions_intensity_g_co2e_per_kwh: number }[];
+    macc_curve: ClimateMaccItem[];
+  };
+  later_decisions: {
+    /** yearly (not cumulative) t CO2e, years 1..20 */
+    fan_chart: { years: number[]; median_tons: number[]; p05_lower_bound_tons: number[]; p95_upper_bound_tons: number[] };
+    assets: ClimateAsset[];
+  };
+  metadata: { data_source_mode: string; mc_paths: number; mc_seed: number; compute_ms: number };
+}
+
+/** data/build/climate_dashboard.json (backend/climate/build.py): the endpoint's answer for every scenario. */
+export interface ClimateArtifact {
+  endpoint: string;
+  builtBy: string;
+  mcEngine: string;
+  apiDefaults: ClimateRequest;
+  options: Record<keyof ClimateScenarioKey, number[]>;
+  defaultScenario: ClimateScenarioKey;
+  assumptions: {
+    region: string;
+    annualGridDecarbRate: number;
+    ouTheta: number;
+    ouSigmaGPerKwh: number;
+    discountRate: number;
+    analysisYears: number;
+    batteryRoundTripEfficiency: number;
+    avoidedElectricityUsdPerKwh: number;
+    touUsdPerKwh: { offPeak: number; peak: number; peakHours: number[] };
+    assets: { name: string; annualOutputKwh: number; federalTaxCreditPct: number; lifeYears: number }[];
+  };
+  scenarios: { request: ClimateScenarioKey; response: ClimateDashboard }[];
+}

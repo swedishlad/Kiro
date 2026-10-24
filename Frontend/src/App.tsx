@@ -8,6 +8,7 @@ const Usage = lazy(() => import("./sections/Usage.tsx"));
 const Prices = lazy(() => import("./sections/Prices.tsx"));
 const Bill = lazy(() => import("./sections/Bill.tsx"));
 const Grid = lazy(() => import("./sections/Grid.tsx"));
+const Climate = lazy(() => import("./sections/Climate.tsx"));
 const Towns = lazy(() => import("./sections/Towns.tsx"));
 const Sources = lazy(() => import("./sections/Sources.tsx"));
 const About = lazy(() => import("./sections/About.tsx"));
@@ -18,6 +19,7 @@ const ROUTES = [
   { id: "prices", label: "Prices & savings" },
   { id: "bill", label: "Bill check" },
   { id: "grid", label: "Regimes & forecast" },
+  { id: "climate", label: "Climate" },
   { id: "towns", label: "Towns" },
   { id: "sources", label: "Data & methods" },
   { id: "about", label: "About" },
@@ -103,6 +105,7 @@ export function App() {
           {route === "prices" && <Prices />}
           {route === "bill" && <Bill />}
           {route === "grid" && <Grid />}
+          {route === "climate" && <Climate />}
           {route === "towns" && <Towns />}
           {route === "sources" && <Sources />}
           {route === "about" && <About />}

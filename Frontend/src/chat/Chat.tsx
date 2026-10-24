@@ -27,6 +27,7 @@ const BY_PAGE: Record<string, string> = {
   usage: "We use about 8,000 kWh a year. How does that compare?",
   prices: GENERAL[1],
   grid: "What does “Above range” mean?",
+  climate: "Is it better to buy solar now or wait?",
   towns: "Which load zone is Worcester in?",
   sources: "Where does this site's data come from?",
   about: "Who builds Watt If?",
