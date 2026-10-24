@@ -13,7 +13,8 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 PAIRS = {"rates.json": "rates", "towns.json": "towns", "forecast.json": "forecast",
          "estimate_model.json": "estimate_model", "usage_forecast.json": "usage_forecast",
          "stats.json": "stats", "regimes.json": "regimes", "mc_forecast.json": "mc_forecast",
-         "towns_metrics.json": "towns_metrics", "live_status.json": "live_status"}
+         "towns_metrics.json": "towns_metrics", "live_status.json": "live_status",
+         "grid_hourly.json": "grid_hourly"}
 QK = ["p5", "p10", "p25", "p50", "p75", "p90", "p95"]
 
 

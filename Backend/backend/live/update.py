@@ -5,7 +5,7 @@ Usage (backend root):  python3 -m backend.live.update            (--no-fetch: re
   1 fetch    backend.live.fetch_grid (EIA-930 load + Open-Meteo temperature -> data/build/grid_daily.csv) and
              backend.live.fetch_eia861m (EIA-861M -> staged data/build/eia_ma_*monthly.csv.new)
   2 verify   G-LIVE (backend.live.verify_live); only then do the staged EIA files replace the build copies
-  3 rebuild  backend.regimes.build -> backend.forecast.mc -> backend.towns.build
+  3 rebuild  backend.live.hourly (3D surface) -> backend.regimes.build -> backend.forecast.mc -> backend.towns.build
   4 gates    G-HMM, G-FC (Monte Carlo), G-CITY, schemas (.kiro/hooks/validate_build.py), pytest on tests/backend and
              tests/hmm (tests/climate covers the FastAPI climate service, reads no data/build file, needs its own deps)
   5 status   data/build/live_status.json: what the site shows as "data through ..."
@@ -23,6 +23,7 @@ from backend.live import fetch_eia861m
 
 PY = sys.executable
 STEPS = [
+    ("build hourly surface", [PY, "-m", "backend.live.hourly"]),
     ("rebuild regimes", [PY, "-m", "backend.regimes.build"]),
     ("rebuild Monte Carlo", [PY, "-m", "backend.forecast.mc"]),
     ("rebuild towns", [PY, "-m", "backend.towns.build"]),

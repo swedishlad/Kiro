@@ -2884,3 +2884,46 @@ table.data tbody th {
     margin-bottom: 8px;
   }
 }
+
+/* Hourly load surface (components/HourlySurface.tsx) */
+.surface-3d {
+  position: relative;
+  outline-offset: 4px;
+}
+.surface-reset {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 0;
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.surface-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--surface);
+  pointer-events: none;
+}
+.surface-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ink-2);
+  margin-bottom: 4px;
+}
+.surface-ramp {
+  display: inline-block;
+  width: 160px;
+  height: 10px;
+  border-radius: 5px;
+}
