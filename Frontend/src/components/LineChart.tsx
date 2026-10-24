@@ -2,9 +2,9 @@ import { scaleLinear } from "d3-scale";
 import { line as d3line, area as d3area } from "d3-shape";
 import { useMemo, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 
-import { categoryTicks, monthTicks, textWidth } from "./axes.ts";
+import { categoryTicks, dayTicks, monthTicks, textWidth } from "./axes.ts";
 import { useWidth } from "./hooks.ts";
-import { REGIME_META, RegimeIcon, type Regime } from "./regime.tsx";
+import { LEVEL_LABELS, REGIME_META, RegimeIcon, type Regime, type RegimeLabels } from "./regime.tsx";
 import { Tooltip, type TooltipRow } from "./ui.tsx";
 
 export interface LineSeries {
@@ -25,11 +25,13 @@ export interface LineBand {
 
 export interface LineChartProps {
   x: string[];
-  xKind: "month" | "category";
+  /** month = YYYY-MM, day = YYYY-MM-DD, category = free labels */
+  xKind: "month" | "day" | "category";
   series: LineSeries[];
   band?: LineBand;
   /** one regime per x, drawn as a strip under the plot */
-  strip?: { label: string; values: (Regime | null)[] };
+  strip?: { label: string; values: (Regime | null)[]; labels?: RegimeLabels };
+  /** baseline-weight reference lines; an empty label draws the line alone */
   refLines?: { y: number; label: string }[];
   height?: number;
   zeroBased?: boolean;
@@ -83,7 +85,7 @@ export function LineChart({
     const innerH = height - top - bottom;
     y.range([top + innerH, top]);
     const xAt = (i: number) => left + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW);
-    const xTicks = xKind === "month" ? monthTicks(x, innerW) : categoryTicks(x, innerW, 34);
+    const xTicks = xKind === "month" ? monthTicks(x, innerW) : xKind === "day" ? dayTicks(x, innerW) : categoryTicks(x, innerW, 34);
     return { y, ticks, left, right, top, innerW, innerH, xAt, xTicks };
   }, [series, band, refLines, zeroBased, yFormat, endLabels, strip, width, height, n, x, xKind]);
 
@@ -151,7 +153,7 @@ export function LineChart({
       });
     }
     const r = strip?.values[active];
-    if (r) tooltipRows.push({ key: <RegimeIcon regime={r} />, value: REGIME_META[r].label, label: strip!.label });
+    if (r) tooltipRows.push({ key: <RegimeIcon regime={r} />, value: (strip!.labels ?? LEVEL_LABELS)[r], label: strip!.label });
   }
 
   const plotBottom = top + innerH;
@@ -188,9 +190,11 @@ export function LineChart({
         {refLines.map((r) => (
           <g key={r.label}>
             <line className="base-line" x1={left} x2={left + innerW} y1={Math.round(y(r.y)) + 0.5} y2={Math.round(y(r.y)) + 0.5} />
-            <text className="ref-label" x={left + 4} y={y(r.y) - 5}>
-              {r.label}
-            </text>
+            {r.label ? (
+              <text className="ref-label" x={left + 4} y={y(r.y) - 5}>
+                {r.label}
+              </text>
+            ) : null}
           </g>
         ))}
         {band ? <path d={bandPath} style={{ fill: band.color }} opacity={0.14} /> : null}

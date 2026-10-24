@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import { ColumnChart, HBarChart } from "../components/BarChart.tsx";
 import { LineChart } from "../components/LineChart.tsx";
-import { RegimeBadge, RegimeLegend, fromGrid, fromHmm } from "../components/regime.tsx";
+import { RANGE_LABELS, RANGE_SHORT, RegimeBadge, RegimeLegend, fromGrid, type Regime } from "../components/regime.tsx";
 import { Card, ChartCard, StatTile, type Tone } from "../components/ui.tsx";
 import { calendarYears, sliceRange, trailing12 } from "../data/derive.ts";
-import { dateLabel, fmtCents, fmtCompact, fmtNum, fmtPct, fmtSignedPct, ymLabel, ymShort } from "../data/format.ts";
-import { consumptionStats, eia, hmmByYm, loadGrid, monthlyRates, savingsModel, type GridBundle } from "../data/load.ts";
+import { dateLabel, fmtCents, fmtCompact, fmtNum, fmtSignedPct, ymLabel, ymShort } from "../data/format.ts";
+import { consumptionStats, eia, loadGrid, monthlyRates, savingsModel, type GridBundle } from "../data/load.ts";
 import { UTILITIES, ZONE_NAMES, type UtilityId } from "../data/model.ts";
 
 function delta(now: number, before: number, upIsBad: boolean | null): { text: string; tone: Tone } {
@@ -21,7 +21,6 @@ export function Overview() {
   const prev = trailing12(eia, 12);
   const years = calendarYears(eia);
   const first = years[0];
-  const latestRegime = hmmByYm.get(latest.ym);
   const ratesTerm = savingsModel.basicServiceRatesCents;
   const fixedRates = UTILITIES.map((u) => ratesTerm[u.id]);
   // Newest month of the variable (monthly) option: the coming winter's price.
@@ -38,6 +37,11 @@ export function Overview() {
       live = false;
     };
   }, []);
+
+  // Homes vs their usual range (regimes.json MA_RES), keyed by month; arrives with the lazy grid chunk.
+  const homes = grid?.regimes.areas.find((a) => a.area === "MA_RES");
+  const homesByYm = useMemo(() => new Map<string, Regime>((homes?.timeline ?? []).map((t) => [t.date.slice(0, 7), fromGrid(t.color)])), [homes]);
+  const zones = grid?.regimes.areas.filter((a) => a.area !== "MA_RES") ?? [];
 
   const priceCols = years.map((y) => ({ label: String(y.year), price: y.priceCents }));
 
@@ -111,10 +115,10 @@ export function Overview() {
             meta="supply only, by utility"
           />
           <div className="tile">
-            <span className="tile-label">Use regime, {ymLabel(latest.ym)}</span>
-            <span style={{ margin: "6px 0 4px" }}>{latestRegime ? <RegimeBadge regime={fromHmm(latestRegime.regime)} large /> : "—"}</span>
+            <span className="tile-label">Homes vs their usual range, {homes ? ymLabel(homes.current.date.slice(0, 7)) : "…"}</span>
+            <span style={{ margin: "6px 0 4px" }}>{homes ? <RegimeBadge regime={fromGrid(homes.current.color)} labels={RANGE_LABELS} large /> : "—"}</span>
             <span className="tile-meta">
-              {latestRegime ? `${fmtNum(latestRegime.value)} kWh per account · 3-state HMM` : ""}
+              {homes ? `${fmtSignedPct(homes.current.pctVsAverage / 100)} vs the same month, last 5 yrs (range ±${fmtNum(homes.current.bandPct, 1)}%)` : "Loading…"}
             </span>
           </div>
         </div>
@@ -122,27 +126,27 @@ export function Overview() {
         <ChartCard
           className="span-8"
           title="Monthly use per residential account"
-          subtitle={`Last 5 years, with the month's use regime underneath. Peaks come in summer and mid-winter.`}
+          subtitle="Last 5 years. The strip underneath compares each month with the same month in the previous five years."
           source={
             <>
-              EIA-861M sales ÷ accounts; regimes from a 3-state hidden Markov model over 2010–2026. <a href="#/usage">Full history →</a>
+              EIA-861M sales ÷ accounts; usual range = 5-year average ± 1 sd, smoothed by a hidden Markov model. <a href="#/grid">More →</a>
             </>
           }
           table={{
             columns: [
               { key: "m", label: "Month", render: (r) => ymLabel(r.ym) },
               { key: "k", label: "kWh / account", align: "r", render: (r) => fmtNum(r.kwhPerCustomer) },
-              { key: "g", label: "Regime", render: (r) => { const t = hmmByYm.get(r.ym); return t ? <RegimeBadge regime={fromHmm(t.regime)} /> : "—"; } },
+              { key: "g", label: "vs usual range", render: (r) => { const g = homesByYm.get(r.ym); return g ? <RegimeBadge regime={g} labels={RANGE_LABELS} /> : "—"; } },
             ],
             rows: [...recent].reverse(),
           }}
         >
-          <RegimeLegend labels={{ low: "Low-use month", mid: "Mid", high: "High-use month" }} />
+          <RegimeLegend labels={RANGE_LABELS} />
           <LineChart
             x={recent.map((r) => r.ym)}
             xKind="month"
             series={[{ id: "kwh", label: "kWh per account", color: "var(--series-1)", values: recent.map((r) => r.kwhPerCustomer) }]}
-            strip={{ label: "use regime", values: recent.map((r) => { const t = hmmByYm.get(r.ym); return t ? fromHmm(t.regime) : null; }) }}
+            strip={{ label: "vs usual range", values: recent.map((r) => homesByYm.get(r.ym) ?? null), labels: RANGE_SHORT }}
             yFormat={(v) => fmtNum(v)}
             valueFormat={(v) => `${fmtNum(v)} kWh`}
             titleFor={(i) => ymLabel(recent[i].ym)}
@@ -194,31 +198,36 @@ export function Overview() {
 
         <Card
           className="span-12"
-          title="Grid load against the weather"
+          title="The grid: last observed day and the next six months"
           subtitle={
-            grid
-              ? `Regime on ${dateLabel(grid.regimes.areas[0].current.date)}, the last ISO-NE day in the data, and the chance of a High regime 30 days on.`
+            zones.length
+              ? `Each zone on ${dateLabel(zones[0].current.date)} (the last ISO-NE day in the data) vs its usual range, and the median load forecast for ${ymLabel(grid!.forecast.horizon[0])} – ${ymLabel(grid!.forecast.horizon[grid!.forecast.horizon.length - 1])}.`
               : "Loading ISO New England zones…"
           }
           source={
             <>
-              Weather-adjusted daily load (all customer classes), 3-state HMM per zone. <a href="#/grid">Explore the grid →</a>
+              ISO-NE daily load (all customer classes); walk-forward-tested Monte Carlo forecast. <a href="#/grid">Explore →</a>
             </>
           }
         >
           {grid ? (
             <div className="link-cards">
-              {grid.regimes.areas.map((a) => {
-                const p30 = a.outlook.find((o) => o.days === 30)!;
+              {zones.map((a) => {
+                const fc = grid.forecast.areas.find((f) => f.area === a.area);
                 return (
                   <div key={a.area} className="state-card">
                     <strong style={{ fontSize: 14 }}>
-                      {a.area} <span style={{ fontWeight: 400, color: "var(--ink-2)" }}>· {ZONE_NAMES[a.area]}</span>
+                      {a.area} <span style={{ fontWeight: 400, color: "var(--ink-2)" }}>· {ZONE_NAMES[a.area as keyof typeof ZONE_NAMES]}</span>
                     </strong>
                     <span>
-                      <RegimeBadge regime={fromGrid(a.current.color)} suffix={` ${fmtPct(Math.max(...a.current.probs))}`} />
+                      <RegimeBadge regime={fromGrid(a.current.color)} labels={RANGE_LABELS} suffix={` ${fmtSignedPct(a.current.pctVsAverage / 100)}`} />
                     </span>
-                    <span className="tile-meta">High in 30 days: {fmtPct(p30.probs[2])}</span>
+                    {fc ? (
+                      <span className="tile-meta">
+                        Next 6 months: <strong style={{ color: "var(--ink)" }}>{fmtNum(fc.total.p50 / 1000, 1)} TWh</strong> (80%:{" "}
+                        {fmtNum(fc.total.p10 / 1000, 1)}–{fmtNum(fc.total.p90 / 1000, 1)})
+                      </span>
+                    ) : null}
                   </div>
                 );
               })}
@@ -239,8 +248,8 @@ export function Overview() {
               <span>Basic service history by utility and a calculator for your competitive supplier.</span>
             </a>
             <a className="link-card" href="#/grid">
-              <strong>Grid regimes</strong>
-              <span>Daily ISO-NE load vs temperature, by zone, with regime outlooks.</span>
+              <strong>Regimes & forecast</strong>
+              <span>Homes and grid zones vs their usual range, plus a tested six-month forecast.</span>
             </a>
             <a className="link-card" href="#/towns">
               <strong>Towns</strong>

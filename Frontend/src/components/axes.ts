@@ -42,3 +42,19 @@ export function categoryTicks(labels: string[], innerWidth: number, minGap = 40)
   const step = Math.max(1, Math.ceil(labels.length / maxTicks));
   return labels.flatMap((label, i) => (i % step === 0 ? [{ i, label }] : []));
 }
+
+/** Ticks for a daily YYYY-MM-DD axis: year starts on long spans, month starts on short ones. */
+export function dayTicks(dates: string[], innerWidth: number): Tick[] {
+  const maxTicks = Math.max(2, Math.floor(innerWidth / 64));
+  const starts = dates.flatMap((d, i) => (d.endsWith("-01") ? [{ i, ym: d.slice(0, 7) }] : []));
+  const months = starts.length;
+  if (months > maxTicks * 3) {
+    const years = starts.filter((s) => s.ym.endsWith("-01"));
+    const step = [1, 2, 5].find((k) => years.length / k <= maxTicks) ?? 5;
+    return years.filter((_, k) => k % step === 0).map((s) => ({ i: s.i, label: s.ym.slice(0, 4) }));
+  }
+  const step = [1, 2, 3, 6].find((k) => months / k <= maxTicks) ?? 6;
+  return starts
+    .filter((s) => (ymIndex(s.ym) % 12) % step === 0)
+    .map((s) => ({ i: s.i, label: `${MONTHS[ymIndex(s.ym) % 12]} ’${s.ym.slice(2, 4)}` }));
+}

@@ -22,10 +22,10 @@ Requires Node 22+ (the tests run TypeScript directly through Node's type strippi
 
 | Tab | What it shows | Backend inputs |
 |---|---|---|
-| Overview | 12-month average price, KPI tiles, recent use with regimes, basic-service rates, grid status | `eia_ma_monthly.csv`, `consumption_stats.json`, `hmm_regimes.json`, `savings_model.json`, `regimes.json` |
+| Overview | 12-month average price, KPI tiles, homes vs their usual range, basic-service rates, grid zones + 6-month forecast | `eia_ma_monthly.csv`, `consumption_stats.json`, `savings_model.json`, `regimes.json`, `mc_forecast.json` |
 | Usage | Monthly use per account since 2010 with HMM regimes, year-over-year sales, regime explainer, “a home like yours” estimator, RECS distribution and breakdowns | `eia_ma_monthly.csv`, `hmm_regimes.json`, `recs_ma.csv`, `consumption_stats.json`, `map_consumption.json` |
 | Prices & savings | Basic-service monthly rates by utility, all-in price vs supply rate, fixed terms, savings calculator | `snapshot/monthly_residential_cents_*.csv`, `snapshot/fixed_residential_cents_*.csv`, `savings_model.json` |
-| Grid regimes | ISO-NE daily load vs temperature by zone, monthly regime shares, outlook, transition matrix | `regimes.json`, `isone_ma_daily.csv`, `ma_towns.csv` |
+| Regimes & forecast | Homes (monthly) and ISO-NE zones (daily) vs the same period in the previous 5 years, outlook, transition matrix; six-month Monte Carlo forecast with its walk-forward test | `regimes.json`, `mc_forecast.json` |
 | Towns | Map of all 351 towns (load zone, population, growth), searchable table | `ma_towns.csv`, `map_consumption.json`, `src/geo/ma-towns.topo.json` |
 | Data & methods | Sources, methods, limits, rebuild steps | — |
 
@@ -38,7 +38,8 @@ Where the frontend computes something the backend also computes, it ports the ba
   last bit, including Python 3.12+'s compensated `sum()` and half-up cent rounding;
 - basic-service term lookup matches `savings_model.py` for every utility and month;
 - weighted percentiles reproduce `consumption_stats.json` and the map thresholds;
-- the typical-account vector matches `consumption_stats.json` (12-month trailing account mean).
+- the typical-account vector matches `consumption_stats.json` (12-month trailing account mean);
+- `regimes.json` and `mc_forecast.json` are checked for the fields and invariants the pages read.
 
 Regenerate the backend artifacts and run `npm test`; a failing test means the two have drifted.
 
@@ -55,7 +56,8 @@ src/
 ## Design notes
 
 - Colours are CSS custom properties with separate, validated light and dark sets (`src/styles.css`).
-  The Low / Mid / High regimes always pair colour with a shape (▼ ● ▲) and a word.
+  Regimes always pair colour with a shape (▼ ● ▲) and a word: Low / Mid / High for the level model
+  (`hmm_regimes.json`), Below / Within / Above range for the usual-range model (`regimes.json`).
 - Every chart has a Table view, keyboard reading (arrow keys) where it is a time series, and a
   hover tooltip; nothing is reachable only by hovering.
 - Towns are never coloured by consumption: there is no verified per-town usage source, and the

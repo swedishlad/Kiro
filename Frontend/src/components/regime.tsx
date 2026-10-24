@@ -1,5 +1,7 @@
 // The traffic-light vocabulary shared by every regime view. Colour always travels with a shape and
-// a word: Low ▼ (green) · Mid ● (grey) · High ▲ (red).
+// a word: ▼ green · ● grey · ▲ red. Two backend models use it, so the words differ:
+//   level  (hmm_regimes.json) — how high use is:            Low / Mid / High
+//   range  (regimes.json)     — use vs its usual range:     Below / Within / Above range
 
 import type { GridColor, RegimeName } from "../data/model.ts";
 
@@ -7,10 +9,17 @@ export type Regime = "low" | "mid" | "high";
 
 export const REGIMES: Regime[] = ["low", "mid", "high"];
 
-export const REGIME_META: Record<Regime, { label: string; color: string; wash: string }> = {
-  low: { label: "Low", color: "var(--low)", wash: "var(--low-wash)" },
-  mid: { label: "Mid", color: "var(--mid)", wash: "var(--surface-2)" },
-  high: { label: "High", color: "var(--high)", wash: "var(--high-wash)" },
+export type RegimeLabels = Record<Regime, string>;
+
+export const LEVEL_LABELS: RegimeLabels = { low: "Low", mid: "Mid", high: "High" };
+export const RANGE_LABELS: RegimeLabels = { low: "Below range", mid: "Within range", high: "Above range" };
+/** compact forms for tight spots (inside stacked bars, tooltips) */
+export const RANGE_SHORT: RegimeLabels = { low: "Below", mid: "Within", high: "Above" };
+
+export const REGIME_META: Record<Regime, { color: string; wash: string }> = {
+  low: { color: "var(--low)", wash: "var(--low-wash)" },
+  mid: { color: "var(--mid)", wash: "var(--surface-2)" },
+  high: { color: "var(--high)", wash: "var(--high-wash)" },
 };
 
 export const fromHmm = (r: RegimeName): Regime => (r === "GREEN" ? "low" : r === "GREY" ? "mid" : "high");
@@ -33,23 +42,33 @@ export function RegimeIcon({ regime, size = 12 }: { regime: Regime; size?: numbe
   );
 }
 
-export function RegimeBadge({ regime, suffix, large }: { regime: Regime; suffix?: string; large?: boolean }) {
+export function RegimeBadge({
+  regime,
+  labels = LEVEL_LABELS,
+  suffix,
+  large,
+}: {
+  regime: Regime;
+  labels?: RegimeLabels;
+  suffix?: string;
+  large?: boolean;
+}) {
   return (
     <span className={`badge${large ? " badge-lg" : ""}`}>
       <RegimeIcon regime={regime} size={large ? 14 : 12} />
-      {REGIME_META[regime].label}
+      {labels[regime]}
       {suffix ? <span style={{ fontWeight: 400, color: "var(--ink-2)" }}>{suffix}</span> : null}
     </span>
   );
 }
 
-export function RegimeLegend({ labels }: { labels?: Partial<Record<Regime, string>> }) {
+export function RegimeLegend({ labels = LEVEL_LABELS }: { labels?: Partial<RegimeLabels> }) {
   return (
     <div className="legend" role="list">
       {REGIMES.map((r) => (
         <span className="legend-item" role="listitem" key={r}>
           <RegimeIcon regime={r} />
-          {labels?.[r] ?? REGIME_META[r].label}
+          {labels[r] ?? LEVEL_LABELS[r]}
         </span>
       ))}
     </div>

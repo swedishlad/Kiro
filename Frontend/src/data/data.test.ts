@@ -16,7 +16,10 @@ import {
   parseTowns,
   sqftBucket,
   type ConsumptionStats,
+  type GridRegimes,
   type MapConsumption,
+  type McForecast,
+  type Quantiles,
   type SavingsModel,
 } from "./model.ts";
 import { calendarYears, summarize, trailing12 } from "./derive.ts";
@@ -183,4 +186,43 @@ test("pySum is Neumaier-compensated like Python 3.12+ sum()", () => {
   assert.equal(pySum(Array(6).fill(-31.2975)), -187.785);
   assert.equal(pySum([0.1, 0.2, 0.3]), 0.6);
   assert.equal(pySum([]), 0);
+});
+
+test("regimes.json has the usual-range shape the Regimes tab reads", () => {
+  const r = json<GridRegimes>("build/regimes.json");
+  assert.deepEqual(r.areas.map((a) => a.area).sort(), ["MA", "MA_RES", "NEMA", "SEMA", "WCMA"]);
+  for (const k of ["red", "grey", "green", "range"] as const) assert.equal(typeof r.definition[k], "string");
+  for (const a of r.areas) {
+    assert.ok(a.unit === "day" || a.unit === "month", a.area);
+    assert.deepEqual(a.states.map((s) => s.color), ["green", "grey", "red"]);
+    for (const s of a.states) for (const k of ["meanSdFromAverage", "expectedDurationDays", "shareOfDays"] as const) assert.equal(typeof s[k], "number");
+    assert.equal(a.transition.length, 3);
+    for (const row of a.transition) assert.ok(Math.abs(row.reduce((x, y) => x + y, 0) - 1) < 1e-6);
+    assert.ok(a.timeline.length > 0 && a.monthly.length > 0 && a.outlook.length > 0);
+    for (const t of [a.current, ...a.timeline]) {
+      assert.ok(["green", "grey", "red"].includes(t.color));
+      assert.equal(typeof t.pctVsAverage, "number");
+      assert.ok(t.bandPct >= 0);
+    }
+    assert.equal(a.current.date, a.timeline[a.timeline.length - 1].date);
+    assert.equal(typeof a.agreementWithBandRule, "number");
+  }
+  const homes = r.areas.find((a) => a.area === "MA_RES")!;
+  assert.equal(homes.unit, "month");
+  // homes are current to the latest EIA month the rest of the dashboard shows
+  const eia = parseEia(read("build/eia_ma_monthly.csv"));
+  assert.equal(homes.current.date.slice(0, 7), eia[eia.length - 1].ym);
+});
+
+test("mc_forecast.json quantiles are ordered and cover the horizon", () => {
+  const f = json<McForecast>("build/mc_forecast.json");
+  assert.equal(f.horizon.length, 6);
+  assert.deepEqual(f.areas.map((a) => a.area).sort(), ["MA", "NEMA", "SEMA", "WCMA"]);
+  const ordered = (q: Quantiles) => [q.p5, q.p10, q.p25, q.p50, q.p75, q.p90, q.p95].every((v, i, arr) => i === 0 || arr[i - 1] <= v);
+  for (const a of f.areas) {
+    assert.deepEqual(a.months.map((m) => m.ym), f.horizon);
+    assert.ok(a.months.every(ordered) && ordered(a.total), a.area);
+    assert.equal(a.sameMonthsLastObservedGWh.length, 6);
+  }
+  for (const k of ["cov80", "cov90", "maeVsNaive"] as const) assert.ok(f.calibration[k] > 0 && f.calibration[k] < 2);
 });

@@ -35,7 +35,7 @@ const SOURCES = [
   },
   {
     file: "data/build/isone_ma_daily.csv",
-    what: "Daily real-time load, peak and temperature for NEMA, SEMA, WCMA",
+    what: "Daily real-time load and temperature for NEMA, SEMA, WCMA (input to the grid regimes and forecast)",
     source: "ISO New England",
     coverage: "2017-01-01 – 2023-12-31",
   },
@@ -58,7 +58,8 @@ const ARTIFACTS = [
   { file: "hmm_regimes.json", used: `Monthly Low/Mid/High use regimes, ${hmm.timeline.length} months (Overview, Usage)` },
   { file: "savings_model.json", used: "Current basic-service term and worked examples (Prices)" },
   { file: "map_consumption.json", used: "Traffic-light cut points and the modeled per-town level (Usage, Towns)" },
-  { file: "regimes.json", used: "Daily weather-adjusted grid regimes per zone, outlooks (Grid)" },
+  { file: "regimes.json", used: "Homes (monthly) and grid zones (daily) vs their usual range, outlooks (Overview, Regimes & forecast)" },
+  { file: "mc_forecast.json", used: "Six-month load forecast and its walk-forward test (Overview, Regimes & forecast)" },
 ];
 
 export default function Sources() {
@@ -118,10 +119,17 @@ export default function Sources() {
               covers the month. Positive means you saved. Totals use the same compensated summation and half-up cent rounding as the
               backend, so the two always agree to the cent.
             </p>
-            <h3>Grid regimes</h3>
+            <h3>Usual-range regimes</h3>
             <p>
-              Each day's load is compared with a weather model (heating and cooling degrees, weekends) fit only on earlier days, and a
-              3-state HMM refit monthly classifies the gap. Every day uses only data up to that day.
+              Each month (homes) or day (grid zones) is compared with the same period in the previous five years; the usual range is
+              that average ± 1 standard deviation. A 3-state HMM with states anchored below, within and above the range smooths the
+              call. Only earlier years are used, so history is never re-coloured by later data.
+            </p>
+            <h3>Six-month forecast</h3>
+            <p>
+              10,000 simulated paths: a past Nov–Apr weather season, the zone's weather model and regime switching, scaled to today's
+              level with EIA sales because the ISO-NE files end in 2023. Before being shown, it was fit on data to Oct 2021 and scored
+              on two later winters.
             </p>
           </div>
         </Card>
@@ -133,6 +141,8 @@ export default function Sources() {
               <li>EIA revises preliminary months (all of 2026 so far), so recent values can change.</li>
               <li>There is no verified per-town usage data, so towns are never coloured by consumption.</li>
               <li>ISO-NE load includes businesses as well as homes, and the files in the repo end on 31 Dec 2023.</li>
+              <li>Usual-range regimes don't remove weather: a heat wave above the range counts as Above.</li>
+              <li>The forecast simulates zones independently, so the statewide band is probably too narrow.</li>
               <li>Town-to-zone assignment is approximate (the backend's <code className="code">zone_approx</code> column).</li>
               <li>Dollar figures cover electricity supply only; delivery charges are not modeled.</li>
             </ul>
@@ -160,6 +170,7 @@ python3 src/backend/build_savings.py
 python3 src/backend/build_map.py
 python3 -m src.hmm.hmm_build
 python3 -m backend.regimes.build
+python3 -m backend.forecast.mc
 python3 -m pytest tests -q
 
 cd ../Frontend

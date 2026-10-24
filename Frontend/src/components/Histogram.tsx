@@ -4,7 +4,7 @@ import { useState } from "react";
 import { textWidth } from "./axes.ts";
 import { barPath } from "./BarChart.tsx";
 import { useWidth } from "./hooks.ts";
-import { REGIME_META } from "./regime.tsx";
+import { LEVEL_LABELS, REGIME_META } from "./regime.tsx";
 import { Tooltip } from "./ui.tsx";
 import { fmtNum, fmtPct } from "../data/format.ts";
 
@@ -54,7 +54,7 @@ export function KwhHistogram({
           <g key={b.regime}>
             <rect x={x(b.from)} y={top} width={Math.max(0, x(Math.min(b.to, xMax)) - x(b.from))} height={innerH} style={{ fill: REGIME_META[b.regime].wash }} />
             <text className="ref-label" x={(x(b.from) + x(Math.min(b.to, xMax))) / 2} y={top - 8} textAnchor="middle">
-              {REGIME_META[b.regime].label}
+              {LEVEL_LABELS[b.regime]}
             </text>
           </g>
         ))}

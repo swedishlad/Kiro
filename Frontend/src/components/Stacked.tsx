@@ -4,7 +4,7 @@ import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { monthTicks, textWidth } from "./axes.ts";
 import { barPath } from "./BarChart.tsx";
 import { useWidth } from "./hooks.ts";
-import { REGIME_META, RegimeIcon, type Regime } from "./regime.tsx";
+import { LEVEL_LABELS, REGIME_META, RegimeIcon, type Regime, type RegimeLabels } from "./regime.tsx";
 import { Tooltip } from "./ui.tsx";
 import { fmtPct } from "../data/format.ts";
 
@@ -18,12 +18,14 @@ export function RegimeShareColumns({
   height = 220,
   titleFor,
   ariaLabel,
+  labels = LEVEL_LABELS,
 }: {
   months: string[];
   shares: Record<Regime, number>[];
   height?: number;
   titleFor: (i: number) => ReactNode;
   ariaLabel: string;
+  labels?: RegimeLabels;
 }) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
@@ -98,7 +100,7 @@ export function RegimeShareColumns({
           rows={(["high", "mid", "low"] as Regime[]).map((r) => ({
             key: <RegimeIcon regime={r} />,
             value: fmtPct(shares[active][r]),
-            label: `${REGIME_META[r].label} days`,
+            label: `of days ${labels[r].toLowerCase()}`,
           }))}
         />
       ) : null}
@@ -107,13 +109,23 @@ export function RegimeShareColumns({
 }
 
 /** One horizontal 100% bar (e.g. outlook probabilities). Labels sit inside a segment only if they fit. */
-export function RegimeStackBar({ probs, height = 26, ariaLabel }: { probs: Record<Regime, number>; height?: number; ariaLabel: string }) {
+export function RegimeStackBar({
+  probs,
+  height = 26,
+  ariaLabel,
+  labels = LEVEL_LABELS,
+}: {
+  probs: Record<Regime, number>;
+  height?: number;
+  ariaLabel: string;
+  labels?: RegimeLabels;
+}) {
   const [ref, width] = useWidth<HTMLDivElement>(300);
   const order: Regime[] = ["low", "mid", "high"];
   const present = order.filter((r) => probs[r] > 0.0005);
   let x = 0;
   return (
-    <div className="chart" ref={ref} role="img" aria-label={`${ariaLabel}: ${order.map((r) => `${REGIME_META[r].label} ${fmtPct(probs[r])}`).join(", ")}`}>
+    <div className="chart" ref={ref} role="img" aria-label={`${ariaLabel}: ${order.map((r) => `${labels[r]} ${fmtPct(probs[r])}`).join(", ")}`}>
       <svg width={width} height={height}>
         {present.map((r, k) => {
           const w = probs[r] * width;
@@ -122,7 +134,7 @@ export function RegimeStackBar({ probs, height = 26, ariaLabel }: { probs: Recor
           const first = k === 0;
           const last = k === present.length - 1;
           const segW = Math.max(0, w - (last ? 0 : 2));
-          const label = `${REGIME_META[r].label} ${fmtPct(probs[r])}`;
+          const label = `${labels[r]} ${fmtPct(probs[r])}`;
           const fits = textWidth(label, 12) + 14 < segW;
           let d: string;
           if (first && last) d = `M${x0 + 4},0H${x0 + segW - 4}Q${x0 + segW},0 ${x0 + segW},4V${height - 4}Q${x0 + segW},${height} ${x0 + segW - 4},${height}H${x0 + 4}Q${x0},${height} ${x0},${height - 4}V4Q${x0},0 ${x0 + 4},0Z`;

@@ -13,7 +13,7 @@ const ROUTES = [
   { id: "overview", label: "Overview" },
   { id: "usage", label: "Usage" },
   { id: "prices", label: "Prices & savings" },
-  { id: "grid", label: "Grid regimes" },
+  { id: "grid", label: "Regimes & forecast" },
   { id: "towns", label: "Towns" },
   { id: "sources", label: "Data & methods" },
 ] as const;
