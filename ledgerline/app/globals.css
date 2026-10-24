@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* Dark mode follows the <html class="dark"> toggle set by next-themes */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens. Values are swapped per theme below; Tailwind utilities
+   (bg-page, text-ink, border-line, ...) read the CSS variables. */
+@theme inline {
+  --font-display: var(--font-display-stack);
+  --font-sans: var(--font-body-stack);
+
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-s1: var(--series-1);
+  --color-s2: var(--series-2);
+  --color-good: var(--good-text);
+  --color-bad: var(--bad-text);
+  --color-wash: var(--wash);
+}
+
+:root {
+  --font-display-stack: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-body-stack: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-3: #6f6d68;
+  --line: #e1e0d9;
+  --rule: #c3c2b7;
+  --wash: rgba(11, 11, 11, 0.045);
+  --accent: #2a78d6;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --good-text: #006300;
+  --bad-text: #b02a2a;
+  color-scheme: light;
+}
+
+.dark {
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --ink-3: #9b998f;
+  --line: #2c2c2a;
+  --rule: #383835;
+  --wash: rgba(255, 255, 255, 0.06);
+  --accent: #3987e5;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --good-text: #0ca30c;
+  --bad-text: #e66767;
+  color-scheme: dark;
+}
+
+html {
+  background: var(--page);
+}
+
+body {
+  font-family: var(--font-body-stack);
+  color: var(--ink);
+  background: var(--page);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* One orchestrated moment: the live indicator pulses while data is flowing */
+@keyframes pulse-ring {
+  0% { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot::after { animation: none; opacity: 0; }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
