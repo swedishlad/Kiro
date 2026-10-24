@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PromptBox } from "../chat/Chat.tsx";
 import { ColumnChart } from "../components/BarChart.tsx";
 import { Callout, Card, ChartCard, Legend } from "../components/ui.tsx";
-import { billMonth, daysBetween, inferBillMonth, parseBillText, type BillEvidence, type BillFields } from "../data/bill.ts";
+import { billMonth, daysBetween, inferBillMonth, parseBillReadings, type BillEvidence, type BillFields } from "../data/bill.ts";
 import { buildReport, roughDollars, solarKw, type BillInput, type BillReport, type Suggestion, type SuggestionKind } from "../data/billCompare.ts";
 import { MONTHS, dateLabel, fmtCents, fmtNum, fmtPct, moneyDisplay, ymIndex, ymLabel } from "../data/format.ts";
 import { consumptionStats, eia, recs, spans } from "../data/load.ts";
@@ -117,11 +117,11 @@ export default function Bill() {
     if (scrollTick) document.getElementById("bill-report")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [scrollTick]);
 
-  function apply(text: string, source: Omit<Source, "found">) {
-    const parsed = parseBillText(text);
+  function apply(text: string, source: Omit<Source, "found">, extraText = "") {
+    const parsed = parseBillReadings([text, extraText]);
     const f = parsed.fields;
     const inferred = inferBillMonth(f);
-    setRawText(text);
+    setRawText(extraText ? `${text}\n\n— Second reading —\n${extraText}` : text);
     setEvidence(parsed.evidence);
     setForm(toForm(f));
     setExtras({
@@ -142,7 +142,7 @@ export default function Bill() {
     setPhase({ kind: "reading", names, progress: { fraction: 0, label: "Opening your bill" } });
     try {
       const read = await readBillFiles(files, (progress) => setPhase({ kind: "reading", names, progress }));
-      apply(read.text, { how: "file", names, previews: read.previews, pages: read.pages, usedOcr: read.usedOcr });
+      apply(read.text, { how: "file", names, previews: read.previews, pages: read.pages, usedOcr: read.usedOcr }, read.extraText);
     } catch (e) {
       const message = (e as Error).message;
       setPhase({
