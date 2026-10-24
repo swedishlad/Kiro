@@ -1,4 +1,4 @@
-// "The grid, hour by hour" on the Regime tab: the 3D hourly load surface (components/HourlySurface.tsx) with its
+// "The grid, hour by hour", at the top of the Energy data tab: the 3D hourly load surface (components/HourlySurface.tsx) with its
 // temperature legend and a table view of each day's low and peak hour. Data: grid_hourly.json, loaded lazily.
 
 import { useEffect, useMemo, useState } from "react";

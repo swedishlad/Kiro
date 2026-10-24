@@ -1,14 +1,12 @@
 // The Regime tab: every regime model on one page. First the usual-range model (regimes.json): the nowcast, the
-// outlook, how the three regimes behave and the six-month forecast; then the hourly load surface; then the
-// Low / Mid / High use-level model (hmm_regimes.json). #/grid, #/hourly and #/levels open this tab and scroll there.
+// outlook, how the three regimes behave and the six-month forecast; then the Low / Mid / High use-level model
+// (hmm_regimes.json). #/grid and #/levels open this tab and scroll there.
 
 import Grid from "./Grid.tsx";
-import Hourly from "./Hourly.tsx";
 import Levels from "./Levels.tsx";
 
 const PARTS = [
   { id: "grid", label: "Regimes & forecast", Section: Grid },
-  { id: "hourly", label: "Hour by hour", Section: Hourly },
   { id: "levels", label: "Use levels", Section: Levels },
 ];
 
