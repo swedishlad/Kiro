@@ -75,6 +75,7 @@ and load zones, and how to read the dashboard.
 | Regimes & forecast | Homes (monthly) and ISO-NE zones (daily) vs the same period in the previous 5 years, outlook, transition matrix; six-month Monte Carlo forecast with its walk-forward test | `regimes.json`, `mc_forecast.json` |
 | Towns | Map of all 351 towns (load zone, population, growth), searchable table | `ma_towns.csv`, `map_consumption.json`, `src/geo/ma-towns.topo.json` |
 | Data & methods | Sources, methods, limits, rebuild steps | — |
+| About | What FairWatt is and the team (Tae, Johan, Yuan, Lin; listed in `src/data/team.ts`) | — |
 | Assistant (every page) | Chat answers grounded in the knowledge base below | `server/knowledge.ts` (generated from all of the above) |
 
 ## Staying in sync with the backend
