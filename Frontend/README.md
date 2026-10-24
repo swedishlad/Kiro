@@ -151,19 +151,30 @@ server is contacted.
   dropping them anywhere on the page, or by pasting (⌘V / Ctrl+V) a screenshot or a PDF's copied text.
   A "paste the text" box and "type the numbers" remain as fallbacks.
 - **Reading** (`src/data/readBill.ts`): a PDF's text layer is read directly with PDF.js
-  (`src/data/pdf.ts` rebuilds its positioned text runs into lines), which is instant and exact. Photos,
-  and PDF pages with no text layer (scans), are read with Tesseract.js (`src/data/ocr.ts`, one worker
-  for every page, single-column page segmentation so boxed fields and label–amount pairs survive).
-  The OCR engine loads only when an image needs it.
+  (`src/data/pdf.ts`; `src/data/textLayout.ts` rebuilds positioned text into lines), which is instant
+  and exact. Photos, screenshots and scanned PDF pages are read with Tesseract.js (`src/data/ocr.ts`):
+  each image is drawn at about 300 dpi (screenshots scaled up as much as 3×), its light is evened out
+  (shadows, dark corners, dim rooms), and box borders and table rules are erased, since Tesseract
+  skips text inside ruled boxes. The page is read as one column of rows; when that leaves details
+  empty, a second reading collects every scrap of text and puts it back into rows by position. The
+  OCR engine loads only when an image needs it.
 - **Assets:** `npm run dev` and `npm run build` first run `scripts/copy-reader-assets.mjs`, which copies
   the Tesseract.js worker, its WebAssembly core and the English model into `public/ocr/`, and the PDF.js
   worker, fonts, character maps and image decoders into `public/pdf/` (both git-ignored). The page
   loads them from this site only. About 7 MB is downloaded once for the first photo; PDF.js is a
   130 KB (gzip) chunk plus its worker, loaded only for a PDF.
 - **Fields** (`src/data/bill.ts`): utility, kWh, total, supply rate, billing period, statement date,
-  and the supply and delivery section totals, each keeping the line it came from. Only kWh and the
-  bill month are required; the month comes from the service period or, failing that, the statement
-  date. Without one of the four utilities (a town-run light plant) the report covers usage and cost.
+  and the supply and delivery section totals, each keeping the line it came from. The rules follow
+  how each utility prints its bill: National Grid's rate-first charge lines ("0.16418 x 659 kWh"),
+  year-less detail period and Amount Due that includes any unpaid balance (so this period's Current
+  Charges is used); Eversource's quantity-first bare rates ("736 kWh X .14205"), "Amount Due On" for
+  the previous bill, and day counts that include both ends. Common OCR misreadings are folded back
+  (S for $, a lost decimal point, O for 0), a column of labels read apart from its column of amounts
+  is paired up again, and totals and rates are cross-checked (rate × kWh against the supply charge,
+  supply + delivery against the total) so a misread value loses to a consistent one. Only kWh and
+  the bill month are required; the month comes from the service period or, failing that, the
+  statement date. Without one of the four utilities (a town-run light plant) the report covers
+  usage and cost.
 - **Report** (`src/data/billCompare.ts`, `buildReport`): the comparison, the year carried month by
   month with the statewide seasonal pattern, a year's kWh and cost, the bill's supply / delivery /
   other split, and the suggestions with rough yearly dollars. Pure and covered by

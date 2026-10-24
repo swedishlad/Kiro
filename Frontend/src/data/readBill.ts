@@ -1,7 +1,9 @@
 // Reads a bill from whatever the visitor adds (photos, screenshots, a PDF, several pages at once)
-// into one text for the parser. A PDF's text layer is read directly; photos and scanned PDF pages
-// go through the OCR reader, which is loaded only when one of them needs it. Nothing is uploaded.
+// into text for the parser. A PDF's text layer is read directly; photos and scanned PDF pages go
+// through the OCR reader, which is loaded only when one of them needs it. When that first reading
+// leaves details empty, the image pages are read a second way to fill them. Nothing is uploaded.
 
+import { incomplete, parseBillText } from "./bill.ts";
 import type { OcrProgress, OcrReader } from "./ocr.ts";
 import type { PdfDoc } from "./pdf.ts";
 
@@ -20,6 +22,8 @@ export interface BillPreview {
 
 export interface ReadResult {
   text: string;
+  /** The second reading of the image pages, made only when the first left details empty; it fills gaps */
+  extraText: string;
   /** Pages read: one per photo, plus each PDF page */
   pages: number;
   /** Whether any page had to be read from an image */
@@ -38,7 +42,7 @@ const MIN_PAGE_TEXT = 40;
 /** Bills run a few pages; inserts and newsletters after these are skipped. */
 const MAX_PDF_PAGES = 8;
 /** Long side of a scanned page drawn for OCR, in pixels */
-const SCAN_SIDE = 2400;
+const SCAN_SIDE = 3300;
 
 type Job = { kind: "image"; file: File } | { kind: "pdf-page"; doc: PdfDoc; page: number };
 
@@ -68,7 +72,7 @@ export async function readBillFiles(files: File[], onProgress: (p: ReadProgress)
     }
 
     const texts: string[] = [];
-    let usedOcr = false;
+    const images: (File | HTMLCanvasElement)[] = [];
     for (let i = 0; i < jobs.length; i++) {
       const job = jobs[i];
       const label = `Reading ${jobs.length > 1 ? `page ${i + 1} of ${jobs.length}` : "your bill"}`;
@@ -90,11 +94,20 @@ export async function readBillFiles(files: File[], onProgress: (p: ReadProgress)
         ocr = await openOcr((p) => onProgress({ fraction: at(loading * p.fraction), label: `${p.label} (first time only)` }));
       }
       const image = job.kind === "image" ? job.file : await job.doc.render(job.page, SCAN_SIDE);
+      images.push(image);
       texts.push(await ocr.read(image, (p: OcrProgress) => onProgress({ fraction: at(loading + (1 - loading) * p.fraction), label })));
-      usedOcr = true;
+    }
+    const text = texts.join("\n");
+    const extra: string[] = [];
+    if (ocr && incomplete(parseBillText(text))) {
+      for (let i = 0; i < images.length; i++) {
+        const label = `Taking a closer look${images.length > 1 ? ` at page ${i + 1} of ${images.length}` : ""}`;
+        onProgress({ fraction: i / images.length, label });
+        extra.push(await ocr.readScattered(images[i], (p: OcrProgress) => onProgress({ fraction: (i + p.fraction) / images.length, label })));
+      }
     }
     onProgress({ fraction: 1, label: "Building your report" });
-    return { text: texts.join("\n"), pages: jobs.length, usedOcr, previews };
+    return { text, extraText: extra.join("\n"), pages: jobs.length, usedOcr: images.length > 0, previews };
   } catch (e) {
     for (const p of previews) if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
     throw e;
