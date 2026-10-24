@@ -40,33 +40,50 @@ def save(fig, name):
     print("wrote", path)
 
 
+ZLIM = 4.0
+
+
+def regime_panel(ax, a, big=False):
+    """3-state HMM format: each point = z (sd from the historical average), colour + marker = filtered state,
+    three horizontal state-mean lines (anchored -1.5 / 0 / +1.5 sd) labelled with the typical % for this area."""
+    tl = a["timeline"]
+    dd = np.array([dt.date.fromisoformat(e["date"]) for e in tl])
+    z = np.clip(np.array([e["pctVsAverage"] / e["bandPct"] for e in tl]), -ZLIM, ZLIM)
+    typical_band = float(np.median([e["bandPct"] for e in tl]))
+    for edge in (-1, 1):
+        ax.axhline(edge, color=GRID, lw=1.0)
+    size = (30 if big else 22) if a["unit"] == "month" else (12 if big else 7)
+    for st in a["states"]:
+        c = st["color"]
+        hexc, mk, lab = STATE[c]
+        sel = np.array([e["color"] == c for e in tl])
+        ax.scatter(dd[sel], z[sel], s=size, marker=mk, color=hexc, linewidths=0, alpha=0.9, zorder=3)
+        m = st["meanSdFromAverage"]
+        ax.axhline(m, color=hexc, lw=1.4, zorder=2)
+        ax.text(1.005, m, f"{lab} {m:+.1f} sd (≈{m * typical_band:+.0f}%) · {st['shareOfDays']:.0%}",
+                transform=ax.get_yaxis_transform(), va="center", fontsize=8, color=INK2)
+    if big:
+        ax.text(1.005, 1, "range edge", transform=ax.get_yaxis_transform(), va="bottom", fontsize=7, color=INK2)
+    ax.set_ylim(-ZLIM, ZLIM)
+    ax.set_ylabel("sd from historical avg")
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    return dd, z
+
+
 def chart_timeline(doc):
-    fig, axes = plt.subplots(5, 1, figsize=(11, 11.5))
+    fig, axes = plt.subplots(5, 1, figsize=(12, 12))
     for ax, a in zip(axes, doc["areas"]):
-        tl = a["timeline"]
-        dd = [dt.date.fromisoformat(e["date"]) for e in tl]
-        v = np.array([e["pctVsAverage"] for e in tl])
-        band = np.array([e["bandPct"] for e in tl])
-        ax.fill_between(dd, -band, band, color="#ebeae5", lw=0, step="mid", label="historical average range (avg ± 1 sd)")
-        ax.axhline(0, color=INK2, lw=0.8)
-        for c, (hexc, mk, lab) in STATE.items():
-            sel = np.array([e["color"] == c for e in tl])
-            ax.scatter(np.array(dd)[sel], v[sel], s=7 if a["unit"] == "day" else 22, marker=mk, color=hexc, linewidths=0,
-                       label=f"{c} = {lab}")
+        regime_panel(ax, a)
         unit = "daily, all customers" if a["unit"] == "day" else "monthly, homes (kWh per account)"
-        ax.set_title(f"{a['area']} ({unit}): {a['states'][2]['shareOfDays']:.0%} red · {a['states'][1]['shareOfDays']:.0%} grey · "
-                     f"{a['states'][0]['shareOfDays']:.0%} green · agrees with the plain range rule {a['agreementWithBandRule']:.0%}",
-                     loc="left", fontsize=9)
-        ax.set_ylabel("% vs historical avg")
-        lim = max(15, float(np.nanpercentile(np.abs(v), 99.5)) + 2)
-        ax.set_ylim(-lim, lim)
-        ax.xaxis.set_major_locator(mdates.YearLocator())
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    axes[0].legend(loc="upper left", ncol=4, frameon=False, fontsize=7.5, markerscale=2)
-    fig.suptitle("HMM regimes vs the historical average range (same period, previous 5 years), forward-filtered\n"
-                 "red = above the range · grey = within · green = below; each mark is one day (zones) or one month (MA_RES)",
-                 x=0.01, ha="left", fontsize=10.5, fontweight="bold")
-    fig.tight_layout()
+        ax.set_title(f"{a['area']} ({unit}) · current {a['current']['date']}: {a['current']['color']} · agrees with the "
+                     f"plain range rule {a['agreementWithBandRule']:.0%}", loc="left", fontsize=9)
+    handles = [plt.Line2D([], [], marker=STATE[c][1], color=STATE[c][0], lw=1.4, label=f"{c} = {STATE[c][2]}") for c in STATE]
+    fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False, fontsize=8.5, bbox_to_anchor=(0.43, 0.0))
+    fig.suptitle("3-state HMM regimes vs the historical average range (same period, previous 5 years), forward-filtered\n"
+                 "points = each day (zones) or month (MA_RES) in sd from the historical average · coloured lines = the three "
+                 "state means · thin grey lines = range edges (±1 sd)", x=0.01, ha="left", fontsize=10, fontweight="bold")
+    fig.tight_layout(rect=(0, 0.025, 0.86, 0.96))
     save(fig, "hmm_states_timeline.png")
 
 
@@ -207,22 +224,18 @@ def example_lights(doc):
 
 def example_history(doc):
     a = next(x for x in doc["areas"] if x["area"] == "MA_RES")
-    tl = a["timeline"]
-    dd = [dt.date.fromisoformat(e["date"]) for e in tl]
-    v = np.array([e["pctVsAverage"] for e in tl])
-    band = np.array([e["bandPct"] for e in tl])
-    fig, ax = plt.subplots(figsize=(11, 3.8))
-    ax.fill_between(dd, -band, band, step="mid", color="#ebeae5", lw=0, label="normal range (historical avg ± 1 sd)")
-    ax.bar(dd, v, width=22, color=[STATE[e["color"]][0] for e in tl])
-    ax.axhline(0, color=INK2, lw=0.8)
-    last = tl[-1]
-    ax.annotate(f"{last['date'][:7]}: {last['pctVsAverage']:+.1f}% ({last['color']})", (dd[-1], v[-1]), xytext=(-150, 18),
-                textcoords="offset points", fontsize=8.5, arrowprops={"arrowstyle": "-", "color": INK2})
-    handles = [plt.Rectangle((0, 0), 1, 1, color=STATE[c][0]) for c in STATE] + [plt.Rectangle((0, 0), 1, 1, color="#ebeae5")]
-    ax.legend(handles, [f"{c} = {STATE[c][2]}" for c in STATE] + ["normal range"], loc="upper left", ncol=4, frameon=False, fontsize=8)
-    ax.set_ylabel("% vs historical average")
-    ax.set_title("Example output: Massachusetts homes, monthly use vs the historical average range "
-                 "(regimes.json → MA_RES.timeline)", loc="left")
+    fig, ax = plt.subplots(figsize=(12, 4.4))
+    dd, z = regime_panel(ax, a, big=True)
+    ax.plot(dd, z, color=GRID, lw=0.8, zorder=1)
+    last = a["timeline"][-1]
+    ax.annotate(f"{last['date'][:7]}: {last['color']} ({last['pctVsAverage']:+.1f}% vs historical avg, range ±{last['bandPct']:.1f}%)",
+                (dd[-1], z[-1]), xytext=(-330, 22), textcoords="offset points", fontsize=8.5,
+                arrowprops={"arrowstyle": "-", "color": INK2})
+    handles = [plt.Line2D([], [], marker=STATE[c][1], color=STATE[c][0], lw=1.4, label=f"{c} = {STATE[c][2]}") for c in STATE]
+    ax.legend(handles=handles, loc="upper left", ncol=3, frameon=False, fontsize=8)
+    ax.set_title("Example output: Massachusetts homes, 3-state HMM regime history (regimes.json → MA_RES.timeline)",
+                 loc="left")
+    fig.tight_layout(rect=(0, 0, 0.84, 1))
     save_to(fig, EX, "example_regime_history.png")
 
 
@@ -334,5 +347,4 @@ if __name__ == "__main__":
     chart_fan(mcd)
     example_lights(reg)
     example_history(reg)
-    example_fan(mcd)
     example_map(reg)
