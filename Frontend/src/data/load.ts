@@ -28,6 +28,7 @@ import {
   type MapConsumption,
   type McForecast,
   type SavingsModel,
+  type TownForecastDoc,
 } from "./model.ts";
 import { termSpans } from "./savings.ts";
 
@@ -85,4 +86,11 @@ let geoPromise: Promise<TownTopology> | null = null;
 export function loadGeo(): Promise<TownTopology> {
   geoPromise ??= import("../geo/ma-towns.topo.json").then((m) => m.default as unknown as TownTopology);
   return geoPromise;
+}
+
+let townForecastPromise: Promise<TownForecastDoc> | null = null;
+/** Each town's modeled 6-month electricity forecast (dated snapshot; population share of its zone). */
+export function loadTownForecast(): Promise<TownForecastDoc> {
+  townForecastPromise ??= import("@backend/build/towns_metrics.json").then((m) => m.default as unknown as TownForecastDoc);
+  return townForecastPromise;
 }
