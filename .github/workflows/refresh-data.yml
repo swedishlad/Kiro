@@ -1,6 +1,6 @@
 # Daily live refresh of the backend calculations (Backend/backend/live/update.py).
 # Pulls the newest public data (EIA-930 grid load, Open-Meteo temperature, EIA-861M monthly sales), re-runs the
-# regimes, Monte Carlo and 351-town builds, runs every backend gate, regenerates the "Ask FairWatt" knowledge base,
+# regimes, Monte Carlo and 351-town builds, runs every backend gate, regenerates the "Ask Watt If" knowledge base,
 # runs the frontend tests and build, and commits Backend/data/build/ + Frontend/server/knowledge.ts only if all of it
 # passed and new data arrived. Any failure = no commit: the site keeps the last good numbers. The push redeploys it.
 name: Refresh live data

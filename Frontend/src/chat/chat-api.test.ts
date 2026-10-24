@@ -87,7 +87,7 @@ test("handleChat sends the knowledge base and streams the answer", async () => {
   assert.ok(p.config.abortSignal instanceof AbortSignal);
   // shared prefix first (instructions, then the knowledge base), per-request context last
   const sys = p.config.systemInstruction;
-  assert.ok(sys.startsWith("You are the assistant on FairWatt"));
+  assert.ok(sys.startsWith("You are the assistant on Watt If"));
   assert.ok(sys.includes(`\n\n${KNOWLEDGE}\n\n# This conversation`));
   assert.ok(sys.endsWith("Today's date is 2026-10-24. The visitor is on the Prices & savings tab (#/prices)."));
   assert.deepEqual(p.contents, [{ role: "user", parts: [{ text: "What does basic service cost?" }] }]);

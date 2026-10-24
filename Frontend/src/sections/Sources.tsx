@@ -72,7 +72,7 @@ export default function Sources() {
           <p className="page-lede">
             Every number on this site comes from a public source committed to this repository, through the Python backend in{" "}
             <code className="code">Backend/</code>. The dashboard reads the same files; nothing is fetched from a third-party API at
-            runtime. The “Ask FairWatt” assistant answers from a knowledge base built from these files and sends your questions to
+            runtime. The “Ask Watt If” assistant answers from a knowledge base built from these files and sends your questions to
             Google's Gemini API to write its replies.
           </p>
         </div>
