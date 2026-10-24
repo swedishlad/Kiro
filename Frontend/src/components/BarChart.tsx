@@ -85,7 +85,8 @@ export function ColumnChart({
 
   return (
     <div className="chart" ref={ref} tabIndex={0} role="group" aria-roledescription="chart" aria-label={`${ariaLabel}. Use arrow keys to read values.`} onKeyDown={onKey} onBlur={() => setActive(null)}>
-      <svg width={width} height={height}>
+      {/* viewBox lets a printed report scale the chart to the paper instead of clipping it */}
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         {ticks.map((t) => (
           <g key={t}>
             <line className={t === 0 ? "base-line" : "grid-line"} x1={left} x2={left + innerW} y1={Math.round(y(t)) + 0.5} y2={Math.round(y(t)) + 0.5} />
