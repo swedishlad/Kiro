@@ -8,6 +8,7 @@ import recsCsv from "@backend/build/recs_ma.csv?raw";
 import consumptionStatsJson from "@backend/build/consumption_stats.json";
 import hmmJson from "@backend/build/hmm_regimes.json";
 import savingsModelJson from "@backend/build/savings_model.json";
+import liveStatusJson from "@backend/build/live_status.json";
 import fixedRatesCsv from "@backend/snapshot/fixed_residential_cents_2026-07-02.csv?raw";
 import monthlyRatesCsv from "@backend/snapshot/monthly_residential_cents_2026-07-02.csv?raw";
 
@@ -22,6 +23,7 @@ import {
   type ConsumptionStats,
   type GridRegimes,
   type HmmRegimes,
+  type LiveStatus,
   type MapConsumption,
   type McForecast,
   type SavingsModel,
@@ -39,6 +41,8 @@ export const recs = parseRecs(recsCsv);
 export const consumptionStats = consumptionStatsJson as ConsumptionStats;
 export const savingsModel = savingsModelJson as SavingsModel;
 export const hmm = hmmJson as HmmRegimes;
+/** How fresh the grid / homes data are (the backend refreshes them daily from EIA-930, Open-Meteo and EIA-861M). */
+export const liveStatus = liveStatusJson as LiveStatus;
 
 /** Regime per month, keyed by YYYY-MM. */
 export const hmmByYm = new Map(hmm.timeline.map((t) => [t.period, t]));

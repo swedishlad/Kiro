@@ -93,11 +93,12 @@ for a in doc["areas"]:
     check(f"{a['area']}: no calendar month is mostly red (not a season detector)", max(red) < 0.7,
           f"red share by month max {max(red):.2f}")
     if a["unit"] == "day":
-        check(f"{a['area']}: daily timeline 2020-01-01 .. 2023-12-31",
-              a["timeline"][0]["date"] == "2020-01-01" and a["timeline"][-1]["date"] == "2023-12-31" and len(a["timeline"]) == 1461)
+        n = (days[-1] - B.DAILY_FROM).days + 1
+        check(f"{a['area']}: daily timeline 2020-01-01 .. {days[-1]} (last data day), no gaps",
+              a["timeline"][0]["date"] == "2020-01-01" and a["timeline"][-1]["date"] == days[-1].isoformat() and len(a["timeline"]) == n)
     else:
-        check(f"{a['area']}: monthly timeline 2016-01 .. 2026-08",
-              a["timeline"][0]["date"] == "2016-01-01" and a["timeline"][-1]["date"] == "2026-08-01")
+        check(f"{a['area']}: monthly timeline 2016-01 .. {months[-1]:%Y-%m} (last EIA month)",
+              a["timeline"][0]["date"] == "2016-01-01" and a["timeline"][-1]["date"] == months[-1].isoformat())
 
 # 4. future regime: tested forecaster, no look-ahead, honest method choice
 zc = np.clip(np.nan_to_num(z), -B.Z_CLIP, B.Z_CLIP)
@@ -118,7 +119,8 @@ for a in doc["areas"]:
 homes = next(a for a in doc["areas"] if a["area"] == "MA_RES")
 fc = homes.get("forecast", [])
 check("MA_RES: 6-month forecast present, months follow the last data month",
-      len(fc) == 6 and fc[0]["date"] == "2026-09-01" and fc[-1]["date"] == "2027-02-01")
+      len(fc) == 6 and fc[0]["date"] == B.add_month(months[-1], 1).isoformat() and fc[-1]["date"] == B.add_month(months[-1], 6).isoformat(),
+      f"{fc[0]['date'][:7]} .. {fc[-1]['date'][:7]}" if fc else "")
 check("MA_RES: forecast probabilities sum to 1", all(abs(sum(f["probs"]) - 1) < 1e-9 for f in fc))
 
 print("G-HMM:", "PASS" if ok else "FAIL")

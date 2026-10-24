@@ -6,7 +6,7 @@ import { RANGE_LABELS, RANGE_SHORT, REGIMES, RegimeBadge, RegimeIcon, RegimeLege
 import { RegimeShareColumns, RegimeStackBar } from "../components/Stacked.tsx";
 import { Card, ChartCard, Filter, Legend, Segmented } from "../components/ui.tsx";
 import { dateLabel, fmtNum, fmtPct, fmtSignedPct, ymLabel, ymShort } from "../data/format.ts";
-import { loadGrid, type GridBundle } from "../data/load.ts";
+import { liveStatus, loadGrid, type GridBundle } from "../data/load.ts";
 import { ZONE_NAMES, type Area, type GridArea, type RegimeArea } from "../data/model.ts";
 
 const AREAS: RegimeArea[] = ["MA_RES", "MA", "NEMA", "SEMA", "WCMA"];
@@ -187,15 +187,15 @@ export default function Grid() {
           <ChartCard
             className="span-8"
             title={`Next six months: ${fcArea === "MA" ? "statewide" : fcArea} grid load`}
-            subtitle={`Monte Carlo forecast, ${ymLabel(bundle.forecast.horizon[0])} – ${ymLabel(bundle.forecast.horizon[bundle.forecast.horizon.length - 1])}: median with the 10–90% range, against the same months of the last observed winter at today's level.${area === "MA_RES" ? " (No forecast for the homes series; showing the statewide grid.)" : ""}`}
-            source={`${fmtNum(bundle.forecast.nPaths)} simulated paths: past weather seasons × the zone's regime model × an EIA level ratio of ${fmtNum(bundle.forecast.levelAdjustment.ratio, 4)} (ISO-NE data ends 2023).`}
+            subtitle={`Monte Carlo forecast, ${ymLabel(bundle.forecast.horizon[0])} – ${ymLabel(bundle.forecast.horizon[bundle.forecast.horizon.length - 1])}: median with the 10–90% range, against the same months a year earlier.${area === "MA_RES" ? " (No forecast for the homes series; showing the statewide grid.)" : ""}`}
+            source={`${fmtNum(bundle.forecast.nPaths)} simulated paths: past weather seasons × the zone's regime model × its recent load level, fit on daily load through ${dateLabel(liveStatus.gridThrough)} (refreshed daily).`}
             table={{
               columns: [
                 { key: "m", label: "Month", render: (m) => ymLabel(m.ym) },
                 { key: "10", label: "P10", align: "r", render: (m) => fmtNum(m.p10) },
                 { key: "50", label: "Median", align: "r", render: (m) => fmtNum(m.p50) },
                 { key: "90", label: "P90", align: "r", render: (m) => fmtNum(m.p90) },
-                { key: "s", label: "Last winter × level", align: "r", render: (m) => fmtNum(fc.sameMonthsLastObservedGWh[fc.months.indexOf(m)]) },
+                { key: "s", label: "Same months last year", align: "r", render: (m) => fmtNum(fc.sameMonthsLastObservedGWh[fc.months.indexOf(m)]) },
               ],
               rows: fc.months,
             }}
@@ -211,7 +211,7 @@ export default function Grid() {
               x={fc.months.map((m) => ymShort(m.ym))}
               xKind="category"
               series={[
-                { id: "last", label: "Last winter × level", color: "var(--ink-2)", values: fc.sameMonthsLastObservedGWh },
+                { id: "last", label: "Same months last year", color: "var(--ink-2)", values: fc.sameMonthsLastObservedGWh },
                 { id: "p50", label: "Median", color: "var(--series-1)", values: fc.months.map((m) => m.p50) },
               ]}
               band={{ label: "10–90% range", color: "var(--series-1)", lower: fc.months.map((m) => m.p10), upper: fc.months.map((m) => m.p90) }}
@@ -231,15 +231,28 @@ export default function Grid() {
                   <span className="result-label" style={{ marginLeft: 6 }}>TWh median</span>
                 </p>
                 <p className="tile-meta">
-                  80% likely between {fmtNum(fc.total.p10 / 1000, 2)} and {fmtNum(fc.total.p90 / 1000, 2)} TWh · same months last winter at
-                  today's level: {fmtNum(fc.sameMonthsLastObservedGWh.reduce((s, v) => s + v, 0) / 1000, 2)} TWh
+                  80% likely between {fmtNum(fc.total.p10 / 1000, 2)} and {fmtNum(fc.total.p90 / 1000, 2)} TWh · same months a year
+                  earlier: {fmtNum(fc.sameMonthsLastObservedGWh.reduce((s, v) => s + v, 0) / 1000, 2)} TWh
                 </p>
               </div>
               <div className="note">
-                <strong>Tested before shown.</strong> Fit only on data to {dateLabel(bundle.forecast.calibration.trainEnd)}, then run on two
-                winters it never saw ({bundle.forecast.calibration.nMonths} zone-months): the 80% range held the actual{" "}
-                {fmtPct(bundle.forecast.calibration.cov80)} of the time (90% range: {fmtPct(bundle.forecast.calibration.cov90)}), and the
-                median's error was {fmtPct(1 - bundle.forecast.calibration.maeVsNaive)} smaller than a “same month last year” guess.
+                {bundle.forecast.backtest ? (
+                  <>
+                    <strong>Tested before shown.</strong> Refit before each of the last {bundle.forecast.backtest.nWinters} winters (
+                    {bundle.forecast.backtest.winters}) and run on months it had not seen ({bundle.forecast.backtest.nMonths} zone-months): the
+                    80% range held the actual {fmtPct(bundle.forecast.backtest.cov80)} of the time (90% range:{" "}
+                    {fmtPct(bundle.forecast.backtest.cov90)}), and the median's error was {fmtPct(1 - bundle.forecast.backtest.maeVsNaive)}{" "}
+                    smaller than a “same month last year” guess. Six-month totals missed by {fmtNum(bundle.forecast.backtest.totalMaePct, 1)}% on
+                    average.
+                  </>
+                ) : (
+                  <>
+                    <strong>Tested before shown.</strong> Fit only on data to {dateLabel(bundle.forecast.calibration.trainEnd)}, then run on two
+                    winters it never saw ({bundle.forecast.calibration.nMonths} zone-months): the 80% range held the actual{" "}
+                    {fmtPct(bundle.forecast.calibration.cov80)} of the time (90% range: {fmtPct(bundle.forecast.calibration.cov90)}), and the
+                    median's error was {fmtPct(1 - bundle.forecast.calibration.maeVsNaive)} smaller than a “same month last year” guess.
+                  </>
+                )}
               </div>
               <ul className="prose" style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
                 {bundle.forecast.notes.map((n) => (

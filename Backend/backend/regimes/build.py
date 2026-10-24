@@ -4,8 +4,8 @@
 Definition (TC, Oct 24):  red = above the historical average range (bad), grey = within it, green = below it (good).
   historical average range = mean +/- 1 standard deviation of consumption in the SAME PERIOD OF THE PREVIOUS
   5 YEARS (or as many as exist; a recent normal, because household use per account trends):
-    daily zones (ISO-NE, 2017-2023): the same day of year +/- 7 days, every earlier year (range from 2019; the HMM
-      warms up on 2019 and its first output is 2020-01-01);
+    daily zones (ISO-NE 2017-2023, then EIA-930 to the latest published day): the same day of year +/- 7 days,
+      every earlier year (range from 2019; the HMM warms up on 2019 and its first output is 2020-01-01);
     MA_RES (EIA residential, kWh per account, monthly 2010-2026): the same calendar month, every earlier year.
   Only earlier years enter the range, so nothing shown uses the future.
 The HMM: 3 states on z = (value - historical mean) / historical sd with the state means ANCHORED at -1.5 / 0 / +1.5
@@ -22,7 +22,7 @@ from math import erf, sqrt
 
 import numpy as np
 
-from backend.common import AREAS, build_path, load_daily, month_starts, with_ma, zone_population
+from backend.common import AREAS, add_month, build_path, load_daily, month_starts, with_ma, zone_population
 from backend.regimes.hmm import emissions, filter_step, fit, stationary
 
 SEED = 20261024
@@ -235,11 +235,6 @@ def rounded_probs(p):
     return out
 
 
-def add_month(d, k):
-    m = d.month - 1 + k
-    return dt.date(d.year + m // 12, m % 12 + 1, 1)
-
-
 def load_all():
     days, gwh, temp = load_daily()
     gwh, temp = with_ma(gwh, temp, zone_population())
@@ -256,6 +251,7 @@ def main():
               f"share {[s['shareOfDays'] for s in out['states']]} agree-with-band {out['agreementWithBandRule']} "
               f"current {out['current']['date']} {out['current']['color']} ({out['current']['pctVsAverage']:+.1f}% "
               f"vs average, range +/-{out['current']['bandPct']:.1f}%)")
+    grid_end, homes_end = days[-1], areas[-1]["current"]["date"][:7]
     doc = {
         "asOf": dt.date.today().isoformat(),
         "method": ("3-state Gaussian HMM (hand-rolled Baum-Welch) on z = (consumption - historical average) / historical "
@@ -268,11 +264,11 @@ def main():
         "areas": areas,
         "leakageTest": "pass",
         "notes": [
-            "Zones NEMA/SEMA/WCMA/MA: ISO-NE daily load, all customer classes, 2020-01-01 to 2023-12-31 (files for 2024+ not available).",
-            "MA_RES: EIA-861M residential kWh per account (12-month mean of customers), monthly 2016-01 to 2026-08: the current light.",
+            f"Zones NEMA/SEMA/WCMA/MA: daily load, all customer classes, 2020-01-01 to {grid_end} (ISO-NE to 2023, then EIA-930, which publishes ISO-NE zone data about 10 days late; refreshed daily).",
+            f"MA_RES: EIA-861M residential kWh per account (12-month mean of customers), monthly 2016-01 to {homes_end}: the current light (EIA posts each month about two months later).",
             "Each day/month is compared with the same period in the previous 5 years only, so history is never re-coloured by later data.",
             "Weather is not removed: a heat wave or cold snap that pushes use above the range shows red.",
-            "outlook / forecast: an AR(1) model of the gap is used at a horizon only where it beat the long-run mix in a walk-forward test (homes: next 1-2 months; grid: next week); otherwise they show the long-run odds. HMM transitions alone lost to the long-run mix, so they are not used for the future.",
+            "outlook / forecast: an AR(1) model of the gap is used at a horizon only where it beat the long-run mix in a walk-forward test (each entry's method, skill and n say which); otherwise they show the long-run odds. HMM transitions alone lost to the long-run mix, so they are not used for the future.",
         ],
     }
     with open(build_path("regimes.json"), "w") as fh:
