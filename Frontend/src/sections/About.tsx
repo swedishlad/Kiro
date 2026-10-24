@@ -1,9 +1,14 @@
+import johanPhoto from "../assets/team/johan.jpg";
+import taePhoto from "../assets/team/tae.jpg";
+import yuanPhoto from "../assets/team/yuan.jpg";
 import { Card } from "../components/ui.tsx";
 import { TEAM } from "../data/team.ts";
 import Sources from "./Sources.tsx";
 
 // Avatars take the categorical slots in order, so each person keeps the same colour in both themes.
 const AVATAR_COLORS = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--series-4)"];
+// Photos where we have them (src/assets/team/); everyone else keeps their initial.
+const PHOTOS: Partial<Record<(typeof TEAM)[number], string>> = { Tae: taePhoto, Johan: johanPhoto, Yuan: yuanPhoto };
 
 export default function About() {
   return (
@@ -22,9 +27,13 @@ export default function About() {
           <ul className="team">
             {TEAM.map((name, i) => (
               <li className="member" key={name}>
-                <span className="member-avatar" style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }} aria-hidden="true">
-                  {name[0]}
-                </span>
+                {PHOTOS[name] ? (
+                  <img className="member-avatar member-photo" src={PHOTOS[name]} alt="" width={72} height={72} />
+                ) : (
+                  <span className="member-avatar" style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }} aria-hidden="true">
+                    {name[0]}
+                  </span>
+                )}
                 <span className="member-name">{name}</span>
               </li>
             ))}

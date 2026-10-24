@@ -1,0 +1,62 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "grid_hourly.schema.json",
+ "title": "GridHourly (data/build/grid_hourly.json) v2.5.0",
+ "description": "Hourly Massachusetts grid load (EIA-930, three ISO-NE subregions summed), one row of 24 hours per day, for the site's 3D surface.",
+ "type": "object",
+ "required": [
+  "area",
+  "unit",
+  "from",
+  "to",
+  "source",
+  "mw",
+  "tempF"
+ ],
+ "properties": {
+  "area": {
+   "const": "MA"
+  },
+  "unit": {
+   "const": "MW"
+  },
+  "from": {
+   "type": "string",
+   "format": "date"
+  },
+  "to": {
+   "type": "string",
+   "format": "date"
+  },
+  "source": {
+   "type": "string"
+  },
+  "zones": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "mw": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "array",
+    "minItems": 24,
+    "maxItems": 24,
+    "items": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    }
+   }
+  },
+  "tempF": {
+   "type": "array",
+   "items": {
+    "type": "number",
+    "minimum": -30,
+    "maximum": 115
+   }
+  }
+ }
+}
