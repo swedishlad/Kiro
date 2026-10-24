@@ -1,0 +1,11 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Guard shared working tree",
+      "trigger": "PreToolUse",
+      "matcher": "shell",
+      "action": { "type": "command", "command": "python3 .kiro/hooks/guard_git.py", "timeout": 10 }
+    }
+  ]
+}

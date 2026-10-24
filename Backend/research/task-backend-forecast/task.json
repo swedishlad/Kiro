@@ -1,0 +1,7 @@
+{
+  "task_id": "task-backend-forecast",
+  "task_description": "Python backend-only forecasting for FairWatt MA: (A) a deterministic Monte Carlo 6-month consumption forecast (P10/P50/P90 fan + full quantiles) spanning the Feb 1 2027 reset, committed to data/build/forecast_mc.json; and (B) an all-cities (351 MA towns) 6-month-ahead forecast committed to data/build/allcities_forecast.json. No UI/TypeScript. All Python under forecast_mc_* / allcities_* prefixes.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

@@ -1,0 +1,149 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "fairwatt/towns_metrics.schema.json",
+ "title": "TownsMetricsFile (data/build/towns_metrics.json)",
+ "type": "object",
+ "required": [
+  "asOf",
+  "method",
+  "zoneMapping",
+  "towns",
+  "zoneTotalsMWh",
+  "notes"
+ ],
+ "properties": {
+  "asOf": {
+   "type": "string",
+   "format": "date"
+  },
+  "method": {
+   "const": "modeled: population share of zone"
+  },
+  "zoneMapping": {
+   "const": "approximate by county"
+  },
+  "towns": {
+   "type": "array",
+   "minItems": 351,
+   "maxItems": 351,
+   "items": {
+    "type": "object",
+    "required": [
+     "townId",
+     "name",
+     "zone",
+     "pop2024",
+     "modeledAnnualMWh",
+     "modeledResidentialMWh",
+     "perCapitaKwh",
+     "regimeColor",
+     "forecast6mMWh",
+     "changeVsLastYearPct"
+    ],
+    "properties": {
+     "townId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 351
+     },
+     "name": {
+      "type": "string"
+     },
+     "zone": {
+      "enum": [
+       "NEMA",
+       "SEMA",
+       "WCMA"
+      ]
+     },
+     "pop2024": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "modeledAnnualMWh": {
+      "type": "number",
+      "minimum": 0
+     },
+     "modeledResidentialMWh": {
+      "type": "number",
+      "minimum": 0
+     },
+     "perCapitaKwh": {
+      "type": "number",
+      "minimum": 0
+     },
+     "regimeColor": {
+      "enum": [
+       "green",
+       "grey",
+       "red"
+      ]
+     },
+     "forecast6mMWh": {
+      "type": "object",
+      "required": [
+       "p5",
+       "p10",
+       "p25",
+       "p50",
+       "p75",
+       "p90",
+       "p95"
+      ],
+      "properties": {
+       "p5": {
+        "type": "number"
+       },
+       "p10": {
+        "type": "number"
+       },
+       "p25": {
+        "type": "number"
+       },
+       "p50": {
+        "type": "number"
+       },
+       "p75": {
+        "type": "number"
+       },
+       "p90": {
+        "type": "number"
+       },
+       "p95": {
+        "type": "number"
+       }
+      }
+     },
+     "changeVsLastYearPct": {
+      "type": "number"
+     }
+    }
+   }
+  },
+  "zoneTotalsMWh": {
+   "type": "object",
+   "required": [
+    "NEMA",
+    "SEMA",
+    "WCMA"
+   ],
+   "properties": {
+    "NEMA": {
+     "type": "number"
+    },
+    "SEMA": {
+     "type": "number"
+    },
+    "WCMA": {
+     "type": "number"
+    }
+   }
+  },
+  "notes": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  }
+ }
+}

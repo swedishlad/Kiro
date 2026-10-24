@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Deterministic Monte Carlo 6-month consumption forecast for a MA household/state baseline. Seasonal-naive P50 path (same-month-last-year per-customer kWh) with a per-calendar-month bootstrap of log-residuals from the EIA-861M series, spanning the Feb 1 2027 reset. Emits P10/P50/P90 fan paths plus a full 9-point quantile grid per month to data/build/forecast_mc.json. This feature builds the shared forecast core that FEAT-002 reuses; it is independent of FEAT-002 and must be completed first.",
+  "status": "pending",
+  "steps": [
+    "Create fairwatt-kit/forecast_mc_core.py with pure, import-safe functions: _load_series(eia_path) -> (sales_dict, pc_dict, ordered_ym_list) reading data/snapshot/eia_ma_monthly_2026-08.csv (keys (year,month)); baseline_mape(sales, pc, ym) -> {'sales':5.95,'perCustomer':6.01,'n':188} computed as mean(|actual-pred|/actual) with pred = same-month-last-year; log_residuals_by_month(pc, ym) -> {1..12: [ln(actual/pred)...]}; horizon(info_end=(2026,8), k=6) -> [(2026,11),(2026,12),(2027,1),(2027,2),(2027,3),(2027,4)]; seasonal_naive_baseline(pc, horizon) -> {(y,m): pc[(y-1,m)]}. No I/O at import.",
+    "Create fairwatt-kit/forecast_mc_build.py: simulate_month(baseline, residuals, rng, n_sims) -> np.ndarray = baseline*exp(rng.choice(residuals, n_sims, replace=True)); choose residuals = per-calendar-month list, falling back to the pooled list when a month has <8 residuals. quantile_record(sim, calendar_month, ym, baseline, post_reset) -> dict filling p10/p50/p90 and a quantiles grid for [1,5,10,25,50,75,90,95,99] via np.percentile, and ASSERTING p10<=p50<=p90 and the 9-point grid is monotone nondecreasing. build_forecast_mc(eia_path, seed=20270201, n_sims=10000) -> dict assembling asOf, infoSetEnd='2026-08', method, unit='kwh_per_customer_month', seed, nSims, horizon (6 'YYYY-MM' strings), resetMonth='2027-02', baselineMape, months[] (each with month, calendarMonth, baseline, postReset=((y,m)>=(2027,2)), p10/p50/p90, quantiles, residualN), and a plainEnglish string >=40 chars that states the method and the honest baseline number. Use numpy.random.default_rng(seed). main() creates data/build/ and writes data/build/forecast_mc.json with sorted keys and a trailing newline for stable bytes.",
+    "Create fairwatt-kit/forecast_mc_test.py (pytest) importing the two modules directly.",
+    "Run the builder and the tests; confirm data/build/forecast_mc.json is written and all tests pass.",
+    "Commit ONLY the new files by name (forecast_mc_core.py, forecast_mc_build.py, forecast_mc_test.py, data/build/forecast_mc.json) with subject 'forecaster-mc: Monte Carlo 6-month consumption forecast'. Never use git add -A/.; never push."
+  ],
+  "acceptance_criteria": [
+    "`cd fairwatt-kit && python3 forecast_mc_build.py` writes data/build/forecast_mc.json with exactly 6 month entries over 2026-11..2027-04 and resetMonth 2027-02.",
+    "baselineMape.sales is within [5.5, 6.5] and baselineMape.n == 188 (reproduces the ~5.9% ground-truth baseline).",
+    "Every month entry satisfies p10 <= p50 <= p90 and its quantiles grid is monotone nondecreasing.",
+    "Months 2027-02, 2027-03, 2027-04 have postReset == true; the first three have postReset == false.",
+    "Two build_forecast_mc(..., seed=20270201) runs produce identical dicts and identical JSON bytes (determinism).",
+    "`cd fairwatt-kit && python3 -m pytest forecast_mc_test.py -q` passes all tests."
+  ],
+  "verification": [
+    "cd fairwatt-kit && python3 forecast_mc_build.py",
+    "cd fairwatt-kit && python3 -m pytest forecast_mc_test.py -q",
+    "cd fairwatt-kit && python3 -c \"import json;d=json.load(open('data/build/forecast_mc.json'));assert len(d['months'])==6;assert 5.5<=d['baselineMape']['sales']<=6.5 and d['baselineMape']['n']==188;assert all(m['p10']<=m['p50']<=m['p90'] for m in d['months']);assert d['resetMonth']=='2027-02';print('FEAT-001 ok')\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
