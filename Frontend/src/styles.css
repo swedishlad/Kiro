@@ -1832,3 +1832,152 @@ table.data tbody th {
     opacity: 0.6;
   }
 }
+
+/* ---------------------------------------------------------------------------------------------
+   Regime nowcast (components/RegimeNowcast.tsx): a dark, terminal-style panel in both themes, drawn
+   like Backend/docs/img/examples/regime_nowcast_*.png. Status colours validated on #0a1020 (dataviz
+   validator): colour-blind separation >= dE 10.1 on every pair, contrast >= 3:1; shapes + words always
+   travel with them. Re-pointing --low / --mid / --high / --surface / --ink here re-themes the shared
+   RegimeIcon, badges and Tooltip inside the panel.
+   --------------------------------------------------------------------------------------------- */
+.nowcast {
+  --now-bg: #070b16;
+  --now-grid: #1b2840;
+  --now-grid-strong: #34476b;
+  --now-ink: #e6ebf0;
+  --now-muted: #7e9fb3;
+  --now-teal: #2fe0b0;
+  --now-line: #7f93ab;
+  --low: #14c46e;
+  --mid: #5b6b82;
+  --high: #c8403f;
+  --surface: #111a2e;
+  --ink: var(--now-ink);
+  --ink-2: #a9bccd;
+  --ink-muted: var(--now-muted);
+  --float-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  background: var(--now-bg);
+  color: var(--now-ink);
+  border-radius: var(--radius-sm);
+  padding: 18px 18px 14px;
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.nowcast p {
+  margin: 0;
+}
+.nowcast-head {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.now-title {
+  color: var(--now-teal);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+.now-big {
+  font-size: 13.5px;
+}
+.now-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+}
+.now-muted {
+  color: var(--now-muted);
+}
+.now-teal {
+  color: var(--now-teal);
+}
+.nowcast svg text {
+  font-family: inherit;
+}
+.now-axis {
+  fill: var(--now-muted);
+  font-size: 10.5px;
+}
+.now-label {
+  fill: var(--now-ink);
+  font-size: 11px;
+}
+.now-teal-text {
+  fill: var(--now-teal);
+  font-size: 11px;
+}
+.now-grid {
+  stroke: var(--now-grid);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.now-edge {
+  stroke: var(--now-grid-strong);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  shape-rendering: crispEdges;
+}
+.now-zline {
+  stroke: var(--now-line);
+  stroke-opacity: 0.75;
+}
+.now-divider {
+  stroke: var(--now-teal);
+  stroke-width: 1.2;
+}
+.now-cross {
+  stroke: var(--now-ink);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.now-focus {
+  stroke: var(--now-bg);
+  stroke-width: 1.5;
+}
+.now-hatch {
+  stroke: var(--now-bg);
+}
+.nowcast-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 4px 0 2px 40px;
+  font-size: 12px;
+}
+.nowcast-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nowcast-foot {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  color: var(--now-muted);
+  font-size: 11.5px;
+}
+.nowcast-foot span {
+  white-space: nowrap;
+}
+.nowcast .chart:focus-visible {
+  outline: 2px solid var(--now-teal);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.nowcast .tooltip {
+  font-family: var(--font);
+  border: 1px solid var(--now-grid-strong);
+}
+@media (max-width: 560px) {
+  .nowcast {
+    padding: 14px 12px 12px;
+    font-size: 11.5px;
+  }
+  .nowcast-legend {
+    margin-left: 0;
+  }
+}

@@ -307,6 +307,19 @@ export interface RangePoint {
   pctVsAverage: number;
   /** half-width of the historical average range (±1 sd), % */
   bandPct: number;
+  /** filtered P(below, within, above), from data up to this point only */
+  probs?: number[];
+}
+
+/** regimes.json v2.3+: the homes series' next 6 months */
+export interface RangeForecastPoint {
+  date: string;
+  probs: number[];
+  color: GridColor;
+  /** "ar1-gap" = the tested gap model (it beat the long-run odds walk-forward); "long-run-mix" = the long-run odds */
+  method: "ar1-gap" | "long-run-mix";
+  skillVsLongRunMix: number;
+  n: number;
 }
 
 export interface GridArea {
@@ -324,7 +337,9 @@ export interface GridArea {
   current: RangePoint & { probs: number[] };
   timeline: RangePoint[];
   monthly: { ym: string; green: number; grey: number; red: number }[];
-  outlook: { days: number; probs: number[] }[];
+  outlook: { days: number; probs: number[]; method?: RangeForecastPoint["method"]; skillVsLongRunMix?: number; n?: number }[];
+  /** homes (MA_RES) only */
+  forecast?: RangeForecastPoint[];
   agreementWithBandRule: number;
 }
 

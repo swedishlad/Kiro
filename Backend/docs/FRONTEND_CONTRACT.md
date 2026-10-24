@@ -24,7 +24,7 @@ Everything is committed under `Backend/`. The site (`Frontend/`) bundles `Backen
 | File / field | What to show | Must show |
 |---|---|---|
 | `data/build/towns_metrics.json` (`backend/towns/build.py`, gate G-CITY) | **Forecast for every town**: `towns[].forecast6mMWh` (p5…p95, Nov–Apr), `forecastMonthlyP50MWh` (6 months), `changeVsLastYearPct`, `modeledAnnualMWh`, `modeledResidentialMWh`, `perCapitaKwh`, `regimeColor`; join on `townId` = the map's town id | "**Modeled** from population share of zone; zones approximate by county" |
-| `regimes.json` → `areas[MA_RES].forecast` | Next 6 months: `date`, `probs` [below, within, above], `color`, `method`, `skillVsLongRunMix` | Months with `method: "long-run-mix"` are not a forecast: label them "long-run odds" |
+| `regimes.json` → `areas[MA_RES].forecast` | Next 6 months: `date`, `probs` [below, within, above], `color`, `method`, `skillVsLongRunMix`. **Shown** in the regime nowcast (`Frontend/src/components/RegimeNowcast.tsx`, with `timeline[].probs`) | Months with `method: "long-run-mix"` are not a forecast: label them "long-run odds" (the nowcast hatches them) |
 | `regimes.json` → `areas[].outlook[].method / skillVsLongRunMix / n` | Same outlook bars as now; add the method and skill as the honesty badge | "beat history by N% in M tests" only where `method = "ar1-gap"` |
 
 ## Field notes
