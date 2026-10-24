@@ -26,6 +26,7 @@ const GENERAL = [
 const BY_PAGE: Record<string, string> = {
   bill: "Where is the supply rate on my bill?",
   data: "We use about 8,000 kWh a year. How does that compare?",
+  regime: "Is Massachusetts using more electricity than usual right now?",
   towns: "Which load zone is Worcester in?",
   about: "Where does this site's data come from?",
 };

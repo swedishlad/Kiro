@@ -7,9 +7,9 @@ import { RANGE_LABELS, RANGE_SHORT, REGIMES, RegimeBadge, RegimeIcon, RegimeLege
 import { RegimeShareColumns, RegimeStackBar } from "../components/Stacked.tsx";
 import { Card, ChartCard, Filter, Legend, Segmented } from "../components/ui.tsx";
 import { dateLabel, fmtNum, fmtPct, fmtSignedPct, ymLabel } from "../data/format.ts";
-import { eia, liveStatus, loadGrid, perAccount, type GridBundle } from "../data/load.ts";
+import { liveStatus, loadGrid, type GridBundle } from "../data/load.ts";
 import { ZONE_NAMES, type Area, type GridArea, type RangePoint, type RegimeArea } from "../data/model.ts";
-import { gridContext, homesContext, monthlyTotals, type DetailContext } from "../data/nowcast.ts";
+import { monthlyTotals } from "../data/nowcast.ts";
 
 const AREAS: RegimeArea[] = ["MA_RES", "MA", "NEMA", "SEMA", "WCMA"];
 const AREA_LABEL: Record<RegimeArea, string> = { MA_RES: "Homes", MA: "MA grid", NEMA: "NEMA", SEMA: "SEMA", WCMA: "WCMA" };
@@ -20,9 +20,6 @@ const AREA_TITLE: Record<RegimeArea, string> = {
   SEMA: `${ZONE_NAMES.SEMA} — ISO-NE / EIA-930, daily`,
   WCMA: `${ZONE_NAMES.WCMA} — ISO-NE / EIA-930, daily`,
 };
-
-type View = "detailed" | "simple";
-const VIEWS: View[] = ["detailed", "simple"];
 
 const toProbs = (p: number[]): Record<Regime, number> => ({ low: p[0], mid: p[1], high: p[2] });
 const pct = (v: number) => fmtSignedPct(v / 100, 1);
@@ -37,24 +34,15 @@ function runLabel(a: GridArea, days: number): string {
   return a.unit === "day" ? `${fmtNum(days, 0)} days` : `${fmtNum(days / 30.44, 1)} months`;
 }
 
-/** The nowcast's table view: every point, plus the detailed panels' values when they are shown. */
-function nowcastTable(tl: RangePoint[], daily: boolean, d?: DetailContext) {
-  const at = new Map(tl.map((t, i) => [t.date, i]));
-  const dp = d?.unit === "GWh" ? 1 : 0;
-  const pick = (arr: (number | null)[] | undefined, t: RangePoint) => arr?.[at.get(t.date)!] ?? null;
+/** The nowcast's table view: every point. */
+function nowcastTable(tl: RangePoint[], daily: boolean) {
   return {
     columns: [
       { key: "d", label: daily ? "Date" : "Month", render: (t: RangePoint) => (daily ? t.date : ymLabel(t.date.slice(0, 7))), sort: (t: RangePoint) => t.date },
       { key: "r", label: "Regime", render: (t: RangePoint) => <RegimeBadge regime={fromGrid(t.color)} labels={RANGE_LABELS} /> },
       { key: "p", label: "vs average", align: "r" as const, render: (t: RangePoint) => pct(t.pctVsAverage), sort: (t: RangePoint) => t.pctVsAverage },
+      { key: "z", label: "sd", align: "r" as const, render: (t: RangePoint) => fmtNum(t.pctVsAverage / t.bandPct, 2), sort: (t: RangePoint) => t.pctVsAverage / t.bandPct },
       { key: "a", label: "P(above)", align: "r" as const, render: (t: RangePoint) => (t.probs ? fmtPct(t.probs[2]) : "—"), sort: (t: RangePoint) => t.probs?.[2] ?? t.pRed },
-      ...(d
-        ? [
-            { key: "v", label: d.unit === "kWh" ? "kWh / account" : "GWh", align: "r" as const, render: (t: RangePoint) => { const v = pick(d.value, t); return v === null ? "—" : fmtNum(v, dp); } },
-            { key: "u", label: `Usual range (${d.unit})`, align: "r" as const, render: (t: RangePoint) => { const lo = pick(d.lo, t); const hi = pick(d.hi, t); return lo === null || hi === null ? "—" : `${fmtNum(lo, dp)}–${fmtNum(hi, dp)}`; } },
-            { key: "y", label: "vs a year earlier", align: "r" as const, render: (t: RangePoint) => { const v = pick(d.yoy, t); return v === null ? "—" : fmtSignedPct(v); } },
-          ]
-        : []),
     ],
     rows: [...tl].reverse(),
   };
@@ -64,7 +52,6 @@ export default function Grid() {
   const [bundle, setBundle] = useState<GridBundle | null>(null);
   const [area, setArea] = usePersistentState<RegimeArea>("grid-area", "MA_RES", AREAS);
   const [year, setYear] = useState("all");
-  const [view, setView] = usePersistentState<View>("nowcast-view", "detailed", VIEWS);
 
   useEffect(() => {
     let live = true;
@@ -75,20 +62,14 @@ export default function Grid() {
   }, []);
 
   const a = bundle?.regimes.areas.find((x) => x.area === area);
-  // Two nowcasts: homes, and the grid (Massachusetts, or the zone picked under Series).
+  // The grid series behind the forecast: Massachusetts, or the zone picked under Series.
   const gridKey: Area = area === "MA_RES" ? "MA" : area;
-  const homesArea = bundle?.regimes.areas.find((x) => x.area === "MA_RES");
   const gridArea = bundle?.regimes.areas.find((x) => x.area === gridKey);
-  const years = useMemo(
-    () => [...new Set([...(homesArea?.timeline ?? []), ...(gridArea?.timeline ?? [])].map((t) => t.date.slice(0, 4)))].sort(),
-    [homesArea, gridArea],
-  );
+  const years = useMemo(() => (a ? [...new Set(a.timeline.map((t) => t.date.slice(0, 4)))] : []), [a]);
   const yearSafe = years.includes(year) ? year : "all";
   const monthly = useMemo(() => (a ? (yearSafe === "all" ? a.monthly : a.monthly.filter((m) => m.ym.startsWith(yearSafe))) : []), [a, yearSafe]);
-  const homesTl = useMemo(() => (homesArea ? homesArea.timeline.filter((t) => yearSafe === "all" || t.date.startsWith(yearSafe)) : []), [homesArea, yearSafe]);
-  const gridTl = useMemo(() => (gridArea ? gridArea.timeline.filter((t) => yearSafe === "all" || t.date.startsWith(yearSafe)) : []), [gridArea, yearSafe]);
-  const homesDetail = useMemo(() => (view === "detailed" && homesTl.length ? homesContext(homesTl, eia, perAccount) : undefined), [view, homesTl]);
-  const gridDetail = useMemo(() => (view === "detailed" && gridTl.length ? gridContext(gridTl) : undefined), [view, gridTl]);
+  // One nowcast for the selected series: sd from the 5-year average with the model's call, and P(state).
+  const tl = useMemo(() => (a ? a.timeline.filter((t) => yearSafe === "all" || t.date.startsWith(yearSafe)) : []), [a, yearSafe]);
   // Actual monthly load for the fan chart: the last two years of full months.
   const fanHistory = useMemo(() => (gridArea ? monthlyTotals(gridArea.timeline).slice(-24) : []), [gridArea]);
 
@@ -124,26 +105,19 @@ export default function Grid() {
             ))}
           </select>
         </Filter>
-        <Filter label="Nowcast">
-          <Segmented label="Nowcast view" value={view} onChange={setView} options={[{ value: "detailed", label: "Detailed" }, { value: "simple", label: "Simple" }]} />
-        </Filter>
       </div>
 
-      {!bundle || !a || !fc || !homesArea || !gridArea ? (
+      {!bundle || !a || !fc || !gridArea ? (
         <div className="loading">Loading regimes and forecast…</div>
       ) : (
         <div className="grid">
-          <ChartCard className="span-12" title="Regime nowcast: homes" source="EIA-861M · filtered, no look-ahead" table={nowcastTable(homesTl, false, homesDetail)}>
-            <RegimeNowcast area={homesArea} timeline={homesTl} areas={bundle.regimes.areas} title={AREA_TITLE.MA_RES} label="Homes" detail={homesDetail} />
-          </ChartCard>
-
           <ChartCard
             className="span-12"
-            title={`Regime nowcast: ${gridKey === "MA" ? "Massachusetts grid" : ZONE_NAMES[gridKey]}`}
-            source="ISO-NE and EIA-930, all customer classes · weather not removed · filtered, no look-ahead"
-            table={nowcastTable(gridTl, true, gridDetail)}
+            title={`Regime nowcast: ${area === "MA_RES" ? "homes" : area === "MA" ? "Massachusetts grid" : ZONE_NAMES[area]}`}
+            source={daily ? "ISO-NE and EIA-930, all customer classes · weather not removed · filtered, no look-ahead" : "EIA-861M · filtered, no look-ahead"}
+            table={nowcastTable(tl, daily)}
           >
-            <RegimeNowcast area={gridArea} timeline={gridTl} areas={bundle.regimes.areas} title={AREA_TITLE[gridKey]} label={AREA_LABEL[gridKey]} detail={gridDetail} />
+            <RegimeNowcast area={a} timeline={tl} areas={bundle.regimes.areas} title={AREA_TITLE[area]} label={AREA_LABEL[area]} />
           </ChartCard>
 
           <Card

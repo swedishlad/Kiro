@@ -5,12 +5,14 @@ import { setThemeChoice, useHashRoute, useTheme, type ThemeChoice } from "./comp
 
 const Bill = lazy(() => import("./sections/Bill.tsx"));
 const EnergyData = lazy(() => import("./sections/EnergyData.tsx"));
+const Regime = lazy(() => import("./sections/Regime.tsx"));
 const Towns = lazy(() => import("./sections/Towns.tsx"));
 const About = lazy(() => import("./sections/About.tsx"));
 
 const ROUTES = [
   { id: "bill", label: "Bill check" },
   { id: "data", label: "Energy data" },
+  { id: "regime", label: "Regime" },
   { id: "towns", label: "Map" },
   { id: "about", label: "About" },
 ] as const;
@@ -18,15 +20,16 @@ const ROUTES = [
 type RouteId = (typeof ROUTES)[number]["id"];
 
 /**
- * Section addresses. Usage, Prices & savings, Regimes & forecast and Data & methods used to be tabs
- * and are now sections of a combined tab; their old links (which the assistant also writes) open
- * that tab and scroll to the section, as #/climate does for the Climate section. The old Overview
- * address opens the landing page.
+ * Section addresses. Usage, Prices & savings and Data & methods used to be tabs and are now sections of a
+ * combined tab; their old links (which the assistant also writes) open that tab and scroll to the section, as
+ * #/climate does for the Climate section. Regimes & forecast and the use levels are sections of the Regime tab.
+ * The old Overview address opens the landing page.
  */
 const SECTIONS: Record<string, { tab: RouteId; label: string; scroll: boolean } | undefined> = {
   usage: { tab: "data", label: "Usage", scroll: true },
   prices: { tab: "data", label: "Prices & savings", scroll: true },
-  grid: { tab: "data", label: "Regimes & forecast", scroll: true },
+  grid: { tab: "regime", label: "Regimes & forecast", scroll: true },
+  levels: { tab: "regime", label: "Use levels", scroll: true },
   climate: { tab: "data", label: "Climate", scroll: true },
   sources: { tab: "about", label: "Data & methods", scroll: true },
   overview: { tab: "bill", label: "Bill check", scroll: false },
@@ -136,6 +139,7 @@ export function App() {
         <Suspense fallback={<div className="loading">Loading…</div>}>
           {route === "bill" && <Bill />}
           {route === "data" && <EnergyData />}
+          {route === "regime" && <Regime />}
           {route === "towns" && <Towns />}
           {route === "about" && <About />}
         </Suspense>
