@@ -12,3 +12,11 @@ data/raw/
 *.tsbuildinfo
 test-results/
 playwright-report/
+build/
+*.so
+*.dylib
+dist/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.coverage

@@ -1,0 +1,377 @@
+{
+  "$defs": {
+    "AssetDecision": {
+      "description": "Real Options Valuation (ROV) and timing analysis for long-term capital assets.",
+      "properties": {
+        "asset_name": {
+          "description": "Name and capacity of candidate asset (e.g. Solar 6kW).",
+          "title": "Asset Name",
+          "type": "string"
+        },
+        "capex_usd": {
+          "description": "Unsubsidized turnkey capital expenditure in USD.",
+          "title": "Capex Usd",
+          "type": "number"
+        },
+        "annual_hardware_deflation_rate": {
+          "description": "Expected annual equipment cost deflation rate (learning curve).",
+          "title": "Annual Hardware Deflation Rate",
+          "type": "number"
+        },
+        "marginal_abatement_cost_usd_per_ton": {
+          "description": "Levelized cost per ton abated over the asset lifetime.",
+          "title": "Marginal Abatement Cost Usd Per Ton",
+          "type": "number"
+        },
+        "co2_averted_lifetime_tons_median": {
+          "description": "Median cumulative metric tons avoided.",
+          "title": "Co2 Averted Lifetime Tons Median",
+          "type": "number"
+        },
+        "co2_averted_lifetime_tons_p05": {
+          "description": "Conservative 5th percentile tons avoided.",
+          "title": "Co2 Averted Lifetime Tons P05",
+          "type": "number"
+        },
+        "co2_averted_lifetime_tons_p95": {
+          "description": "Optimistic 95th percentile tons avoided.",
+          "title": "Co2 Averted Lifetime Tons P95",
+          "type": "number"
+        },
+        "delay_cost_metric_tons_per_yr": {
+          "description": "Irreversible metric tons of emissions released by waiting one year.",
+          "title": "Delay Cost Metric Tons Per Yr",
+          "type": "number"
+        },
+        "recommendation": {
+          "description": "Optimal timing recommendation based on real options analysis.",
+          "enum": [
+            "INSTALL NOW",
+            "HOLD & WAIT"
+          ],
+          "title": "Recommendation",
+          "type": "string"
+        },
+        "deferral_analysis": {
+          "description": "Option value trajectory across deferral horizons (0, 1, 2, 3 years).",
+          "items": {
+            "$ref": "#/$defs/DeferralStep"
+          },
+          "title": "Deferral Analysis",
+          "type": "array"
+        }
+      },
+      "required": [
+        "asset_name",
+        "capex_usd",
+        "annual_hardware_deflation_rate",
+        "marginal_abatement_cost_usd_per_ton",
+        "co2_averted_lifetime_tons_median",
+        "co2_averted_lifetime_tons_p05",
+        "co2_averted_lifetime_tons_p95",
+        "delay_cost_metric_tons_per_yr",
+        "recommendation",
+        "deferral_analysis"
+      ],
+      "title": "AssetDecision",
+      "type": "object"
+    },
+    "ClimateMetadata": {
+      "description": "System diagnostic, provenance, and execution telemetry.",
+      "properties": {
+        "data_source_mode": {
+          "description": "Data provenance mode (e.g., 'live_lme_api' or 'regional_iso_ne_fallback').",
+          "title": "Data Source Mode",
+          "type": "string"
+        },
+        "mc_paths": {
+          "description": "Number of Monte Carlo paths executed.",
+          "title": "Mc Paths",
+          "type": "integer"
+        },
+        "mc_seed": {
+          "description": "PRNG seed used.",
+          "title": "Mc Seed",
+          "type": "integer"
+        },
+        "compute_ms": {
+          "description": "Total server-side computational latency in milliseconds.",
+          "title": "Compute Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "data_source_mode",
+        "mc_paths",
+        "mc_seed",
+        "compute_ms"
+      ],
+      "title": "ClimateMetadata",
+      "type": "object"
+    },
+    "ClimateSummary": {
+      "description": "High-level executive metrics for household carbon footprint and liabilities.",
+      "properties": {
+        "current_annual_metric_tons": {
+          "description": "Current annual carbon emissions under business-as-usual grid supply (metric tons CO2e).",
+          "title": "Current Annual Metric Tons",
+          "type": "number"
+        },
+        "lifetime_co2_liability_metric_tons": {
+          "description": "20-year undiscounted cumulative CO2e liability under business-as-usual.",
+          "title": "Lifetime Co2 Liability Metric Tons",
+          "type": "number"
+        },
+        "best_case_reduction_pct": {
+          "description": "Maximum achievable immediate emissions reduction percentage via load shifting and battery.",
+          "title": "Best Case Reduction Pct",
+          "type": "number"
+        },
+        "social_carbon_damage_yr_usd": {
+          "description": "Monetized annual social damage caused by household emissions based on SCC.",
+          "title": "Social Carbon Damage Yr Usd",
+          "type": "number"
+        },
+        "portfolio_carbon_yield_pct": {
+          "description": "Equivalent 'carbon dividend yield': annual metric tons abated per $1,000 CapEx invested.",
+          "title": "Portfolio Carbon Yield Pct",
+          "type": "number"
+        }
+      },
+      "required": [
+        "current_annual_metric_tons",
+        "lifetime_co2_liability_metric_tons",
+        "best_case_reduction_pct",
+        "social_carbon_damage_yr_usd",
+        "portfolio_carbon_yield_pct"
+      ],
+      "title": "ClimateSummary",
+      "type": "object"
+    },
+    "DeferralStep": {
+      "description": "Analysis for deferring capital investment by tau years.",
+      "properties": {
+        "defer_years": {
+          "description": "Years deferred (0 = deploy immediately).",
+          "title": "Defer Years",
+          "type": "integer"
+        },
+        "net_option_value_usd": {
+          "description": "Net present economic + social option value associated with this timing.",
+          "title": "Net Option Value Usd",
+          "type": "number"
+        }
+      },
+      "required": [
+        "defer_years",
+        "net_option_value_usd"
+      ],
+      "title": "DeferralStep",
+      "type": "object"
+    },
+    "FanChartResponse": {
+      "description": "Monte Carlo long-term trajectory quantiles (P05, Median, P95).",
+      "properties": {
+        "years": {
+          "description": "Years elapsed from current baseline (1 to 20).",
+          "items": {
+            "type": "integer"
+          },
+          "title": "Years",
+          "type": "array"
+        },
+        "median_tons": {
+          "description": "Median remaining annual carbon footprint (P50).",
+          "items": {
+            "type": "number"
+          },
+          "title": "Median Tons",
+          "type": "array"
+        },
+        "p05_lower_bound_tons": {
+          "description": "Optimistic grid decarbonization bound (P05).",
+          "items": {
+            "type": "number"
+          },
+          "title": "P05 Lower Bound Tons",
+          "type": "array"
+        },
+        "p95_upper_bound_tons": {
+          "description": "Pessimistic grid decarbonization bound (P95).",
+          "items": {
+            "type": "number"
+          },
+          "title": "P95 Upper Bound Tons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "years",
+        "median_tons",
+        "p05_lower_bound_tons",
+        "p95_upper_bound_tons"
+      ],
+      "title": "FanChartResponse",
+      "type": "object"
+    },
+    "HourlyPoint": {
+      "description": "Emissions and load profile for an individual hour of the representative day.",
+      "properties": {
+        "hour": {
+          "description": "Hour of day (0-23).",
+          "maximum": 23,
+          "minimum": 0,
+          "title": "Hour",
+          "type": "integer"
+        },
+        "baseline_load_kwh": {
+          "description": "Baseline household demand in kWh.",
+          "title": "Baseline Load Kwh",
+          "type": "number"
+        },
+        "optimized_load_kwh": {
+          "description": "Optimized net grid load after shifting and battery.",
+          "title": "Optimized Load Kwh",
+          "type": "number"
+        },
+        "emissions_intensity_g_co2e_per_kwh": {
+          "description": "Marginal grid emissions intensity for this hour (g CO2e/kWh).",
+          "title": "Emissions Intensity G Co2E Per Kwh",
+          "type": "number"
+        }
+      },
+      "required": [
+        "hour",
+        "baseline_load_kwh",
+        "optimized_load_kwh",
+        "emissions_intensity_g_co2e_per_kwh"
+      ],
+      "title": "HourlyPoint",
+      "type": "object"
+    },
+    "LaterDecisionsResponse": {
+      "description": "Long-term structural asset investments and grid decarbonization fan chart.",
+      "properties": {
+        "fan_chart": {
+          "$ref": "#/$defs/FanChartResponse",
+          "description": "20-year stochastic Monte Carlo decarbonization bounds."
+        },
+        "assets": {
+          "description": "Real options valuation for clean technology capital assets.",
+          "items": {
+            "$ref": "#/$defs/AssetDecision"
+          },
+          "title": "Assets",
+          "type": "array"
+        }
+      },
+      "required": [
+        "fan_chart",
+        "assets"
+      ],
+      "title": "LaterDecisionsResponse",
+      "type": "object"
+    },
+    "MACCItem": {
+      "description": "Entry on the Marginal Abatement Cost Curve (MACC).",
+      "properties": {
+        "intervention_name": {
+          "description": "Name of the efficiency or load-shifting action.",
+          "title": "Intervention Name",
+          "type": "string"
+        },
+        "abatement_cost_usd_per_ton": {
+          "description": "Net cost (or financial savings if negative) per metric ton of CO2e abated.",
+          "title": "Abatement Cost Usd Per Ton",
+          "type": "number"
+        },
+        "annual_tons_abated": {
+          "description": "Annual metric tons of CO2e avoided by implementing this intervention.",
+          "title": "Annual Tons Abated",
+          "type": "number"
+        },
+        "annual_net_financial_savings_usd": {
+          "description": "Direct annual electricity bill savings from the intervention.",
+          "title": "Annual Net Financial Savings Usd",
+          "type": "number"
+        }
+      },
+      "required": [
+        "intervention_name",
+        "abatement_cost_usd_per_ton",
+        "annual_tons_abated",
+        "annual_net_financial_savings_usd"
+      ],
+      "title": "MACCItem",
+      "type": "object"
+    },
+    "NowArbitrageResponse": {
+      "description": "Immediate operational load shifting and dispatch results.",
+      "properties": {
+        "average_grid_intensity_g_co2e_per_kwh": {
+          "description": "24-hour mean grid emissions intensity (g CO2e/kWh).",
+          "title": "Average Grid Intensity G Co2E Per Kwh",
+          "type": "number"
+        },
+        "marginal_peak_intensity_g_co2e_per_kwh": {
+          "description": "Highest hourly marginal grid emissions intensity in the profile.",
+          "title": "Marginal Peak Intensity G Co2E Per Kwh",
+          "type": "number"
+        },
+        "schedulable_reductions_annual_metric_tons": {
+          "description": "Total annual carbon abatement unlocked by optimal 24-hr scheduling.",
+          "title": "Schedulable Reductions Annual Metric Tons",
+          "type": "number"
+        },
+        "hourly_series": {
+          "description": "24-hour timeline of baseline vs optimized dispatch and grid MOER.",
+          "items": {
+            "$ref": "#/$defs/HourlyPoint"
+          },
+          "title": "Hourly Series",
+          "type": "array"
+        },
+        "macc_curve": {
+          "description": "Ranked marginal abatement cost curve interventions.",
+          "items": {
+            "$ref": "#/$defs/MACCItem"
+          },
+          "title": "Macc Curve",
+          "type": "array"
+        }
+      },
+      "required": [
+        "average_grid_intensity_g_co2e_per_kwh",
+        "marginal_peak_intensity_g_co2e_per_kwh",
+        "schedulable_reductions_annual_metric_tons",
+        "hourly_series",
+        "macc_curve"
+      ],
+      "title": "NowArbitrageResponse",
+      "type": "object"
+    }
+  },
+  "description": "Complete, self-contained payload returned by POST /api/climate/dashboard.",
+  "properties": {
+    "summary": {
+      "$ref": "#/$defs/ClimateSummary"
+    },
+    "now_arbitrage": {
+      "$ref": "#/$defs/NowArbitrageResponse"
+    },
+    "later_decisions": {
+      "$ref": "#/$defs/LaterDecisionsResponse"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ClimateMetadata"
+    }
+  },
+  "required": [
+    "summary",
+    "now_arbitrage",
+    "later_decisions",
+    "metadata"
+  ],
+  "title": "ClimateDashboardResponse",
+  "type": "object"
+}
