@@ -34,6 +34,7 @@ const SECTIONS: Record<string, { tab: RouteId; label: string; scroll: boolean } 
   usage: { tab: "data", label: "Usage", scroll: true },
   prices: { tab: "data", label: "Prices & savings", scroll: true },
   grid: { tab: "regime", label: "Regimes & forecast", scroll: true },
+  hourly: { tab: "regime", label: "Hour by hour", scroll: true },
   levels: { tab: "regime", label: "Use levels", scroll: true },
   climate: { tab: "data", label: "Climate", scroll: true },
   sources: { tab: "about", label: "Data & methods", scroll: true },
