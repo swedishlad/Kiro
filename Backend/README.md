@@ -1,6 +1,6 @@
-# FairWatt Backend
+# Watt If Backend
 
-Python backend-only calculation modules for the FairWatt Massachusetts household energy planner.
+Python backend-only calculation modules for the Watt If Massachusetts household energy planner.
 The web frontend is built separately and consumes the committed JSON artifacts under `data/build/`.
 
 ## Deliverables
@@ -53,7 +53,7 @@ python3 tests/backend/make_test_charts.py          # charts of the test results 
 2. Verify: gate G-LIVE checks completeness and ranges, that the 2017–2023 history is unchanged, the 2023/2024 seam, and that
    the two federal sources agree on load growth since 2023 (Oct 24: +5.0 % vs +4.35 %).
 3. Rebuild and gate: regimes → Monte Carlo → 351 towns; G-HMM, G-FC, G-CITY, schemas, pytest (`tests/backend`, `tests/hmm`);
-   then the frontend regenerates the "Ask FairWatt" knowledge base (`npm run knowledge`) and runs `npm test` and `npm run build`.
+   then the frontend regenerates the "Ask Watt If" knowledge base (`npm run knowledge`) and runs `npm test` and `npm run build`.
 4. Publish: `data/build/` and `Frontend/server/knowledge.ts` are committed only if all of it passed and new data arrived. The push
    redeploys the site. Any failure publishes nothing, so the site keeps its last good numbers.
 

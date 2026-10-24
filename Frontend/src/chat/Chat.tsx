@@ -1,4 +1,4 @@
-// The FairWatt assistant: a launcher button and a chat panel that streams answers from /api/chat
+// The Watt If assistant: a launcher button and a chat panel that streams answers from /api/chat
 // (api/chat.ts). The conversation survives tab changes and reloads within the browser session.
 
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
@@ -298,14 +298,14 @@ export function Chat({ page }: { page: string }) {
         hidden={open}
       >
         <ChatIcon />
-        Ask FairWatt
+        Ask Watt If
       </button>
 
       {open ? (
-        <section id="chat-panel" className="chat-panel" role="dialog" aria-label="FairWatt assistant" onKeyDown={(e) => e.key === "Escape" && close()}>
+        <section id="chat-panel" className="chat-panel" role="dialog" aria-label="Watt If assistant" onKeyDown={(e) => e.key === "Escape" && close()}>
           <header className="chat-head">
             <div>
-              <h2 className="chat-title">FairWatt assistant</h2>
+              <h2 className="chat-title">Watt If assistant</h2>
               <p className="chat-sub">Answers from this site's Massachusetts energy data</p>
             </div>
             <div className="chat-actions">
