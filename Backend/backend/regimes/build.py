@@ -133,9 +133,12 @@ def build_area(area, days, gwh):
     pct = (x - mean) / mean * 100
     band = sd / mean * 100
     kd = np.array(dates)[keep]
-    timeline = [{"date": d.isoformat(), "color": COLORS[s], "pRed": round(float(p[2]), 4),
-                 "pctVsAverage": round(float(v), 2), "bandPct": round(float(w), 2)}
-                for d, s, p, v, w in zip(kd, idx, probs[keep], pct[keep], band[keep])]
+    timeline = []
+    for d, st, pr, v, w in zip(kd, idx, probs[keep], pct[keep], band[keep]):
+        pr3 = [round(float(q), 4) for q in pr]
+        pr3[1] = round(1.0 - pr3[0] - pr3[2], 4)          # rounded probabilities still sum to exactly 1
+        timeline.append({"date": d.isoformat(), "color": COLORS[st], "pRed": pr3[2], "probs": pr3,
+                         "pctVsAverage": round(float(v), 2), "bandPct": round(float(w), 2)})
     monthly = defaultdict(Counter)
     for d, s in zip(kd, idx):
         monthly[f"{d.year}-{d.month:02d}"][COLORS[s]] += 1

@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Whole-Massachusetts all-cities 6-month consumption forecast: apply the shared state per-customer seasonal path (from FEAT-001's core) to EVERY one of the 351 MA towns, writing data/build/allcities_forecast.json. Because NO town-level usage history exists in-repo (RECS has no town field; EIA is MA state-total; towns.json carries only geometry+geoid), every town uses the same state-shaped path and is honestly labeled scaling='state-shaped', thinHistory=true. Depends on FEAT-001 (reuses forecast_mc_core and the MC band logic); must run after it.",
+  "status": "pending",
+  "steps": [
+    "Create fairwatt-kit/allcities_towns.py: load_town_list(build_dir, fetch_ok=True) -> (towns, source, dropped). Read data/build/towns.json if present and extract (id=massgis id, name=massgis_name UPPER, census=census_name, geoid=GEOID) for all 351; ELSE if data/build/allcities_towns_cache.json exists read it; ELSE fetch the LMEC GeoJSON (https://raw.githubusercontent.com/nblmc/massachusetts-municipal-boundaries/main/data-cooked/mass-municipalities.geojson) once with urllib, extract the 351 (massgis_town_id, massgis_name, census_name, GEOID), and write the cache to data/build/allcities_towns_cache.json. Validate count: if != 351, return the list plus `dropped` listing the missing ids and set source to flag the shortfall (never silently pad to 351). If no towns.json, no cache, and the fetch fails, raise a clear error (fail closed). NEVER write data/raw/** or data/build/towns*.",
+    "Create fairwatt-kit/allcities_build.py: build_allcities(eia_path, build_dir, seed=20270201) -> dict. Compute the shared state per-customer P10/P50/P90 band for the 6 horizon months ONCE (reuse forecast_mc_core + the MC simulate/quantile logic from forecast_mc_build at the three band points). Load the town list from allcities_towns.py. Map the one state band onto every town: each town gets {id,name,census,geoid,scaling:'state-shaped',thinHistory:true,months:[{month,p10,p50,p90,postReset}...6]}. Assemble asOf, infoSetEnd='2026-08', method, unit='kwh_per_customer_month', seed, horizon, resetMonth='2027-02', townListSource, townCount, droppedTowns, thinHistoryNote (explaining no town-level history exists and forecasts are state-shaped not town-measured), plainEnglish (>=40 chars, honest). Enforce p10<=p50<=p90 in every town-month. main() creates data/build/ and writes data/build/allcities_forecast.json with sorted keys and trailing newline.",
+    "Create fairwatt-kit/allcities_test.py (pytest) importing allcities_build and allcities_towns.",
+    "Run the builder and tests; confirm data/build/allcities_forecast.json is written and all tests pass.",
+    "Commit ONLY the new files by name (allcities_towns.py, allcities_build.py, allcities_test.py, data/build/allcities_forecast.json, data/build/allcities_towns_cache.json) with subject 'forecaster-mc: all-cities 6-month forecast (351 towns, state-shaped)'. Never use git add -A/.; never push."
+  ],
+  "acceptance_criteria": [
+    "`cd fairwatt-kit && python3 allcities_build.py` writes data/build/allcities_forecast.json with townCount 351 and exactly 351 town entries with unique ids 1..351.",
+    "droppedTowns is empty, OR every dropped id is listed and townCount+len(droppedTowns) reconcile to 351 (no silent drops).",
+    "Every town has 6 months with p10 <= p50 <= p90 and correct postReset flags (2027-02/03/04 true).",
+    "Every town is flagged thinHistory == true and scaling == 'state-shaped', and thinHistoryNote is present (honest labeling per agent-rules #1/#11).",
+    "Each town's P50 path equals the shared state P50 path (towns are not independently perturbed).",
+    "Determinism: two builds with seed 20270201 produce identical JSON bytes.",
+    "`cd fairwatt-kit && python3 -m pytest allcities_test.py -q` passes all tests."
+  ],
+  "verification": [
+    "cd fairwatt-kit && python3 allcities_build.py",
+    "cd fairwatt-kit && python3 -m pytest allcities_test.py -q",
+    "cd fairwatt-kit && python3 -c \"import json;d=json.load(open('data/build/allcities_forecast.json'));assert d['townCount']==351 and len(d['towns'])==351;ids={t['id'] for t in d['towns']};assert len(ids)==351 and min(ids)==1 and max(ids)==351;assert all(mm['p10']<=mm['p50']<=mm['p90'] for t in d['towns'] for mm in t['months']);assert all(t['thinHistory'] and t['scaling']=='state-shaped' for t in d['towns']);print('FEAT-002 ok dropped=',d['droppedTowns'])\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

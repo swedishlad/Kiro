@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fairwatt/estimate_model.schema.json",
+  "title": "EstimateModelFile (data/build/estimate_model.json)",
+  "type": "object",
+  "required": ["asOf", "sources", "model", "residualLog", "looMedianAbsPctError", "nHomes", "shares", "typical", "limits"],
+  "$defs": {
+    "twelve": { "type": "array", "minItems": 12, "maxItems": 12, "items": { "type": "number", "exclusiveMinimum": 0 } }
+  },
+  "properties": {
+    "asOf": { "type": "string", "format": "date" },
+    "sources": {
+      "type": "object", "required": ["recs", "eia"],
+      "properties": { "recs": { "const": "S14" }, "eia": { "const": "S15" } }
+    },
+    "model": { "enum": ["LOGLINEAR", "CELL_MEDIAN"] },
+    "loglinear": {
+      "type": "object", "required": ["intercept", "coef"],
+      "properties": {
+        "intercept": { "type": "number" },
+        "coef": {
+          "type": "object", "required": ["logSqft"],
+          "properties": {
+            "logSqft": { "type": "number" }, "electricHeat": { "type": "number" },
+            "apartment": { "type": "number" }, "yearBuiltRange": { "type": "number" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "cells": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["key", "n", "medianKwh"],
+        "properties": {
+          "key": { "type": "string", "pattern": "^(<1000|1000-1999|2000-2999|3000\\+|\\*)\\|(ELECTRIC|NONELECTRIC|\\*)\\|(HOUSE|APARTMENT|\\*)$" },
+          "n": { "type": "integer", "minimum": 1 },
+          "medianKwh": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    },
+    "residualLog": {
+      "type": "object", "required": ["p10", "p50", "p90", "n"],
+      "properties": {
+        "p10": { "type": "number", "maximum": 0 }, "p50": { "type": "number" },
+        "p90": { "type": "number", "minimum": 0 }, "n": { "type": "integer", "minimum": 100 }
+      }
+    },
+    "looMedianAbsPctError": { "type": "number", "minimum": 0 },
+    "nHomes": { "const": 552 },
+    "shares": { "$ref": "#/$defs/twelve" },
+    "typical": {
+      "type": "object", "required": ["year", "kwhByMonth"],
+      "properties": { "year": { "type": "integer", "minimum": 2019 }, "kwhByMonth": { "$ref": "#/$defs/twelve" } }
+    },
+    "limits": {
+      "type": "object", "required": ["sqftMin", "sqftMax", "userKwhMin", "userKwhMax"],
+      "properties": {
+        "sqftMin": { "const": 200 }, "sqftMax": { "const": 15000 },
+        "userKwhMin": { "const": 50 }, "userKwhMax": { "const": 5000 }
+      }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "model": { "const": "LOGLINEAR" } } }, "then": { "required": ["loglinear"] } },
+    { "if": { "properties": { "model": { "const": "CELL_MEDIAN" } } }, "then": { "required": ["cells"] } }
+  ]
+}

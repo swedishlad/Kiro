@@ -328,6 +328,85 @@ def example_map(doc):
     save_to(fig, EX, "example_town_map.png")
 
 
+NOW_BG, NOW_PANEL, NOW_TEAL, NOW_MUTED, NOW_INK, NOW_GRID = "#070b16", "#0a1020", "#2fe0b0", "#5f8ba0", "#e6ebf0", "#1b2840"
+NOW_STATE = {"green": ("#14c46e", "v", "good"), "grey": ("#4f5d72", "o", "mid"), "red": ("#c8403f", "^", "too much")}
+AREA_NAMES = {"MA_RES": "Massachusetts homes (monthly, kWh per account)", "MA": "Massachusetts grid (daily, all customers)",
+              "NEMA": "Northeast MA & Boston (daily)", "SEMA": "Southeast MA (daily)", "WCMA": "West & Central MA (daily)"}
+
+
+def example_nowcast(doc, area):
+    """ENERGY REGIME NOWCAST in the style of the VOL REGIME NOWCAST panel: header + 'now' line, a line graph of
+    consumption vs the historical average with the three state lines, and the stacked filtered P(state) below."""
+    a = next(x for x in doc["areas"] if x["area"] == area)
+    tl = a["timeline"]
+    dd = np.array([dt.date.fromisoformat(e["date"]) for e in tl])
+    z = np.clip(np.array([e["pctVsAverage"] / e["bandPct"] for e in tl]), -ZLIM, ZLIM)
+    probs = np.array([e["probs"] for e in tl])
+    band = float(np.median([e["bandPct"] for e in tl]))
+    cur = a["current"]
+    mono = {"family": "monospace"}
+    with plt.rc_context({"font.family": ["Menlo", "DejaVu Sans Mono", "monospace"], "axes.grid": True,
+                         "grid.color": NOW_GRID, "grid.linewidth": 0.6, "axes.edgecolor": NOW_GRID,
+                         "xtick.color": NOW_MUTED, "ytick.color": NOW_MUTED, "axes.labelcolor": NOW_MUTED,
+                         "axes.spines.top": False, "axes.spines.right": False}):
+        fig = plt.figure(figsize=(13, 7.4), facecolor=NOW_BG)
+        top = fig.add_axes([0.065, 0.50, 0.80, 0.30], facecolor=NOW_PANEL)
+        bot = fig.add_axes([0.065, 0.15, 0.80, 0.30], facecolor=NOW_PANEL, sharex=top)
+        fig.text(0.035, 0.945, "ENERGY REGIME NOWCAST", color=NOW_TEAL, fontsize=13, fontweight="bold", **mono)
+        fig.text(0.245, 0.945, "· 3-state HMM on consumption vs the historical average range, filtered (past data only)",
+                 color=NOW_MUTED, fontsize=10.5, **mono)
+        means = [s_["meanSdFromAverage"] for s_ in a["states"]]
+        fig.text(0.035, 0.895, "now: ", color=NOW_INK, fontsize=12.5, **mono)
+        fig.text(0.075, 0.895, f"{cur['color'].upper()} ({max(cur['probs']):.0%})", color=NOW_STATE[cur["color"]][0],
+                 fontsize=12.5, fontweight="bold", **mono)
+        fig.text(0.205, 0.895, f"· {cur['pctVsAverage']:+.1f}% vs historical avg (range ±{cur['bandPct']:.1f}%) · "
+                 f"state means {means[0]:+.1f} / {means[1]:+.1f} / {means[2]:+.1f} sd  (≈ {means[0] * band:+.0f}% / 0% / "
+                 f"{means[2] * band:+.0f}%)", color=NOW_INK, fontsize=10.5, **mono)
+        fig.text(0.035, 0.855, AREA_NAMES[area] + f" · as of {cur['date'][:7] if a['unit'] == 'month' else cur['date']}",
+                 color=NOW_MUTED, fontsize=9.5, **mono)
+        # top: the line graph (3-state format)
+        for edge in (-1, 1):
+            top.axhline(edge, color=NOW_GRID, lw=1.2)
+        top.plot(dd, z, color="#7f93ab", lw=0.9 if a["unit"] == "month" else 0.5, alpha=0.8, zorder=2)
+        for st in a["states"]:
+            c = st["color"]
+            hexc, mk, lab = NOW_STATE[c]
+            sel = np.array([e["color"] == c for e in tl])
+            top.scatter(dd[sel], z[sel], s=26 if a["unit"] == "month" else 6, marker=mk, color=hexc, linewidths=0, zorder=3)
+            top.axhline(st["meanSdFromAverage"], color=hexc, lw=1.3, zorder=1)
+            top.text(1.008, st["meanSdFromAverage"], f"{lab} {st['meanSdFromAverage']:+.1f} sd", transform=top.get_yaxis_transform(),
+                     va="center", fontsize=8.5, color=hexc, **mono)
+        top.set_ylim(-ZLIM, ZLIM)
+        top.set_ylabel("sd from hist. avg", fontsize=8.5)
+        top.tick_params(labelbottom=False)
+        # bottom: stacked filtered probabilities (green bottom, grey middle, red top)
+        bot.stackplot(dd, probs[:, 0], probs[:, 1], probs[:, 2],
+                      colors=[NOW_STATE["green"][0], NOW_STATE["grey"][0], NOW_STATE["red"][0]], linewidth=0,
+                      step="mid" if a["unit"] == "month" else None)
+        bot.set_ylim(0, 1)
+        bot.set_yticks([0, 0.5, 1], ["0%", "50%", "100%"])
+        bot.set_ylabel("P(state)", fontsize=8.5)
+        handles = [plt.Rectangle((0, 0), 1, 1, color=NOW_STATE[c][0]) for c in ("red", "grey", "green")]
+        leg = top.legend(handles, ["too much", "mid", "good"], loc="lower left", bbox_to_anchor=(0, 1.02), ncol=3,
+                         frameon=False, fontsize=9, handlelength=3)
+        for t in leg.get_texts():
+            t.set_color(NOW_INK)
+        if a["unit"] == "month":
+            bot.xaxis.set_major_locator(mdates.YearLocator())
+            bot.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+        else:
+            bot.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
+            bot.xaxis.set_major_formatter(mdates.DateFormatter("%b\n%Y"))
+        st_now = {x["area"]: x["current"] for x in doc["areas"]}
+        fig.text(0.035, 0.065, f"WHAT THE DATA SAYS ({cur['date'][:7] if a['unit'] == 'month' else cur['date']}): "
+                 f"{area} {cur['color'].upper()} · {cur['pctVsAverage']:+.1f}% vs avg · grid zones on {st_now['NEMA']['date']}: "
+                 + " · ".join(f"{z_} {st_now[z_]['color']}" for z_ in ("NEMA", "SEMA", "WCMA")),
+                 color=NOW_MUTED, fontsize=9.5, **mono)
+        fig.text(0.035, 0.035, "red = above the historical average range · grey = within · green = below · range = avg ± 1 sd "
+                 "of the same period in the previous 5 years", color=NOW_MUTED, fontsize=9, **mono)
+        save_to(fig, EX, f"regime_nowcast_{area}.png")
+
+
 def save_to(fig, folder, name):
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, name)
@@ -348,3 +427,5 @@ if __name__ == "__main__":
     example_lights(reg)
     example_history(reg)
     example_map(reg)
+    for area in ("MA_RES", "MA"):
+        example_nowcast(reg, area)

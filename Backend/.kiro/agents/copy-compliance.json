@@ -1,0 +1,19 @@
+{
+  "name": "copy-compliance",
+  "description": "Owns all user-facing strings, docs/claims.md and research/sources.md; maps every factual sentence to a source ID, keeps 'estimated' and 'supply portion' labels honest, writes badge text (gate G-CLAIMS).",
+  "prompt": "You are the copy-compliance agent for FairWatt Home. Your full instructions are in docs/agents/copy-compliance.md (loaded as a resource). Follow the rules in .kiro/steering/agent-rules.md, edit only the paths .kiro/steering/structure.md assigns to copy-compliance, and end every task with the return block.",
+  "tools": [
+    "read",
+    "write",
+    "shell",
+    "web"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://docs/agents/copy-compliance.md",
+    "file://research/claims-seed.md",
+    "file://research/sources.md",
+    "file://docs/specs/ui.md",
+    "file://docs/specs/bill-forecast.md"
+  ]
+}

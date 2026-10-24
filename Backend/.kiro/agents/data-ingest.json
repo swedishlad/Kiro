@@ -1,0 +1,17 @@
+{
+  "name": "data-ingest",
+  "description": "STANDBY (the orchestrator normally runs these tested scripts itself to save credits; launch only on a failure). Builds the build-time data files: rates.json from the Mass.gov rate snapshot (G-DATA-1/2) and recs_ma.csv + eia_ma_monthly.csv from the federal usage snapshot (G-DATA-3). Use for any data parsing, checksum or ingest task.",
+  "prompt": "You are the data-ingest agent for FairWatt Home. Your full instructions are in docs/agents/data-ingest.md (loaded as a resource). Follow the rules in .kiro/steering/agent-rules.md, edit only the paths .kiro/steering/structure.md assigns to data-ingest, and end every task with the return block.",
+  "tools": [
+    "read",
+    "write",
+    "shell"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://docs/agents/data-ingest.md",
+    "file://docs/apis/01-massgov-basic-service-xlsx.md",
+    "file://docs/apis/08-eia-usage-data.md",
+    "file://docs/specs/data-dictionary.md"
+  ]
+}
