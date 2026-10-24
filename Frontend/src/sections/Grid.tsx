@@ -21,9 +21,6 @@ const AREA_TITLE: Record<RegimeArea, string> = {
   WCMA: `${ZONE_NAMES.WCMA} — ISO-NE / EIA-930, daily`,
 };
 
-type View = "detailed" | "simple";
-const VIEWS: View[] = ["detailed", "simple"];
-
 const toProbs = (p: number[]): Record<Regime, number> => ({ low: p[0], mid: p[1], high: p[2] });
 const pct = (v: number) => fmtSignedPct(v / 100, 1);
 
@@ -64,7 +61,6 @@ export default function Grid() {
   const [bundle, setBundle] = useState<GridBundle | null>(null);
   const [area, setArea] = usePersistentState<RegimeArea>("grid-area", "MA_RES", AREAS);
   const [year, setYear] = useState("all");
-  const [view, setView] = usePersistentState<View>("nowcast-view", "detailed", VIEWS);
 
   useEffect(() => {
     let live = true;
@@ -75,20 +71,15 @@ export default function Grid() {
   }, []);
 
   const a = bundle?.regimes.areas.find((x) => x.area === area);
-  // Two nowcasts: homes, and the grid (Massachusetts, or the zone picked under Series).
+  // The grid series behind the forecast: Massachusetts, or the zone picked under Series.
   const gridKey: Area = area === "MA_RES" ? "MA" : area;
-  const homesArea = bundle?.regimes.areas.find((x) => x.area === "MA_RES");
   const gridArea = bundle?.regimes.areas.find((x) => x.area === gridKey);
-  const years = useMemo(
-    () => [...new Set([...(homesArea?.timeline ?? []), ...(gridArea?.timeline ?? [])].map((t) => t.date.slice(0, 4)))].sort(),
-    [homesArea, gridArea],
-  );
+  const years = useMemo(() => (a ? [...new Set(a.timeline.map((t) => t.date.slice(0, 4)))] : []), [a]);
   const yearSafe = years.includes(year) ? year : "all";
   const monthly = useMemo(() => (a ? (yearSafe === "all" ? a.monthly : a.monthly.filter((m) => m.ym.startsWith(yearSafe))) : []), [a, yearSafe]);
-  const homesTl = useMemo(() => (homesArea ? homesArea.timeline.filter((t) => yearSafe === "all" || t.date.startsWith(yearSafe)) : []), [homesArea, yearSafe]);
-  const gridTl = useMemo(() => (gridArea ? gridArea.timeline.filter((t) => yearSafe === "all" || t.date.startsWith(yearSafe)) : []), [gridArea, yearSafe]);
-  const homesDetail = useMemo(() => (view === "detailed" && homesTl.length ? homesContext(homesTl, eia, perAccount) : undefined), [view, homesTl]);
-  const gridDetail = useMemo(() => (view === "detailed" && gridTl.length ? gridContext(gridTl) : undefined), [view, gridTl]);
+  // One nowcast for the selected series, with its value vs the usual range and the change vs a year earlier.
+  const tl = useMemo(() => (a ? a.timeline.filter((t) => yearSafe === "all" || t.date.startsWith(yearSafe)) : []), [a, yearSafe]);
+  const detail = useMemo(() => (!tl.length ? undefined : area === "MA_RES" ? homesContext(tl, eia, perAccount) : gridContext(tl)), [area, tl]);
   // Actual monthly load for the fan chart: the last two years of full months.
   const fanHistory = useMemo(() => (gridArea ? monthlyTotals(gridArea.timeline).slice(-24) : []), [gridArea]);
 
@@ -124,26 +115,19 @@ export default function Grid() {
             ))}
           </select>
         </Filter>
-        <Filter label="Nowcast">
-          <Segmented label="Nowcast view" value={view} onChange={setView} options={[{ value: "detailed", label: "Detailed" }, { value: "simple", label: "Simple" }]} />
-        </Filter>
       </div>
 
-      {!bundle || !a || !fc || !homesArea || !gridArea ? (
+      {!bundle || !a || !fc || !gridArea ? (
         <div className="loading">Loading regimes and forecast…</div>
       ) : (
         <div className="grid">
-          <ChartCard className="span-12" title="Regime nowcast: homes" source="EIA-861M · filtered, no look-ahead" table={nowcastTable(homesTl, false, homesDetail)}>
-            <RegimeNowcast area={homesArea} timeline={homesTl} areas={bundle.regimes.areas} title={AREA_TITLE.MA_RES} label="Homes" detail={homesDetail} />
-          </ChartCard>
-
           <ChartCard
             className="span-12"
-            title={`Regime nowcast: ${gridKey === "MA" ? "Massachusetts grid" : ZONE_NAMES[gridKey]}`}
-            source="ISO-NE and EIA-930, all customer classes · weather not removed · filtered, no look-ahead"
-            table={nowcastTable(gridTl, true, gridDetail)}
+            title={`Regime nowcast: ${area === "MA_RES" ? "homes" : area === "MA" ? "Massachusetts grid" : ZONE_NAMES[area]}`}
+            source={daily ? "ISO-NE and EIA-930, all customer classes · weather not removed · filtered, no look-ahead" : "EIA-861M · filtered, no look-ahead"}
+            table={nowcastTable(tl, daily, detail)}
           >
-            <RegimeNowcast area={gridArea} timeline={gridTl} areas={bundle.regimes.areas} title={AREA_TITLE[gridKey]} label={AREA_LABEL[gridKey]} detail={gridDetail} />
+            <RegimeNowcast area={a} timeline={tl} areas={bundle.regimes.areas} title={AREA_TITLE[area]} label={AREA_LABEL[area]} detail={detail} />
           </ChartCard>
 
           <Card
