@@ -113,10 +113,24 @@ export function ChartCard<R>({
   );
 }
 
-export function Card({ title, subtitle, children, className, source }: { title?: ReactNode; subtitle?: ReactNode; children: ReactNode; className?: string; source?: ReactNode }) {
+export function Card({
+  title,
+  subtitle,
+  children,
+  className,
+  source,
+  id,
+}: {
+  title?: ReactNode;
+  subtitle?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  source?: ReactNode;
+  id?: string;
+}) {
   const headingId = useId();
   return (
-    <section className={`card ${className ?? ""}`} aria-labelledby={title ? headingId : undefined}>
+    <section id={id} className={`card ${className ?? ""}`} aria-labelledby={title ? headingId : undefined}>
       {title ? (
         <div className="card-head">
           <div>

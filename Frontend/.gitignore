@@ -3,5 +3,6 @@ dist/
 *.tsbuildinfo
 .vite/
 public/ocr/
+public/pdf/
 .env*.local
 .vercel/
