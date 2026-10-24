@@ -42,8 +42,8 @@ def extra(name, data):
             m = [st["meanSdFromAverage"] for st in a["states"]]
             if not m[0] < m[1] < m[2]:
                 errs.append(f"{a['area']}: state means not increasing green < grey < red")
-            bad = [p["date"] for p in a["timeline"] if p["bandPct"] <= 0][:3]
-            errs += [f"{a['area']}: non-positive range on {bad}"] if bad else []
+            bad = [p["date"] for p in a["timeline"] if p["bandPct"] <= 0 or abs(sum(p["probs"]) - 1) > 1e-6][:3]
+            errs += [f"{a['area']}: bad range or probs not summing to 1 on {bad}"] if bad else []
             errs += [f"{a['area']}: transition row {i} sums to {sum(r):.4f}" for i, r in enumerate(a["transition"])
                      if abs(sum(r) - 1) > 1e-6]
             if abs(sum(a["current"]["probs"]) - 1) > 1e-6:
