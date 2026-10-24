@@ -10,10 +10,11 @@ import { ZONES, ZONE_NAMES, type Town, type TownForecastDoc, type Zone } from ".
 
 const ZONE_COLOR: Record<Zone, string> = { NEMA: "var(--series-1)", SEMA: "var(--series-2)", WCMA: "var(--series-3)" };
 
-// Sequential blue (log-spaced classes); light->dark on light, dark->light on dark, so small
-// values always recede toward the surface and big values read strongest in either theme.
-const FORECAST_LIGHT = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"];
-const FORECAST_DARK = ["#13304f", "#184f95", "#256abf", "#3987e5", "#6da7ec", "#9ec5f4", "#cde2fb"];
+// Sequential blue (log-spaced classes), same direction in both themes: smallest forecast = white,
+// largest = strong blue. Dark theme starts a touch off-white so the lowest class stays visible
+// against the surface, but the ramp still runs light -> strong blue (never reversed).
+const FORECAST_LIGHT = ["#ffffff", "#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#1c5cab", "#0d366b"];
+const FORECAST_DARK = ["#eef5ff", "#c3dcfa", "#93bdf2", "#5a9ae9", "#2f7ae0", "#1c5cab", "#0d3a7a"];
 
 // Log-spaced class breaks (MWh) spanning the real p50 range (~199 MWh .. ~2.4M MWh): seven classes,
 // Boston in the top class, the smallest towns in the bottom.
