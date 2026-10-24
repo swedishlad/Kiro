@@ -406,7 +406,10 @@ export function Chat({ page }: { page: string }) {
               </button>
             )}
           </form>
-          <p className="chat-note">AI answers from this site's data, powered by Claude. They can be wrong, so check key figures on the dashboard. Please don't share account numbers or other personal details.</p>
+          <p className="chat-note">
+            AI answers from this site's data, powered by Google Gemini. They can be wrong, so check key figures on the dashboard. Questions are sent to
+            Google, which may use them to improve its products: please don't share account numbers or other personal details.
+          </p>
         </section>
       ) : null}
     </>

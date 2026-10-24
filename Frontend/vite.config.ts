@@ -15,14 +15,14 @@ async function readBody(req: IncomingMessage): Promise<string> {
 
 /**
  * `npm run dev` has no Vercel runtime, so this mounts api/chat.ts at /api/chat on the dev server.
- * ANTHROPIC_API_KEY comes from the shell or from .env.local.
+ * GEMINI_API_KEY comes from the shell or from .env.local.
  */
 function chatApiDev(): Plugin {
   return {
     name: "fairwatt-chat-api-dev",
     apply: "serve",
     configureServer(server) {
-      for (const [k, v] of Object.entries(loadEnv(server.config.mode, server.config.root, "ANTHROPIC_"))) process.env[k] ??= v;
+      for (const [k, v] of Object.entries(loadEnv(server.config.mode, server.config.root, ["GEMINI_", "GOOGLE_API_KEY"]))) process.env[k] ??= v;
       server.middlewares.use("/api/chat", async (req, res, next) => {
         if (req.method !== "POST") {
           res.statusCode = 405;
