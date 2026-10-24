@@ -10,7 +10,7 @@ export function Delta({ now, prev, className }: { now: number; prev: number; cla
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-0.5 text-sm font-medium tabular-nums",
+        "inline-flex items-center gap-0.5 text-[13px] font-medium tabular-nums",
         up ? "text-good" : "text-bad",
         className,
       )}

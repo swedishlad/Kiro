@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
-import "@fontsource-variable/bricolage-grotesque";
-import "@fontsource-variable/public-sans";
 import "./globals.css";
 
 export const metadata: Metadata = {

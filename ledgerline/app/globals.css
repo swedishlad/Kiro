@@ -4,10 +4,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Design tokens. Values are swapped per theme below; Tailwind utilities
-   (bg-page, text-ink, border-line, ...) read the CSS variables. */
+   (bg-page, text-ink, border-line, ...) read the CSS variables.
+   Palette and type follow Apple's system UI: grouped grey page, white
+   cards, system blue, flat fills, no gradients and no resting shadows. */
 @theme inline {
-  --font-display: var(--font-display-stack);
-  --font-sans: var(--font-body-stack);
+  --font-display: var(--font-stack);
+  --font-sans: var(--font-stack);
 
   --color-page: var(--page);
   --color-surface: var(--surface);
@@ -18,46 +20,49 @@
   --color-rule: var(--rule);
   --color-accent: var(--accent);
   --color-s1: var(--series-1);
-  --color-s2: var(--series-2);
   --color-good: var(--good-text);
   --color-bad: var(--bad-text);
   --color-wash: var(--wash);
+  --color-fill: var(--fill);
+  --color-knob: var(--knob);
 }
 
 :root {
-  --font-display-stack: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-body-stack: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue",
+    "Segoe UI", Roboto, Arial, sans-serif;
 
-  --page: #f9f9f7;
-  --surface: #fcfcfb;
-  --ink: #0b0b0b;
-  --ink-2: #52514e;
-  --ink-3: #6f6d68;
-  --line: #e1e0d9;
-  --rule: #c3c2b7;
-  --wash: rgba(11, 11, 11, 0.045);
-  --accent: #2a78d6;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --good-text: #006300;
-  --bad-text: #b02a2a;
+  --page: #f5f5f7;
+  --surface: #ffffff;
+  --ink: #1d1d1f;
+  --ink-2: #6e6e73;
+  --ink-3: #86868b;
+  --line: #e8e8ed;
+  --rule: #d2d2d7;
+  --wash: #f5f5f7;
+  --fill: #e8e8ed;
+  --knob: #ffffff;
+  --accent: #0071e3;
+  --series-1: #0071e3;
+  --good-text: #1d8a3a;
+  --bad-text: #d70015;
   color-scheme: light;
 }
 
 .dark {
-  --page: #0d0d0d;
-  --surface: #1a1a19;
-  --ink: #f0efec;
-  --ink-2: #c3c2b7;
-  --ink-3: #9b998f;
-  --line: #2c2c2a;
-  --rule: #383835;
-  --wash: rgba(255, 255, 255, 0.06);
-  --accent: #3987e5;
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --good-text: #0ca30c;
-  --bad-text: #e66767;
+  --page: #000000;
+  --surface: #1c1c1e;
+  --ink: #f5f5f7;
+  --ink-2: #a1a1a6;
+  --ink-3: #8e8e93;
+  --line: #2c2c2e;
+  --rule: #3a3a3c;
+  --wash: #2c2c2e;
+  --fill: #2c2c2e;
+  --knob: #636366;
+  --accent: #0a84ff;
+  --series-1: #0a84ff;
+  --good-text: #30d158;
+  --bad-text: #ff453a;
   color-scheme: dark;
 }
 
@@ -66,31 +71,28 @@ html {
 }
 
 body {
-  font-family: var(--font-body-stack);
+  font-family: var(--font-stack);
   color: var(--ink);
   background: var(--page);
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* One orchestrated moment: the live indicator pulses while data is flowing */
-@keyframes pulse-ring {
-  0% { transform: scale(0.6); opacity: 0.7; }
-  100% { transform: scale(2.4); opacity: 0; }
+/* The live indicator breathes while data is flowing */
+@keyframes breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
-.live-dot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: currentColor;
-  animation: pulse-ring 1.8s ease-out infinite;
+.live-dot {
+  animation: breathe 2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .live-dot::after { animation: none; opacity: 0; }
+  .live-dot { animation: none; }
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
   outline-offset: 2px;
 }
