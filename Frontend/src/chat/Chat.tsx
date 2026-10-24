@@ -2,7 +2,7 @@
 // launcher button or, on the home page, by asking in its prompt box. The conversation survives tab
 // changes and reloads within the browser session.
 
-import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 
 import type { ChatEvent } from "../../api/chat.ts";
 import { parseMarkdown, type Inline } from "./markdown.ts";
@@ -42,6 +42,23 @@ const PROMPT_HINTS = [
 
 /** The mounted panel's way in for the prompt box: opens the panel and asks there. */
 let askInPanel: ((question: string) => void) | null = null;
+
+/** Whether the home page's prompt box has scrolled out of sight, which brings the launcher back there. */
+let promptAway = false;
+const promptWatchers = new Set<() => void>();
+
+function setPromptAway(away: boolean): void {
+  if (away === promptAway) return;
+  promptAway = away;
+  for (const watcher of promptWatchers) watcher();
+}
+
+function watchPrompt(watcher: () => void): () => void {
+  promptWatchers.add(watcher);
+  return () => {
+    promptWatchers.delete(watcher);
+  };
+}
 
 function suggestionsFor(page: string): string[] {
   const first = BY_PAGE[page];
@@ -195,8 +212,9 @@ export function Chat({ page }: { page: string }) {
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
-  /** where focus was when the panel opened (the launcher or the prompt box), to return it on close */
+  /** where focus was when the panel opened, to return it there on close if the launcher is hidden */
   const returnRef = useRef<HTMLElement | null>(null);
+  const awayFromPrompt = useSyncExternalStore(watchPrompt, () => promptAway);
   const stickRef = useRef(true);
   const wasOpen = useRef(false);
   /** bumped by each send and by "New chat", so a superseded stream can't write into the chat */
@@ -210,7 +228,11 @@ export function Chat({ page }: { page: string }) {
     if (open) {
       returnRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       inputRef.current?.focus();
-    } else if (wasOpen.current) (returnRef.current?.isConnected ? returnRef.current : launcherRef.current)?.focus();
+    } else if (wasOpen.current) {
+      // Back to the launcher, or to the prompt box while that stands in for it, without scrolling to it.
+      const back = launcherRef.current?.hidden ? returnRef.current : launcherRef.current;
+      if (back?.isConnected) back.focus({ preventScroll: true });
+    }
     wasOpen.current = open;
   }, [open]);
 
@@ -326,7 +348,7 @@ export function Chat({ page }: { page: string }) {
         aria-expanded={open}
         aria-controls="chat-panel"
         onClick={() => setOpen(true)}
-        hidden={open || page === "bill"}
+        hidden={open || (page === "bill" && !awayFromPrompt)}
       >
         <ChatIcon />
         Ask Watt If
@@ -454,17 +476,37 @@ function SendIcon() {
 }
 
 /**
- * The home page's question box, in place of the floating launcher there. Its placeholder cycles through
- * example questions, one per run of the hint's CSS animation; asking opens the panel with the answer.
+ * The home page's question box, in place of the floating launcher there until it scrolls away. Its
+ * placeholder cycles through example questions, one per run of the hint's CSS animation; asking opens the
+ * panel with the answer.
  */
 export function PromptBox() {
   const [draft, setDraft] = useState("");
   const [hint, setHint] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Mostly gone under the sticky bar or off the screen: the launcher takes over. (Mostly, as the page can
+  // be too short to scroll the box fully away.)
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const bar = document.querySelector<HTMLElement>(".topbar")?.offsetHeight ?? 0;
+    const observer = new IntersectionObserver(([entry]) => setPromptAway(entry.intersectionRatio < 0.5), {
+      rootMargin: `-${bar}px 0px 0px 0px`,
+      threshold: 0.5,
+    });
+    observer.observe(form);
+    return () => {
+      observer.disconnect();
+      setPromptAway(false);
+    };
+  }, []);
 
   return (
     <div className="prompt-box">
       <form
+        ref={formRef}
         className="prompt"
         onSubmit={(e) => {
           e.preventDefault();

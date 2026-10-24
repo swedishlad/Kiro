@@ -1573,12 +1573,20 @@ table.data tbody th {
   font-size: 14px;
   box-shadow: var(--float-shadow);
   cursor: pointer;
+  /* plays each time it appears, as when the home page's prompt box scrolls away */
+  animation: chat-launcher-in 0.2s ease-out;
 }
 .chat-launcher:hover {
   background: var(--ink-2);
 }
 .chat-launcher[hidden] {
   display: none;
+}
+@keyframes chat-launcher-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }
 
 .chat-panel {
@@ -1928,6 +1936,9 @@ table.data tbody th {
   }
   .prompt-hint {
     animation-name: prompt-hint-fade;
+  }
+  .chat-launcher {
+    animation: none;
   }
 }
 @keyframes prompt-hint-fade {
