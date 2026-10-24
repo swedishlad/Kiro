@@ -638,13 +638,6 @@ pre.code {
   font-weight: 600;
 }
 
-.member-photo {
-  object-fit: cover;
-  /* portraits: keep the face in the circle rather than the middle of the frame */
-  object-position: 50% 30%;
-  background: var(--fill);
-}
-
 .member-name {
   font-size: 17px;
   font-weight: 600;
@@ -1797,6 +1790,61 @@ table.data tbody th {
 }
 
 /* ---------------------------------------------------------------------------------------------
+   First-visit note (src/components/Intro.tsx): a small card in the bottom-left corner of Bill
+   check (the assistant's button has the right). It floats, so it gets the float shadow, and
+   eases in a moment after the page so it doesn't greet the visitor at the door.
+   --------------------------------------------------------------------------------------------- */
+.intro {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(420px, calc(100vw - 40px));
+  padding: 14px 14px 14px 18px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--float-shadow);
+  animation: intro-in 0.3s ease-out 0.8s both;
+}
+@keyframes intro-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.intro-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.intro-text {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.intro-ok {
+  flex: none;
+}
+
+@media (max-width: 560px) {
+  .intro {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    gap: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
    Assistant (src/chat/Chat.tsx)
    --------------------------------------------------------------------------------------------- */
 .footer {
@@ -2527,4 +2575,9 @@ table.data tbody th {
   width: 160px;
   height: 10px;
   border-radius: 5px;
+}
+
+.member-photo {
+  object-fit: cover;
+  background: var(--surface-2);
 }

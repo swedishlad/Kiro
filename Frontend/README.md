@@ -78,8 +78,9 @@ for the button until it scrolls away.
 Five tabs: Bill check (the home page), Energy data, Regime, Map and About. Energy data stacks the Usage,
 Prices & savings and Climate sections; Regime holds Regimes & forecast; About ends with Data & methods.
 The section addresses (`#/usage`, `#/prices`, `#/grid`, `#/climate`, `#/sources`) open the tab that holds
-them and scroll to the section. The old `#/overview` and `#/welcome` addresses open Bill check, and `#/levels` opens
-the Regime tab.
+them and scroll to the section; `#/overview` opens Bill check and the old `#/levels` opens the Regime tab. A browser's first visit to the home page shows a small note in the
+corner of Bill check: start with your bill here, the other tabs have the bigger picture (`src/components/Intro.tsx`); it doesn't block the page, and
+once closed `localStorage` (`fw-welcomed`) keeps it closed. Deep links skip it; `#/welcome` shows it again.
 
 | Tab | What it shows | Backend inputs |
 |---|---|---|
