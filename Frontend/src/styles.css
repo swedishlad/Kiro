@@ -1790,154 +1790,38 @@ table.data tbody th {
 }
 
 /* ---------------------------------------------------------------------------------------------
-   Welcome — the onboarding page (src/sections/Welcome.tsx): hello, what you get, three steps,
-   a tour of the tabs, the prompt box, promises and FAQ
+   Welcome — the onboarding page (src/sections/Welcome.tsx): what brings you here, the three
+   lines on a bill, a note from the team, a few questions and the prompt box
    --------------------------------------------------------------------------------------------- */
-.welcome-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 40px;
-  align-items: center;
+.welcome-intro {
+  max-width: 760px;
 }
-@media (max-width: 900px) {
-  .welcome-hero {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-  }
-}
-.welcome-hello {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 14px 5px 6px;
-  border-radius: 999px;
-  background: var(--accent-wash);
+.welcome-eyebrow {
   color: var(--accent-ink);
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
 }
-.welcome-hello .brand-mark {
-  width: 22px;
-  height: 22px;
-}
 .welcome-title {
-  font-size: 48px;
+  font-size: 56px;
   font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
-  margin-top: 18px;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin-top: 8px;
 }
 .welcome-lede {
   color: var(--ink-2);
-  font-size: 19px;
+  font-size: 21px;
   line-height: 1.45;
-  max-width: 580px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
-.welcome-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 28px;
-}
-
-/* The page's big pill links: .btn / .btn-primary (Bill check) at a larger size */
-.btn-large {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 11px 22px;
-  font-size: 17px;
-  text-decoration: none;
-}
-.btn-large:hover {
-  text-decoration: none;
-}
-
-.welcome-trust {
-  list-style: none;
-  margin: 24px 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  color: var(--ink-2);
-  font-size: 14px;
-}
-.welcome-trust li {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* The example result beside the hello: Bill check's comparison bars on a smaller card */
-.welcome-preview {
-  margin: 0;
-  display: grid;
-  gap: 16px;
-}
-.welcome-preview-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-.welcome-preview-eyebrow {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-2);
-}
-.welcome-preview-badge {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-2);
-  background: var(--fill);
-  border-radius: 999px;
-  padding: 2px 10px;
-}
-.welcome-preview-title {
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 600;
-  margin-bottom: -10px;
-}
-.welcome-preview-verdict {
+.welcome-skip {
+  margin-top: 18px;
   color: var(--ink-2);
   font-size: 15px;
-}
-.welcome-preview-verdict strong {
-  color: var(--ink);
-}
-.welcome-preview .compare-bar {
-  grid-template-columns: 96px minmax(0, 1fr) 72px;
-}
-.welcome-tip {
-  display: grid;
-  gap: 2px;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-wash);
-}
-.welcome-tip-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent-ink);
-}
-.welcome-tip-title {
-  font-weight: 600;
-}
-.welcome-tip-text {
-  color: var(--ink-2);
-  font-size: 14px;
-}
-.welcome-preview-foot {
-  color: var(--ink-muted);
-  font-size: 12px;
 }
 
 .welcome-section {
   margin-top: 72px;
-  scroll-margin-top: 72px;
 }
 .welcome-section-head {
   max-width: 720px;
@@ -1956,158 +1840,308 @@ table.data tbody th {
 .welcome-section .prompt-box {
   margin-top: 0;
 }
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 
-.welcome-benefits {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+/* The page's big pill links: .btn / .btn-primary (Bill check) at a larger size */
+.btn-large {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 22px;
+  font-size: 17px;
+  text-decoration: none;
 }
-.benefit {
-  display: grid;
-  gap: 8px;
-  align-content: start;
+.btn-large:hover {
+  text-decoration: none;
 }
-.benefit-q {
+
+/* What brings you here: answers as big tappable rows, the chosen one tinted, its reply below */
+.welcome-paths {
+  margin-top: 48px;
+}
+.paths {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+}
+.path {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.path:hover {
+  background: var(--surface-hover);
+}
+.path[aria-pressed="true"] {
+  background: var(--accent-wash);
+}
+.path-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.path-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.path[aria-pressed="true"] .path-title {
+  color: var(--accent-ink);
+}
+.path-sub {
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.path-dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px var(--baseline);
+}
+.path[aria-pressed="true"] .path-dot {
+  background: var(--accent);
+  box-shadow: inset 0 0 0 6px var(--accent), inset 0 0 0 11px #fff;
+}
+.path-answer {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  max-width: 820px;
+  scroll-margin: 88px 0 24px;
+  animation: path-answer-in 0.2s ease-out;
+}
+@keyframes path-answer-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.path-answer p {
+  color: var(--ink-2);
+}
+.path-answer .path-lead {
+  color: var(--ink);
+  font-family: var(--font-display);
   font-size: 21px;
+  font-weight: 600;
 }
-.benefit p {
+.path-answer .welcome-actions {
+  margin-top: 4px;
+}
+.rate-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 14px;
+  max-width: 420px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.rate-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--grid);
+}
+.rate-list li:last-child {
+  border-bottom: 0;
+}
+.path-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.path-links li {
+  display: grid;
+  gap: 2px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--grid);
+}
+.path-links li:last-child {
+  border-bottom: 0;
+}
+.path-links a {
+  font-size: 17px;
+  font-weight: 600;
+}
+.path-links span {
   color: var(--ink-2);
 }
 
-.welcome-steps {
+/* The three lines on a bill: a made-up bill on the left, what each marked line means on the right */
+.bill-explainer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+}
+@media (max-width: 860px) {
+  .bill-explainer {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+.paper {
+  margin: 0;
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 14px;
+}
+.paper-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--grid);
+}
+.paper-logo {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--fill);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.paper-meta {
+  color: var(--ink-muted);
+  font-size: 12px;
+  text-align: right;
+}
+.paper-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 10px;
+  margin: 0 -10px;
+  border-radius: 8px;
+}
+.paper-row > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.paper-row.is-marked {
+  background: var(--accent-wash);
+}
+.paper-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 32px;
+  margin: 6px 0 4px;
+}
+.paper-bars span {
+  flex: 1;
+  border-radius: 2px;
+  background: var(--muted-series);
+}
+.paper-bars span.is-now {
+  background: var(--accent);
+}
+.paper-group {
+  margin-top: 12px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.paper-total {
+  margin-top: 12px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.paper-foot {
+  margin-top: 16px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.bill-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.bill-notes {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
 }
-@media (max-width: 800px) {
-  .welcome-steps {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-.step {
+.bill-notes li {
   display: grid;
-  gap: 8px;
-  align-content: start;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 14px;
 }
-.step-num {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
+.bill-notes h3 {
+  font-size: 19px;
   margin-bottom: 4px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
 }
-.step-title {
-  font-size: 19px;
-}
-.step p {
+.bill-notes p {
   color: var(--ink-2);
 }
-.welcome-scope {
-  display: inline-block;
-  margin-top: 20px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: var(--accent-wash);
-  font-size: 14px;
-}
-.welcome-scope strong {
-  color: var(--accent-ink);
-}
 
-.welcome-features {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+/* A note from the team: their initials, a few sentences, their names */
+.welcome-note {
+  padding: 36px;
 }
-.feature {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.feature-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.feature-title {
-  font-size: 19px;
-}
-.feature-kicker {
-  margin-left: auto;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--accent-wash);
-  color: var(--accent-ink);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.feature-text {
-  flex: 1 1 auto;
+.welcome-note > p {
+  max-width: 680px;
+  margin-top: 14px;
+  font-size: 17px;
+  line-height: 1.55;
   color: var(--ink-2);
 }
-.feature-links {
+.note-faces {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  font-size: 15px;
-  font-weight: 500;
+  margin-bottom: 18px;
 }
-
-/* iOS-style app icons: a white line glyph on a rounded colour tile */
-.icon-tile {
+.note-face {
   display: grid;
   place-items: center;
-  flex: none;
   width: 44px;
   height: 44px;
-  border-radius: 11px;
+  margin-right: -8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px var(--surface);
   color: #fff;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
 }
-.icon-tile svg {
-  width: 26px;
-  height: 26px;
-}
-.icon-tile.is-small {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-}
-.icon-tile.is-small svg {
-  width: 21px;
-  height: 21px;
+.welcome-note > .note-sign {
+  margin-top: 20px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
-.welcome-promises {
-  display: grid;
-  gap: 28px 32px;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+.welcome-faq-title {
+  margin-bottom: 20px;
 }
-.promise {
-  display: grid;
-  gap: 6px;
-  align-content: start;
-}
-.promise .icon-tile {
-  margin-bottom: 6px;
-}
-.promise-title {
-  font-size: 17px;
-}
-.promise p {
-  color: var(--ink-2);
-  font-size: 14px;
-}
-
 .faq {
   padding-top: 8px;
   padding-bottom: 8px;
@@ -2149,20 +2183,9 @@ table.data tbody th {
   padding-bottom: 18px;
 }
 
-.welcome-cta {
-  padding: 48px 24px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  text-align: center;
-}
-.welcome-cta .welcome-actions {
-  justify-content: center;
-  margin-top: 24px;
-}
-
 @media (max-width: 640px) {
   .welcome-title {
-    font-size: 34px;
+    font-size: 38px;
   }
   .welcome-lede {
     font-size: 17px;
@@ -2170,28 +2193,35 @@ table.data tbody th {
   .welcome-section {
     margin-top: 56px;
   }
+  .welcome-paths {
+    margin-top: 40px;
+  }
   .welcome-section-title {
     font-size: 24px;
   }
   .welcome-section-lede {
     font-size: 15px;
   }
-  .welcome-benefits,
-  .welcome-steps,
-  .welcome-features {
-    gap: 14px;
-  }
-  .welcome-features {
+  .paths {
     grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
   }
-  .welcome-scope {
-    border-radius: 12px;
+  .path {
+    padding: 16px;
   }
-  .welcome-cta {
-    padding: 36px 16px;
+  .paper {
+    padding: 18px 16px;
+  }
+  .welcome-note {
+    padding: 24px 18px;
   }
   .welcome-actions .btn {
     flex: 1 1 auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .path-answer {
+    animation: none;
   }
 }
 
