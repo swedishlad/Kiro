@@ -9,14 +9,14 @@ Reference data for the Watt If assistant, generated from the backend artifacts t
 
 Watt If is a free, public dashboard about Massachusetts residential electricity: what homes use, what they pay, what basic service costs, and whether use is running above or below its usual range. Every number comes from public data (U.S. EIA, Mass.gov DPU, ISO New England, U.S. Census, MassGIS) processed by the project's Python backend. The site has no user accounts and cannot see anyone's bill, meter or utility account; it does not sell electricity or sign anyone up.
 
-The site has four tabs: Bill check, Energy data, Towns and About. Energy data holds the Usage, Prices & savings and Regimes & forecast sections; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it.
+The site has four tabs: Bill check, Energy data, Map and About. Energy data holds the Usage, Prices & savings and Regimes & forecast sections; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it.
 - [Bill check](#/bill) (the home page): a visitor adds a photo of their Massachusetts electric bill (National Grid, Eversource or Unitil), or pastes a PDF bill's text. It is read in their browser and never uploaded, so you cannot see it. They check the numbers it read (utility, kWh, bill month, total, supply rate, days) and see their use vs the typical Massachusetts home that month, their cost and all-in ¢/kWh vs the state average, their supply rate vs their utility's basic-service rate, and suggestions: switching supply back to basic service, a Mass Save assessment, community or rooftop solar, heat pumps. Usage is only published statewide, so the comparison is Massachusetts-wide plus the visitor's own utility, not their town.
 - [Energy data](#/data): the four sections below on one page.
 - [Usage](#/usage): monthly use per residential account since 2010 with the Low / Mid / High use regimes, sales vs a year earlier, what the regimes mean, the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel).
 - [Prices & savings](#/prices): basic-service monthly rates by utility since 2005, the all-in average price vs the supply rate, fixed-option terms, and the "Did your supplier save you money?" calculator with a month-by-month breakdown.
 - [Regimes & forecast](#/grid): homes (monthly) and the ISO-NE grid zones (daily) compared with the same period in the previous 5 years, the outlook, how the three regimes behave, and the six-month Monte Carlo load forecast with its walk-forward test.
 - [Climate](#/climate): a modeled household's CO₂ from electricity on the New England grid. Pick monthly use, flexible use a day and a home battery; it shows yearly emissions, how much moving use to cleaner hours cuts, the cost per ton of steps like weatherization, a 20-year emissions range as the grid gets cleaner, and whether solar or a battery is worth buying now or later.
-- [Towns](#/towns): a map and searchable table of all 351 cities and towns with county, ISO-NE load zone, 2020 and 2024 population and growth.
+- [Map](#/towns): a map and searchable table of all 351 cities and towns with county, ISO-NE load zone, 2020 and 2024 population and growth.
 - [About](#/about): what Watt If is and the team that builds it: Tae, Johan, Yuan and Lin.
 - [Data & methods](#/sources) (on the About tab): sources, how each number is made, limits, and how to rebuild.
 
@@ -432,7 +432,7 @@ Solar and battery timing, default home:
 - Solar PV Array (6.0 kW DC): **Install now**. Price $13,500 before credits, falling 3.5% a year; net value if bought now $28,467, in 1 yr $27,723, in 2 yr $26,995, in 3 yr $26,283; CO₂ avoided over 20 years 33.5 t (27.5–39.5); waiting a year releases 2.65 t it would have avoided.
 - Home Energy Storage (10 kWh): **Hold and wait**. Price $8,500 before credits, falling 6.5% a year; net value if bought now −$2,343, in 1 yr −$1,941, in 2 yr −$1,584, in 3 yr −$1,265; CO₂ avoided over 15 years 6.0 t (4.9–7.1); waiting a year releases 0.64 t it would have avoided.
 
-## Cities and towns (Towns tab)
+## Cities and towns (Map tab)
 
 - What differs by town on the site: the ISO-NE load zone (which decides which zone's grid regime and forecast apply) and population. Zone assignment is approximate (by county in the backend; for example Brookline is counted in SEMA).
 - Why the map isn't coloured by usage: there is no verified per-town electricity-use source (RECS 2020 has no town field and EIA-861M is statewide), so the backend gives every town the same modeled level, 5,990 kWh a year (the statewide RECS median, class Mid), and the site doesn't paint differences that aren't in the data. For a household, use [A home like yours](#/usage).

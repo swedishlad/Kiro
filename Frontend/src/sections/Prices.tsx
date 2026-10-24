@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { ColumnChart, HBarChart } from "../components/BarChart.tsx";
 import { usePersistentState } from "../components/hooks.ts";
 import { LineChart } from "../components/LineChart.tsx";
-import { Callout, Card, ChartCard, DataTable, Filter, Legend, Segmented } from "../components/ui.tsx";
+import { Callout, Card, ChartCard, Filter, Legend, Segmented } from "../components/ui.tsx";
 import { RANGES, RANGE_LABEL, sliceRange, type Range } from "../data/derive.ts";
 import { addMonths, fmtCents, fmtNum, moneyDisplay, ymIndex, ymLabel, ymShort } from "../data/format.ts";
 import { consumptionStats, eia, monthlyRates, savingsModel, spans } from "../data/load.ts";
@@ -369,19 +369,6 @@ function SavingsCalculator({ utility }: { utility: UtilityId }) {
           <p className="loading">Fix the inputs to see the breakdown.</p>
         )}
       </ChartCard>
-
-      <Card className="span-12" title="Worked examples from the backend" subtitle="The calculator reproduces these figures from savings_model.json exactly (checked in the test suite).">
-        <DataTable
-          caption="Backend savings examples"
-          columns={[
-            { key: "l", label: "Example", render: (e) => e.label },
-            { key: "u", label: "Utility", render: (e) => utilityById(e.utility).name },
-            { key: "r", label: "Your rate", align: "r", render: (e) => fmtCents(e.userRateCents, 1) },
-            { key: "t", label: "Result", align: "r", render: (e) => e.savedTotalDisplay },
-          ]}
-          rows={savingsModel.examples}
-        />
-      </Card>
     </>
   );
 }
