@@ -1,0 +1,83 @@
+{
+  "basicServiceRatesCents": {
+    "EV_EAST": 17.323,
+    "EV_WEST": 15.934,
+    "NG": 17.185,
+    "UNITIL": 18.921,
+    "term": "2026-08..2027-01"
+  },
+  "defaultPeriodMonths": 6,
+  "examples": [
+    {
+      "basicServiceCentsByMonth": [
+        17.185,
+        17.185,
+        17.185,
+        17.185,
+        17.185,
+        17.185
+      ],
+      "kwhByMonth": [
+        650.0,
+        650.0,
+        650.0,
+        650.0,
+        650.0,
+        650.0
+      ],
+      "label": "6 months on NG, paid 22.0c vs basic 17.185c, 650 kWh/mo",
+      "months": [
+        "2026-08",
+        "2026-09",
+        "2026-10",
+        "2026-11",
+        "2026-12",
+        "2027-01"
+      ],
+      "savedMonthly": [
+        -31.2975,
+        -31.2975,
+        -31.2975,
+        -31.2975,
+        -31.2975,
+        -31.2975
+      ],
+      "savedMonthlyDisplay": [
+        "-$31.30",
+        "-$31.30",
+        "-$31.30",
+        "-$31.30",
+        "-$31.30",
+        "-$31.30"
+      ],
+      "savedTotal": -187.785,
+      "savedTotalDisplay": "-$187.79",
+      "userRateCents": 22.0,
+      "utility": "NG"
+    },
+    {
+      "basicServiceCentsByMonth": [
+        17.185
+      ],
+      "kwhByMonth": [
+        600.0
+      ],
+      "label": "1 month on NG, paid 15.0c vs basic 17.185c, 600 kWh (came out ahead)",
+      "months": [
+        "2026-08"
+      ],
+      "savedMonthly": [
+        13.11
+      ],
+      "savedMonthlyDisplay": [
+        "$13.11"
+      ],
+      "savedTotal": 13.11,
+      "savedTotalDisplay": "$13.11",
+      "userRateCents": 15.0,
+      "utility": "NG"
+    }
+  ],
+  "generated": "2026-10-24",
+  "method": "supply-portion-only; saved = (basicService - userRate) * kWh / 100; + = saved, - = overpaid"
+}
