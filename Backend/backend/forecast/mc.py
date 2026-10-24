@@ -3,9 +3,10 @@
 
 Spec: docs/specs/mc-forecast.md. Per path:
   weather   one historical Nov-Apr season (2017-18 .. 2022-23), shifted -7..+7 days, shared by all zones
-  expected  rolling 2-year weather model (temperature, weekend, calendar month), the HMM's own definition of normal
-  regimes   the zone's 3-state HMM (regimes.json: tied sd, transition matrix), started from its stationary distribution;
-            daily load = expected x (1 + residual% / 100)
+  expected  rolling 2-year weather model (temperature, weekend, calendar month), the residual's definition of normal
+  regimes   a 3-state HMM (tied sd) fit here on the zone's walk-forward residual in % vs that model, started from its
+            stationary distribution; daily load = expected x (1 + residual% / 100). Not the regimes.json HMM, whose
+            states are in sd from the historical average.
   level     x EIA all-sector sales, 12 months to 2026-08 / 2023 (= 1.0435): ISO-NE files stop at 2023-12
 Calibration: fit everything on data <= 2021-10-31, simulate Nov 2021-Apr 2022 and Nov 2022-Apr 2023 on their real
 calendars, score 36 zone-months. A leakage test proves those forecasts ignore data after the cut.
@@ -104,7 +105,7 @@ def fit_inputs(days, gwh, temp, end):
         y, t = gwh[z][keep], temp[z][keep]
         X = regressors(d, t)
         betas[z] = fit_weather(X[lo:], y[lo:])
-        r = walk_forward_residuals(d, y, X, start=dt.date(2018, 1, 1))
+        r = walk_forward_residuals(d, y, X, start=dt.date(2018, 1, 1), pct=True)  # %: simulate() divides by 100
         p = hmm_fit(r[d >= dt.date(2018, 1, 1)], seed=SEED, n_init=8, tied=True)
         regs[z] = {"mu": p["mu"], "sd": p["sd"], "A": p["A"]}
     return betas, regs
