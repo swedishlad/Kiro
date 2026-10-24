@@ -8,10 +8,16 @@ import { ApiError, FinishReason, GoogleGenAI, ThinkingLevel, type Content, type 
 
 import { KNOWLEDGE } from "../server/knowledge.ts";
 
-/** Google's alias for its newest Flash model, which the free tier includes. Pin a versioned name to freeze behaviour. */
-const MODEL = "gemini-flash-latest";
-/** Chat answers are short and mostly look-ups; raise to MEDIUM if answers get careless. */
-const THINKING = ThinkingLevel.LOW;
+/**
+ * Tried in order: when one is overloaded (503), over its free-tier quota (429, counted per model), gone (404) or slow to
+ * start, the next one answers. Google's aliases for its newest Flash and Flash-Lite; pin versioned names to freeze behaviour.
+ */
+const MODELS: { model: string; thinking?: ThinkingLevel }[] = [
+  /** Chat answers are short and mostly look-ups; raise to MEDIUM if answers get careless. */
+  { model: "gemini-flash-latest", thinking: ThinkingLevel.LOW },
+  /** Its own default thinking, which suits Flash-Lite whichever generation the alias points to. */
+  { model: "gemini-flash-lite-latest" },
+];
 const MAX_TOKENS = 8000;
 
 export const LIMITS = {
@@ -25,6 +31,8 @@ export const LIMITS = {
   windowMs: 10 * 60_000,
   /** under the function's 60 s limit (vercel.json), so a slow answer ends with a message instead of being cut off */
   answerMs: 50_000,
+  /** a model that hasn't started its answer by then hands over to the next one */
+  startMs: 20_000,
 };
 
 /** The site's tabs (src/App.tsx routes), so the assistant knows what the visitor is looking at. */
@@ -114,12 +122,20 @@ const UNAVAILABLE = "The assistant isn't available right now.";
 
 /** What the visitor sees when the API call fails; details go to the function log. */
 function failureMessage(err: unknown): string {
-  // 429 is also what the free tier returns once its per-minute or per-day quota is used up.
-  if (err instanceof ApiError && err.status === 429) return "The assistant is busy right now. Please try again in a minute.";
+  // 429 is also what the free tier returns once its per-minute or per-day quota is used up; 503 means overloaded.
+  if (err instanceof ApiError && (err.status === 429 || err.status === 503)) return "The assistant is busy right now. Please try again in a minute.";
   if (err instanceof ApiError && err.status >= 500) return "The assistant couldn't be reached. Please try again.";
   // 400/401/403 are almost always the site's configuration (a missing or invalid key), not the visitor.
   if (err instanceof ApiError) return UNAVAILABLE;
   return "The assistant couldn't be reached. Please try again.";
+}
+
+/** A model that hadn't started its answer within LIMITS.startMs. */
+class SlowStart extends Error {}
+
+/** Worth asking the next model, before any of the answer has been sent. */
+function tryNext(err: unknown): boolean {
+  return err instanceof SlowStart || (err instanceof ApiError && (err.status === 404 || err.status === 429 || err.status >= 500));
 }
 
 /** The part of the SDK client the handler uses, so tests can pass a fake. */
@@ -172,36 +188,65 @@ export async function handleChat(request: Request, client: ChatClient, today = n
         late = true;
         aborted.abort();
       }, LIMITS.answerMs);
-      try {
-        const chunks = await client.models.generateContentStream({
-          model: MODEL,
-          contents: toContents(parsed.turns),
-          config: {
-            systemInstruction,
-            maxOutputTokens: MAX_TOKENS,
-            thinkingConfig: { thinkingLevel: THINKING },
-            abortSignal: aborted.signal,
-          },
-        });
-        let finish: string | undefined;
-        let blocked: string | undefined;
-        let usage: GenerateContentResponseUsageMetadata | undefined;
-        let model: string | undefined;
-        for await (const chunk of chunks) {
-          const text = chunk.text;
-          if (text) {
-            answered = true;
-            send({ type: "text", text });
+      /** One model's answer, streamed to the visitor; with `startMs`, gives up if no text has arrived by then. */
+      const ask = async ({ model, thinking }: (typeof MODELS)[number], startMs: number | null) => {
+        const attempt = new AbortController();
+        const stop = () => attempt.abort();
+        aborted.signal.addEventListener("abort", stop);
+        let slow = false;
+        const start = startMs === null ? undefined : setTimeout(() => {
+          slow = true;
+          attempt.abort();
+        }, startMs);
+        try {
+          const chunks = await client.models.generateContentStream({
+            model,
+            contents: toContents(parsed.turns),
+            config: {
+              systemInstruction,
+              maxOutputTokens: MAX_TOKENS,
+              ...(thinking && { thinkingConfig: { thinkingLevel: thinking } }),
+              abortSignal: attempt.signal,
+            },
+          });
+          let finish: string | undefined;
+          let blocked: string | undefined;
+          let usage: GenerateContentResponseUsageMetadata | undefined;
+          let version: string | undefined;
+          for await (const chunk of chunks) {
+            const text = chunk.text;
+            if (text) {
+              clearTimeout(start);
+              answered = true;
+              send({ type: "text", text });
+            }
+            finish = chunk.candidates?.[0]?.finishReason ?? finish;
+            blocked = chunk.promptFeedback?.blockReason ?? blocked;
+            usage = chunk.usageMetadata ?? usage;
+            version ??= chunk.modelVersion;
           }
-          finish = chunk.candidates?.[0]?.finishReason ?? finish;
-          blocked = chunk.promptFeedback?.blockReason ?? blocked;
-          usage = chunk.usageMetadata ?? usage;
-          model ??= chunk.modelVersion;
+          console.log(
+            `chat: model=${version ?? model} finish=${blocked ?? finish} in=${usage?.promptTokenCount ?? 0} cached=${usage?.cachedContentTokenCount ?? 0} thoughts=${usage?.thoughtsTokenCount ?? 0} out=${usage?.candidatesTokenCount ?? 0}`,
+          );
+          send(blocked || (finish && BLOCKED.has(finish)) ? { type: "refusal" } : { type: "done", truncated: finish === FinishReason.MAX_TOKENS });
+        } catch (err) {
+          throw slow && !answered ? new SlowStart(`no text after ${startMs! / 1000} s`, { cause: err }) : err;
+        } finally {
+          clearTimeout(start);
+          aborted.signal.removeEventListener("abort", stop);
         }
-        console.log(
-          `chat: model=${model ?? MODEL} finish=${blocked ?? finish} in=${usage?.promptTokenCount ?? 0} cached=${usage?.cachedContentTokenCount ?? 0} thoughts=${usage?.thoughtsTokenCount ?? 0} out=${usage?.candidatesTokenCount ?? 0}`,
-        );
-        send(blocked || (finish && BLOCKED.has(finish)) ? { type: "refusal" } : { type: "done", truncated: finish === FinishReason.MAX_TOKENS });
+      };
+      try {
+        for (const [i, m] of MODELS.entries()) {
+          const next = MODELS[i + 1];
+          try {
+            await ask(m, next ? LIMITS.startMs : null);
+            break;
+          } catch (err) {
+            if (!next || answered || aborted.signal.aborted || !tryNext(err)) throw err;
+            console.warn(`chat: ${m.model} ${err instanceof ApiError ? `returned ${err.status}` : (err as Error).message}; trying ${next.model}`);
+          }
+        }
       } catch (err) {
         if (late) {
           // Keep what already arrived; with nothing yet, say so rather than leave the visitor waiting.
