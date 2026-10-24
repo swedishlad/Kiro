@@ -41,59 +41,61 @@ def save(fig, name):
 
 
 def chart_timeline(doc):
-    days, gwh, temp = B.load_all()
-    fig, axes = plt.subplots(4, 1, figsize=(11, 9.5), sharex=True)
+    fig, axes = plt.subplots(5, 1, figsize=(11, 11.5))
     for ax, a in zip(axes, doc["areas"]):
-        r = B.area_series(a["area"], days, gwh, temp)
-        keep = days >= B.OUTPUT_FROM
-        dd, rr = days[keep], r[keep]
-        colors = [e["color"] for e in a["timeline"]]
+        tl = a["timeline"]
+        dd = [dt.date.fromisoformat(e["date"]) for e in tl]
+        v = np.array([e["pctVsAverage"] for e in tl])
+        band = np.array([e["bandPct"] for e in tl])
+        ax.fill_between(dd, -band, band, color="#ebeae5", lw=0, step="mid", label="historical average range (avg ± 1 sd)")
+        ax.axhline(0, color=INK2, lw=0.8)
         for c, (hexc, mk, lab) in STATE.items():
-            sel = np.array([x == c for x in colors])
-            ax.scatter(dd[sel], rr[sel], s=7, marker=mk, color=hexc, linewidths=0, alpha=0.85, label=f"{c} = {lab}")
-        for s in a["states"]:
-            ax.axhline(s["meanResidualPct"], color=STATE[s["color"]][0], lw=1.2)
-            ax.text(dd[-1] + dt.timedelta(days=12), s["meanResidualPct"], f"{s['label']} {s['meanResidualPct']:+.1f}%",
-                    va="center", fontsize=8, color=INK2)
-        ax.set_ylabel("% vs expected")
-        ax.set_title(f"{a['area']} ({a['states'][2]['shareOfDays']:.0%} of days red, {a['states'][0]['shareOfDays']:.0%} green)",
+            sel = np.array([e["color"] == c for e in tl])
+            ax.scatter(np.array(dd)[sel], v[sel], s=7 if a["unit"] == "day" else 22, marker=mk, color=hexc, linewidths=0,
+                       label=f"{c} = {lab}")
+        unit = "daily, all customers" if a["unit"] == "day" else "monthly, homes (kWh per account)"
+        ax.set_title(f"{a['area']} ({unit}): {a['states'][2]['shareOfDays']:.0%} red · {a['states'][1]['shareOfDays']:.0%} grey · "
+                     f"{a['states'][0]['shareOfDays']:.0%} green · agrees with the plain range rule {a['agreementWithBandRule']:.0%}",
                      loc="left", fontsize=9)
-        ax.set_ylim(-22, 22)
-    axes[0].legend(loc="upper left", ncol=3, frameon=False, fontsize=8, markerscale=2)
-    axes[-1].xaxis.set_major_locator(mdates.YearLocator())
-    axes[-1].xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    fig.suptitle("HMM regimes on weather-adjusted daily load, forward-filtered (no look-ahead), 2019-2023\n"
-                 "each dot is one day: actual load vs a 2-year weather model; colour, marker and height all show the state",
+        ax.set_ylabel("% vs historical avg")
+        lim = max(15, float(np.nanpercentile(np.abs(v), 99.5)) + 2)
+        ax.set_ylim(-lim, lim)
+        ax.xaxis.set_major_locator(mdates.YearLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    axes[0].legend(loc="upper left", ncol=4, frameon=False, fontsize=7.5, markerscale=2)
+    fig.suptitle("HMM regimes vs the historical average range (same period, previous 5 years), forward-filtered\n"
+                 "red = above the range · grey = within · green = below; each mark is one day (zones) or one month (MA_RES)",
                  x=0.01, ha="left", fontsize=10.5, fontweight="bold")
+    fig.tight_layout()
     save(fig, "hmm_states_timeline.png")
+
+
+def red_share_by_month(timeline, key="date", colkey="color", red="red"):
+    cm = defaultdict(Counter)
+    for e in timeline:
+        cm[int(e[key][5:7])][e[colkey]] += 1
+    return [cm[m][red] / sum(cm[m].values()) for m in range(1, 13)]
 
 
 def chart_seasonality(doc):
     fig, ax = plt.subplots(figsize=(8.5, 4.2))
     months = np.arange(1, 13)
-    ours = defaultdict(Counter)
-    for e in doc["areas"][3]["timeline"]:
-        ours[int(e["date"][5:7])][e["color"]] += 1
-    y_ours = [ours[m]["red"] / sum(ours[m].values()) for m in months]
-    ax.plot(months, y_ours, color=ZONEC["NEMA"], lw=2, marker="o", ms=6, label="this model: weather-adjusted daily (MA)")
-    ax.text(12.25, y_ours[-1], "weather-adjusted", color=INK2, va="center", fontsize=8)
+    series = [("MA daily vs historical range (this model)", red_share_by_month(doc["areas"][3]["timeline"]), ZONEC["NEMA"], "o"),
+              ("MA homes monthly vs historical range (this model)", red_share_by_month(doc["areas"][4]["timeline"]), ZONEC["WCMA"], "D")]
     other = build_path("hmm_regimes.json")
     if os.path.exists(other):
-        theirs = defaultdict(Counter)
-        for e in json.load(open(other))["timeline"]:
-            theirs[int(e["period"][5:7])][e["regime"]] += 1
-        y_th = [theirs[m]["RED"] / sum(theirs[m].values()) for m in months]
-        ax.plot(months, y_th, color=ZONEC["SEMA"], lw=2, marker="s", ms=6, label="raw monthly kWh per customer (src/hmm)")
-        ax.text(12.25, y_th[-1], "raw monthly", color=INK2, va="center", fontsize=8)
+        series.append(("raw monthly kWh level (src/hmm)", red_share_by_month(json.load(open(other))["timeline"], "period", "regime", "RED"),
+                       ZONEC["SEMA"], "s"))
+    for label, y, c, mk in series:
+        ax.plot(months, y, color=c, lw=2, marker=mk, ms=6, label=label)
     ax.axhspan(0.7, 1.0, color="#f0efec", zorder=0)
     ax.text(1.1, 0.95, "fails: a month that is mostly red means the model detects the season", fontsize=8, color=INK2, va="top")
     ax.set_xticks(months, ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"])
     ax.set_ylim(0, 1.0)
-    ax.set_xlim(0.6, 13.6)
-    ax.set_ylabel("share of days (or months) in the red state")
+    ax.set_ylabel("share in the red state")
     ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
     ax.legend(loc="center left", frameon=False, fontsize=8)
-    ax.set_title("Test: is 'red' a behaviour or just the season?", loc="left")
+    ax.set_title("Test: is 'red' about consumption or just the season?", loc="left")
     save(fig, "hmm_not_seasonal.png")
 
 
@@ -101,12 +103,13 @@ def chart_leakage():
     z = np.load(os.path.join(OUT, "_hmm_leakage.npz"))
     days = np.array([dt.date.fromisoformat(d) for d in z["days"]])
     cut = dt.date.fromisoformat(str(z["cut"]))
-    keep = days >= B.OUTPUT_FROM
+    keep = days >= B.DAILY_FROM
     fig, ax = plt.subplots(figsize=(9, 3.6))
     ax.plot(days[keep], z["p1"][keep, 2], color=ZONEC["NEMA"], lw=1.6, label="original data")
     ax.plot(days[keep], z["p2"][keep, 2], color=ZONEC["SEMA"], lw=1.0, label="load scrambled after the cut (+/-5%)")
     ax.axvline(cut, color=INK, lw=1)
-    ax.text(cut, 1.04, f"  cut {cut}: lines identical before (532 days, bit-for-bit)", fontsize=8, color=INK2)
+    n_same = int(((days >= B.DAILY_FROM) & (days <= cut)).sum())
+    ax.text(cut, 1.04, f"  cut {cut}: lines identical before ({n_same} days, bit-for-bit)", fontsize=8, color=INK2)
     ax.set_ylim(0, 1.1)
     ax.set_ylabel("P(red) for that day")
     ax.legend(loc="upper left", frameon=False, fontsize=8, bbox_to_anchor=(0, 0.92))
@@ -173,6 +176,153 @@ def chart_fan(mcdoc):
     save(fig, "mc_forecast_fan.png")
 
 
+EX = os.path.join("docs", "img", "examples")
+
+
+def example_lights(doc):
+    fig, axes = plt.subplots(1, 5, figsize=(12, 2.9))
+    order = ["MA_RES", "MA", "NEMA", "SEMA", "WCMA"]
+    names = {"MA_RES": "Massachusetts homes", "MA": "Massachusetts grid", "NEMA": "Northeast MA & Boston",
+             "SEMA": "Southeast MA", "WCMA": "West & Central MA"}
+    by = {a["area"]: a for a in doc["areas"]}
+    for ax, k in zip(axes, order):
+        a = by[k]
+        c = a["current"]
+        hexc, mk, lab = STATE[c["color"]]
+        ax.set_axis_off()
+        ax.scatter([0.5], [0.70], s=1500, color=hexc, marker="o")
+        ax.scatter([0.5], [0.70], s=260, color=SURF, marker=mk)
+        ax.text(0.5, 0.40, f"{c['color'].upper()}: {lab}", ha="center", fontsize=10, fontweight="bold")
+        ax.text(0.5, 0.25, f"{c['pctVsAverage']:+.1f}% vs historical avg", ha="center", fontsize=9)
+        ax.text(0.5, 0.13, f"normal range ±{c['bandPct']:.1f}%", ha="center", fontsize=8.5, color=INK2)
+        ax.text(0.5, 1.02, names[k], ha="center", fontsize=9.5, fontweight="bold")
+        ax.text(0.5, 0.0, ("month of " if a["unit"] == "month" else "day ") + c["date"][:7 if a["unit"] == "month" else 10],
+                ha="center", fontsize=8, color=INK2)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(-0.05, 1.08)
+    fig.suptitle("Example output: current regime lights (regimes.json → areas[].current)", x=0.01, ha="left",
+                 fontsize=10.5, fontweight="bold")
+    save_to(fig, EX, "example_regime_lights.png")
+
+
+def example_history(doc):
+    a = next(x for x in doc["areas"] if x["area"] == "MA_RES")
+    tl = a["timeline"]
+    dd = [dt.date.fromisoformat(e["date"]) for e in tl]
+    v = np.array([e["pctVsAverage"] for e in tl])
+    band = np.array([e["bandPct"] for e in tl])
+    fig, ax = plt.subplots(figsize=(11, 3.8))
+    ax.fill_between(dd, -band, band, step="mid", color="#ebeae5", lw=0, label="normal range (historical avg ± 1 sd)")
+    ax.bar(dd, v, width=22, color=[STATE[e["color"]][0] for e in tl])
+    ax.axhline(0, color=INK2, lw=0.8)
+    last = tl[-1]
+    ax.annotate(f"{last['date'][:7]}: {last['pctVsAverage']:+.1f}% ({last['color']})", (dd[-1], v[-1]), xytext=(-150, 18),
+                textcoords="offset points", fontsize=8.5, arrowprops={"arrowstyle": "-", "color": INK2})
+    handles = [plt.Rectangle((0, 0), 1, 1, color=STATE[c][0]) for c in STATE] + [plt.Rectangle((0, 0), 1, 1, color="#ebeae5")]
+    ax.legend(handles, [f"{c} = {STATE[c][2]}" for c in STATE] + ["normal range"], loc="upper left", ncol=4, frameon=False, fontsize=8)
+    ax.set_ylabel("% vs historical average")
+    ax.set_title("Example output: Massachusetts homes, monthly use vs the historical average range "
+                 "(regimes.json → MA_RES.timeline)", loc="left")
+    save_to(fig, EX, "example_regime_history.png")
+
+
+def example_fan(mcdoc):
+    a = next(x for x in mcdoc["areas"] if x["area"] == "MA")
+    m = a["months"]
+    x = np.arange(6)
+    q = {k: np.array([mm[k] for mm in m]) for k in ["p5", "p10", "p25", "p50", "p75", "p90", "p95"]}
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.fill_between(x, q["p5"], q["p95"], color=BLUE[0], lw=0, label="90% range")
+    ax.fill_between(x, q["p10"], q["p90"], color=BLUE[1], lw=0, label="80% range")
+    ax.plot(x, q["p50"], color=BLUE[3], lw=2.2, marker="o", ms=5, label="median")
+    ax.scatter(x, a["sameMonthsLastObservedGWh"], color=INK, s=16, zorder=3, label="same months last observed (scaled)")
+    ax.axvline(2.5, color=INK2, lw=1)
+    ax.text(2.55, q["p95"].max(), " Feb 1 rate reset", fontsize=8, color=INK2, va="top")
+    ax.set_xticks(x, [mm["ym"] for mm in m])
+    ax.set_ylabel("GWh per month")
+    c = mcdoc["calibration"]
+    ax.set_title(f"Example output: Massachusetts 6-month forecast (mc_forecast.json)\n"
+                 f"tested on {c['nMonths']} unseen months: 80% range held {c['cov80']:.0%} of the time", loc="left", fontsize=9.5)
+    ax.legend(loc="upper right", frameon=False, fontsize=7.5)
+    save_to(fig, EX, "example_mc_fan.png")
+
+
+def example_map(doc):
+    """Hue = the town's zone regime (vs the historical average range); shade strength = the town's modeled annual
+    consumption (zone 2023 load x EIA level ratio x population share), log scale: darker = more energy."""
+    geo_path = os.path.join("data", "raw", "mass-municipalities.geojson")
+    towns_path = build_path("ma_towns.csv")
+    if not (os.path.exists(geo_path) and os.path.exists(towns_path)):
+        print("skip example map: needs data/raw/mass-municipalities.geojson and data/build/ma_towns.csv")
+        return
+    import csv
+    from matplotlib.collections import PolyCollection
+    from backend.forecast.mc import level_ratio
+    towns = {r["geoid"]: r for r in csv.DictReader(open(towns_path))}
+    zpop = defaultdict(int)
+    for r in towns.values():
+        zpop[r["zone_approx"]] += int(r["pop2024"])
+    daily = list(csv.DictReader(open(build_path("isone_ma_daily.csv"))))
+    zload = {z: sum(float(r["rt_mwh"]) for r in daily if r["zone"] == z and r["date"].startswith("2023")) * level_ratio()
+             for z in ("NEMA", "SEMA", "WCMA")}
+    mwh = {g: zload[r["zone_approx"]] * int(r["pop2024"]) / zpop[r["zone_approx"]] for g, r in towns.items()}
+    lo, hi = np.log10(min(mwh.values())), np.log10(max(mwh.values()))
+    surf = np.array(matplotlib.colors.to_rgb(SURF))
+
+    def shade(hexc, value):
+        t = 0.15 + 0.85 * (np.log10(value) - lo) / (hi - lo)      # 0.15 = lightest town still visible
+        return tuple(surf + t * (np.array(matplotlib.colors.to_rgb(hexc)) - surf))
+
+    cur = {a["area"]: a["current"] for a in doc["areas"]}
+    polys, cols = [], []
+    for f in json.load(open(geo_path))["features"]:
+        r = towns.get(f["properties"]["GEOID"])
+        g = f["geometry"]
+        rings = [g["coordinates"][0]] if g["type"] == "Polygon" else [q[0] for q in g["coordinates"]]
+        for ring in rings:
+            polys.append(np.array(ring)[:, :2])
+            cols.append(shade(STATE[cur[r["zone_approx"]]["color"]][0], mwh[r["geoid"]]) if r else "#cccccc")
+    fig = plt.figure(figsize=(12, 6.6))
+    ax = fig.add_axes([0.0, 0.0, 0.78, 0.92])
+    ax.add_collection(PolyCollection(polys, facecolors=cols, edgecolors=SURF, linewidths=0.3))
+    ax.autoscale()
+    ax.set_aspect(1 / np.cos(np.radians(42.2)))
+    ax.set_axis_off()
+    for z, (lon, lat) in {"WCMA": (-72.4, 42.55), "NEMA": (-71.2, 42.66), "SEMA": (-70.9, 41.85)}.items():
+        c = cur[z]
+        ax.text(lon, lat, f"{z}: {c['color']} ({c['pctVsAverage']:+.1f}% vs avg)", fontsize=9, fontweight="bold",
+                ha="center", bbox={"boxstyle": "round,pad=0.25", "fc": SURF, "ec": GRID})
+    boston = next(r for r in towns.values() if r["name"] == "Boston")
+    ax.annotate(f"Boston ≈ {mwh[boston['geoid']] / 1e6:.1f} TWh/yr (modeled)", (-71.06, 42.33), xytext=(-70.55, 42.55),
+                fontsize=8, arrowprops={"arrowstyle": "-", "color": INK2})
+    # legend: rows = regime hue, columns = consumption strength
+    lg = fig.add_axes([0.80, 0.30, 0.18, 0.40])
+    lg.set_axis_off()
+    marks = [1e3, 1e4, 1e5, 1e6, 5e6]
+    for i, c in enumerate(["red", "grey", "green"]):
+        for j, v in enumerate(marks):
+            lg.add_patch(plt.Rectangle((j, i), 0.92, 0.85, color=shade(STATE[c][0], v)))
+        lg.text(-0.15, i + 0.42, f"{c} = {STATE[c][2]}", ha="right", va="center", fontsize=8)
+    for j, v in enumerate(marks):
+        lg.text(j + 0.46, -0.25, f"{v / 1e3:,.0f}k" if v < 1e6 else f"{v / 1e6:,.0f}M", ha="center", va="top", fontsize=7.5)
+    lg.text(2.5, -0.85, "modeled annual MWh (log scale)", ha="center", va="top", fontsize=8, color=INK2)
+    lg.text(2.5, 3.25, "hue = zone regime\nshade = how much energy", ha="center", va="bottom", fontsize=8.5, fontweight="bold")
+    lg.set_xlim(-2.2, 5.1)
+    lg.set_ylim(-1.2, 4.0)
+    fig.suptitle(f"Example output: 351 towns, regime on {cur['MA']['date']} · darker = more energy used "
+                 "(modeled from population share of zone load; zones approximate by county)", x=0.01, ha="left",
+                 fontsize=10, fontweight="bold")
+    save_to(fig, EX, "example_town_map.png")
+
+
+def save_to(fig, folder, name):
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, name)
+    fig.savefig(path, dpi=160, bbox_inches="tight")
+    plt.close(fig)
+    print("wrote", path)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     reg = json.load(open(build_path("regimes.json")))
@@ -182,3 +332,7 @@ if __name__ == "__main__":
     chart_leakage()
     chart_calibration(mcd)
     chart_fan(mcd)
+    example_lights(reg)
+    example_history(reg)
+    example_fan(mcd)
+    example_map(reg)
