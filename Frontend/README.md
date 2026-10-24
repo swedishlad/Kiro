@@ -50,11 +50,16 @@ and load zones, and how to read the dashboard.
   and streams the reply to the browser as NDJSON. The knowledge base comes first and never changes
   between visitors, so Gemini's implicit caching can reuse it; today's date and the visitor's current tab
   go last. Answers Gemini stops for safety or recitation are replaced with a polite decline. Change the
-  model or thinking level at the top of the file; pin a versioned model name to freeze behaviour.
+  models or thinking level at the top of the file; pin versioned model names to freeze behaviour.
+- **Fallback and time limit:** when `gemini-flash-latest` is overloaded (503), over its quota (429), gone
+  (404) or hasn't started answering within 20 s, the question goes to `gemini-flash-lite-latest`, which
+  has its own capacity and free-tier quota, with that model's default thinking. Only before any of the answer
+  has been sent, so two answers are never mixed. After 50 s the call is stopped, inside the function's 60 s
+  limit: visitors keep what arrived, marked as cut short, or see "took too long" instead of a dead panel.
 - **Free tier:** works with a free AI Studio key, within Google's per-minute and per-day quotas (see
   the key's limits in AI Studio). Every question sends the whole knowledge base (roughly 20–30K tokens),
   so the tokens-per-minute quota is usually what runs out first; visitors then see "busy, try again in a
-  minute". Turning on billing for the key raises the quotas.
+  minute" (also when both models are overloaded). Turning on billing for the key raises the quotas.
 - **Guards:** messages up to 2,000 characters, the latest 24 turns, max 8,000 output tokens, and
   20 requests per IP per 10 minutes per function instance. That limiter protects the quota, not a
   security boundary; for a public launch add a Vercel Firewall rate-limit rule on `/api/chat`.
