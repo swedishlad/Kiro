@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fairwatt/usage_forecast.schema.json",
+  "title": "UsageForecastFile (data/build/usage_forecast.json)",
+  "type": "object",
+  "required": ["asOf", "infoSetEnd", "model", "skill", "factor", "backtest", "plainEnglish"],
+  "$defs": {
+    "ym": { "type": "string", "pattern": "^(19|20)\\d\\d-(0[1-9]|1[0-2])$" },
+    "model": { "enum": ["K0", "K1"] }
+  },
+  "properties": {
+    "asOf": { "type": "string", "format": "date" },
+    "infoSetEnd": { "$ref": "#/$defs/ym" },
+    "model": { "$ref": "#/$defs/model" },
+    "skill": { "enum": ["beats-naive", "seasonal-only"] },
+    "factor": {
+      "type": "array", "minItems": 12, "maxItems": 12,
+      "items": {
+        "type": "object", "required": ["month", "p10", "p50", "p90"],
+        "properties": {
+          "month": { "type": "integer", "minimum": 1, "maximum": 12 },
+          "p10": { "type": "number", "exclusiveMinimum": 0 },
+          "p50": { "type": "number", "exclusiveMinimum": 0 },
+          "p90": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    },
+    "backtest": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["model", "nMonths", "maeLog", "cov80", "vsNaive"],
+        "properties": {
+          "model": { "$ref": "#/$defs/model" },
+          "nMonths": { "type": "integer", "minimum": 1 },
+          "maeLog": { "type": "number", "minimum": 0 },
+          "cov80": { "type": "number", "minimum": 0, "maximum": 1 },
+          "vsNaive": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "plainEnglish": { "type": "string", "minLength": 40 }
+  }
+}

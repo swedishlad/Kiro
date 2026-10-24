@@ -1,0 +1,245 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "fairwatt/stats.schema.json",
+ "title": "StatsFile (data/build/stats.json)",
+ "type": "object",
+ "required": [
+  "asOf",
+  "sources",
+  "areas",
+  "household",
+  "notes"
+ ],
+ "properties": {
+  "asOf": {
+   "type": "string",
+   "format": "date"
+  },
+  "sources": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "minItems": 1
+  },
+  "areas": {
+   "type": "array",
+   "minItems": 4,
+   "maxItems": 4,
+   "items": {
+    "type": "object",
+    "required": [
+     "area",
+     "label",
+     "years",
+     "annualGWh",
+     "meanDailyGWh",
+     "peakDay",
+     "peakHourMW",
+     "monthlyProfileGWh",
+     "weekendVsWeekdayPct",
+     "temperature",
+     "loadFactor",
+     "yoyChangePct",
+     "weatherCostGWh2023"
+    ],
+    "properties": {
+     "area": {
+      "enum": [
+       "NEMA",
+       "SEMA",
+       "WCMA",
+       "MA"
+      ]
+     },
+     "label": {
+      "type": "string"
+     },
+     "years": {
+      "type": "object",
+      "properties": {
+       "from": {
+        "const": 2017
+       },
+       "to": {
+        "const": 2023
+       }
+      },
+      "required": [
+       "from",
+       "to"
+      ]
+     },
+     "annualGWh": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+       "type": "object",
+       "required": [
+        "year",
+        "gwh"
+       ],
+       "properties": {
+        "year": {
+         "type": "integer"
+        },
+        "gwh": {
+         "type": "number",
+         "exclusiveMinimum": 0
+        }
+       }
+      }
+     },
+     "meanDailyGWh": {
+      "type": "number",
+      "exclusiveMinimum": 0
+     },
+     "peakDay": {
+      "type": "object",
+      "required": [
+       "date",
+       "gwh"
+      ],
+      "properties": {
+       "date": {
+        "type": "string",
+        "format": "date"
+       },
+       "gwh": {
+        "type": "number"
+       }
+      }
+     },
+     "peakHourMW": {
+      "type": "object",
+      "required": [
+       "date",
+       "mw"
+      ],
+      "properties": {
+       "date": {
+        "type": "string",
+        "format": "date"
+       },
+       "mw": {
+        "type": "number"
+       }
+      }
+     },
+     "monthlyProfileGWh": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+       "type": "number"
+      }
+     },
+     "weekendVsWeekdayPct": {
+      "type": "number"
+     },
+     "temperature": {
+      "type": "object",
+      "required": [
+       "gwhPerHDD",
+       "gwhPerCDD",
+       "r2"
+      ],
+      "properties": {
+       "gwhPerHDD": {
+        "type": "number"
+       },
+       "gwhPerCDD": {
+        "type": "number"
+       },
+       "r2": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     },
+     "loadFactor": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1
+     },
+     "yoyChangePct": {
+      "type": "number"
+     },
+     "weatherCostGWh2023": {
+      "type": "number"
+     }
+    }
+   }
+  },
+  "household": {
+   "type": "object",
+   "required": [
+    "typicalAnnualKwh",
+    "typicalMonthlyKwh",
+    "medianBySqft",
+    "medianByHeat",
+    "basicServiceNow",
+    "allInPrice",
+    "savingsExamples"
+   ],
+   "properties": {
+    "typicalAnnualKwh": {
+     "type": "number"
+    },
+    "typicalMonthlyKwh": {
+     "type": "array",
+     "minItems": 12,
+     "maxItems": 12,
+     "items": {
+      "type": "number"
+     }
+    },
+    "medianBySqft": {
+     "type": "array",
+     "minItems": 4
+    },
+    "medianByHeat": {
+     "type": "array",
+     "minItems": 3
+    },
+    "basicServiceNow": {
+     "type": "object",
+     "required": [
+      "NG",
+      "EV_EAST",
+      "EV_WEST",
+      "UNITIL"
+     ]
+    },
+    "allInPrice": {
+     "type": "object",
+     "required": [
+      "ym",
+      "cents"
+     ],
+     "properties": {
+      "ym": {
+       "type": "string",
+       "pattern": "^(19|20)\\d\\d-(0[1-9]|1[0-2])$"
+      },
+      "cents": {
+       "type": "number"
+      }
+     }
+    },
+    "savingsExamples": {
+     "type": "array",
+     "minItems": 1
+    }
+   }
+  },
+  "notes": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  }
+ }
+}

@@ -1,0 +1,11 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Validate generated data files",
+      "trigger": "PostFileSave",
+      "matcher": "data/build/[^/]*\\.json$",
+      "action": { "type": "command", "command": "python3 .kiro/hooks/validate_build.py", "timeout": 30 }
+    }
+  ]
+}

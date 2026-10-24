@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fairwatt/forecast.schema.json",
+  "title": "ForecastFile (data/build/forecast.json)",
+  "type": "object",
+  "required": ["asOf", "infoSetEnd", "target", "perUtility", "backtest", "plainEnglish"],
+  "$defs": {
+    "utility": { "enum": ["NG", "EV_EAST", "EV_WEST", "UNITIL"] },
+    "ym": { "type": "string", "pattern": "^(19|20)\\d\\d-(0[1-9]|1[0-2])$" },
+    "fc": {
+      "type": "object",
+      "required": ["current", "p10", "p50", "p90", "model", "skill"],
+      "properties": {
+        "current": { "type": "number", "exclusiveMinimum": 0 },
+        "p10": { "type": "number", "exclusiveMinimum": 0 },
+        "p50": { "type": "number", "exclusiveMinimum": 0 },
+        "p90": { "type": "number", "exclusiveMinimum": 0 },
+        "model": { "enum": ["M0", "M1", "M2"] },
+        "skill": { "enum": ["beats-naive", "no-skill"] }
+      }
+    }
+  },
+  "properties": {
+    "asOf": { "type": "string", "format": "date" },
+    "infoSetEnd": { "$ref": "#/$defs/ym" },
+    "target": {
+      "type": "object",
+      "properties": { "termStart": { "const": "2027-02" }, "termEnd": { "const": "2027-07" } },
+      "required": ["termStart", "termEnd"]
+    },
+    "perUtility": {
+      "type": "object",
+      "required": ["NG", "EV_EAST", "EV_WEST", "UNITIL"],
+      "additionalProperties": { "$ref": "#/$defs/fc" }
+    },
+    "backtest": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["model", "utility", "nTerms", "maeLogChange", "cov80", "pinball", "vsNaive"],
+        "properties": {
+          "model": { "enum": ["M0", "M1", "M2"] },
+          "utility": { "enum": ["NG", "EV_EAST", "EV_WEST", "UNITIL", "POOLED"] },
+          "nTerms": { "type": "integer", "minimum": 1 },
+          "maeLogChange": { "type": "number", "minimum": 0 },
+          "cov80": { "type": "number", "minimum": 0, "maximum": 1 },
+          "pinball": {
+            "type": "object", "required": ["q10", "q50", "q90"],
+            "properties": { "q10": { "type": "number" }, "q50": { "type": "number" }, "q90": { "type": "number" } }
+          },
+          "vsNaive": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "plainEnglish": { "type": "string", "minLength": 40 }
+  }
+}
