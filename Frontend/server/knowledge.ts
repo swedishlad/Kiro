@@ -11,10 +11,11 @@ Watt If is a free, public dashboard about Massachusetts residential electricity:
 
 The site has four tabs: Bill check, Energy data, Towns and About. Energy data holds the Usage, Prices & savings and Regimes & forecast sections; About holds Data & methods. The site uses hash links, so link to them exactly as written; a section's link opens its tab and scrolls to it.
 - [Bill check](#/bill) (the home page): a visitor adds a photo of their Massachusetts electric bill (National Grid, Eversource or Unitil), or pastes a PDF bill's text. It is read in their browser and never uploaded, so you cannot see it. They check the numbers it read (utility, kWh, bill month, total, supply rate, days) and see their use vs the typical Massachusetts home that month, their cost and all-in ¢/kWh vs the state average, their supply rate vs their utility's basic-service rate, and suggestions: switching supply back to basic service, a Mass Save assessment, community or rooftop solar, heat pumps. Usage is only published statewide, so the comparison is Massachusetts-wide plus the visitor's own utility, not their town.
-- [Energy data](#/data): the three sections below on one page.
+- [Energy data](#/data): the four sections below on one page.
 - [Usage](#/usage): monthly use per residential account since 2010 with the Low / Mid / High use regimes, sales vs a year earlier, what the regimes mean, the "A home like yours" estimator, where Massachusetts homes fall (spread of yearly kWh), a typical year month by month, and what drives the difference (home size, heating fuel).
 - [Prices & savings](#/prices): basic-service monthly rates by utility since 2005, the all-in average price vs the supply rate, fixed-option terms, and the "Did your supplier save you money?" calculator with a month-by-month breakdown.
 - [Regimes & forecast](#/grid): homes (monthly) and the ISO-NE grid zones (daily) compared with the same period in the previous 5 years, the outlook, how the three regimes behave, and the six-month Monte Carlo load forecast with its walk-forward test.
+- [Climate](#/climate): a modeled household's CO₂ from electricity on the New England grid. Pick monthly use, flexible use a day and a home battery; it shows yearly emissions, how much moving use to cleaner hours cuts, the cost per ton of steps like weatherization, a 20-year emissions range as the grid gets cleaner, and whether solar or a battery is worth buying now or later.
 - [Towns](#/towns): a map and searchable table of all 351 cities and towns with county, ISO-NE load zone, 2020 and 2024 population and growth.
 - [About](#/about): what Watt If is and the team that builds it: Tae, Johan, Yuan and Lin.
 - [Data & methods](#/sources) (on the About tab): sources, how each number is made, limits, and how to rebuild.
@@ -371,6 +372,65 @@ Six-month total: median 26,625 GWh, 80% range 25,810–27,478 GWh, 90% range 25,
 | Feb 2027 | 4,220 | 4,429 | 4,670 | 4,689 |
 | Mar 2027 | 4,212 | 4,369 | 4,541 | 4,424 |
 | Apr 2027 | 3,695 | 3,823 | 3,954 | 3,803 |
+
+## Climate section (Energy data tab; modeled household emissions)
+
+Everything in the [Climate](#/climate) section (Energy data tab) is **modeled** for a home like the one picked, not measured. It is the backend's Climate API (POST /api/climate/dashboard) answering for each combination of monthly use (300, 600, 750, 1,000, 1,500 kWh), flexible use a day (0, 6, 12 kWh: laundry, dishwasher, water heating, an EV charging overnight) and a home battery (0 or 10 kWh). The default is 750 kWh a month, 6 kWh flexible, 10 kWh battery.
+
+How it works:
+- Grid emissions: one typical day of hourly marginal emissions for ISO-NE (extra CO₂ per extra kWh), not live data: average 353 g CO₂e/kWh, cleanest at 3 am (250 g), dirtiest at 6 pm (540 g) when gas peaking plants run.
+- The home's monthly kWh is spread over a typical hourly shape. A linear program moves the flexible kWh and runs the battery, weighing CO₂ 70% and the bill 30% on a time-of-use rate of 22¢/kWh, 34¢ from 8 am to 9 pm.
+- Social cost of carbon: $190 a ton (U.S. EPA's 2023 estimate): damage to society, not a charge on the bill.
+- "Over 20 years if nothing changes" is today's yearly total × 20. The 20-year range is a Monte Carlo of 10,000 paths of grid carbon intensity around a 3.5%-a-year decline (seed 20261024).
+- Carbon yield = CO₂ avoided a year by the 6 kW solar array plus timing, per $1,000 of solar price.
+- Solar and battery timing compares the net value in today's dollars (3% a year discount; bill savings plus the social value of CO₂ avoided, minus the price after an assumed 30% federal tax credit) of buying now or after 1–3 years. The credit is the model's assumption, not advice; visitors should check which credits apply before buying.
+
+Every scenario (t CO₂e a year at today's grid; cut = share of daily emissions avoided by moving use and the battery):
+
+| Monthly kWh | Flexible kWh/day | Battery kWh | t CO₂e/yr | Cut from timing % | t avoided by timing/yr | Social cost/yr |
+|---|---|---|---|---|---|---|
+| 300 | 0 | 0 | 1.38 | 0.0 | 0.00 | $263 |
+| 300 | 0 | 10 | 1.38 | 22.0 | 0.30 | $263 |
+| 300 | 6 | 0 | 1.38 | 15.7 | 0.22 | $263 |
+| 300 | 6 | 10 | 1.38 | 28.1 | 0.39 | $263 |
+| 300 | 12 | 0 | 1.38 | 18.1 | 0.25 | $263 |
+| 300 | 12 | 10 | 1.38 | 26.5 | 0.37 | $263 |
+| 600 | 0 | 0 | 2.77 | 0.0 | 0.00 | $526 |
+| 600 | 0 | 10 | 2.77 | 21.5 | 0.59 | $526 |
+| 600 | 6 | 0 | 2.77 | 8.2 | 0.23 | $526 |
+| 600 | 6 | 10 | 2.77 | 25.2 | 0.70 | $526 |
+| 600 | 12 | 0 | 2.77 | 15.7 | 0.43 | $526 |
+| 600 | 12 | 10 | 2.77 | 27.9 | 0.77 | $526 |
+| 750 | 0 | 0 | 3.46 | 0.0 | 0.00 | $657 |
+| 750 | 0 | 10 | 3.46 | 19.9 | 0.69 | $657 |
+| 750 | 6 | 0 | 3.46 | 6.5 | 0.23 | $657 |
+| 750 | 6 | 10 | 3.46 | 24.2 | 0.84 | $657 |
+| 750 | 12 | 0 | 3.46 | 13.1 | 0.45 | $657 |
+| 750 | 12 | 10 | 3.46 | 27.1 | 0.94 | $657 |
+| 1,000 | 0 | 0 | 4.61 | 0.0 | 0.00 | $876 |
+| 1,000 | 0 | 10 | 4.61 | 16.8 | 0.77 | $876 |
+| 1,000 | 6 | 0 | 4.61 | 4.9 | 0.23 | $876 |
+| 1,000 | 6 | 10 | 4.61 | 21.0 | 0.97 | $876 |
+| 1,000 | 12 | 0 | 4.61 | 9.8 | 0.45 | $876 |
+| 1,000 | 12 | 10 | 4.61 | 24.7 | 1.14 | $876 |
+| 1,500 | 0 | 0 | 6.92 | 0.0 | 0.00 | $1,315 |
+| 1,500 | 0 | 10 | 6.92 | 12.4 | 0.86 | $1,315 |
+| 1,500 | 6 | 0 | 6.92 | 3.3 | 0.23 | $1,315 |
+| 1,500 | 6 | 10 | 6.92 | 15.5 | 1.07 | $1,315 |
+| 1,500 | 12 | 0 | 6.92 | 6.5 | 0.45 | $1,315 |
+| 1,500 | 12 | 10 | 6.92 | 18.5 | 1.28 | $1,315 |
+
+Default home (750 kWh a month): 3.46 t CO₂e a year, 69.2 t over 20 years if nothing changes, carbon yield 0.19 t a year per $1,000. Simulated yearly emissions: median 2.57 t in year 1 (5–95%: 2.28–2.86), 1.50 t in year 20 (1.35–1.66).
+
+Steps ranked by net cost per ton avoided (negative = saves more than it costs), default home:
+1. Smart EV & major appliance overnight load shift: −$586 per ton, 0.84 t a year, $491 off the bill a year.
+2. Smart thermostat emissions-aware thermal pre-conditioning: −$179 per ton, 0.14 t a year, $55 off the bill a year.
+3. Building envelope weatherization & air sealing: −$87 per ton, 0.52 t a year, $115 off the bill a year.
+4. Home battery peaker displacement & reserve arbitrage: −$68 per ton, 1.29 t a year, $438 off the bill a year.
+
+Solar and battery timing, default home:
+- Solar PV Array (6.0 kW DC): **Install now**. Price $13,500 before credits, falling 3.5% a year; net value if bought now $28,467, in 1 yr $27,723, in 2 yr $26,995, in 3 yr $26,283; CO₂ avoided over 20 years 33.5 t (27.5–39.5); waiting a year releases 2.65 t it would have avoided.
+- Home Energy Storage (10 kWh): **Hold and wait**. Price $8,500 before credits, falling 6.5% a year; net value if bought now −$2,343, in 1 yr −$1,941, in 2 yr −$1,584, in 3 yr −$1,265; CO₂ avoided over 15 years 6.0 t (4.9–7.1); waiting a year releases 0.64 t it would have avoided.
 
 ## Cities and towns (Towns tab)
 

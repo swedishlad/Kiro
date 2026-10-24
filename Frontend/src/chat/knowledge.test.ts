@@ -32,5 +32,7 @@ test("the knowledge base covers every month, town and tab", () => {
   // one month-by-month row per EIA month
   assert.equal((markdown.match(/^\| [A-Z][a-z]{2} \d{4}\*? \| \d+\.\d{2} \| [\d,]+ \| [\d,]+ \|/gm) ?? []).length, inputs.eia.length);
   for (const t of inputs.towns) assert.ok(markdown.includes(`| ${t.name} | ${t.county} | ${t.zone} |`), t.name);
-  for (const tab of ["bill", "data", "usage", "prices", "grid", "towns", "about", "sources"]) assert.ok(markdown.includes(`(#/${tab})`), tab);
+  for (const tab of ["bill", "data", "usage", "prices", "grid", "climate", "towns", "about", "sources"]) assert.ok(markdown.includes(`(#/${tab})`), tab);
+  // one row per Climate scenario
+  assert.equal((markdown.match(/^\| [\d,]+ \| \d+ \| \d+ \| \d+\.\d{2} \| \d+\.\d \| /gm) ?? []).length, inputs.climate.scenarios.length);
 });

@@ -20,27 +20,43 @@ type RouteId = (typeof ROUTES)[number]["id"];
 /**
  * Section addresses. Usage, Prices & savings, Regimes & forecast and Data & methods used to be tabs
  * and are now sections of a combined tab; their old links (which the assistant also writes) open
- * that tab and scroll to the section. The old Overview address opens the landing page.
+ * that tab and scroll to the section, as #/climate does for the Climate section. The old Overview
+ * address opens the landing page.
  */
 const SECTIONS: Record<string, { tab: RouteId; label: string; scroll: boolean } | undefined> = {
   usage: { tab: "data", label: "Usage", scroll: true },
   prices: { tab: "data", label: "Prices & savings", scroll: true },
   grid: { tab: "data", label: "Regimes & forecast", scroll: true },
+  climate: { tab: "data", label: "Climate", scroll: true },
   sources: { tab: "about", label: "Data & methods", scroll: true },
   overview: { tab: "bill", label: "Bill check", scroll: false },
 };
 
-/** Waits for a lazily loaded section to render, then scrolls it under the sticky bar. */
+/**
+ * Waits for a lazily loaded section to render, then scrolls it under the sticky bar. Sections above it
+ * load their own data and grow, so it keeps the section in place for a few seconds, until the visitor
+ * scrolls or types.
+ */
 function scrollToSection(id: string): () => void {
   let frame = 0;
+  let pinnedTop: number | null = null;
   const started = performance.now();
+  const stop = () => {
+    cancelAnimationFrame(frame);
+    for (const e of ["wheel", "touchstart", "keydown"]) window.removeEventListener(e, stop);
+  };
   const tick = () => {
     const el = document.getElementById(`sec-${id}`);
-    if (el) el.scrollIntoView({ block: "start" });
-    else if (performance.now() - started < 4000) frame = requestAnimationFrame(tick);
+    if (el && (pinnedTop === null || Math.abs(el.getBoundingClientRect().top - pinnedTop) > 1)) {
+      el.scrollIntoView({ block: "start" });
+      pinnedTop = el.getBoundingClientRect().top;
+    }
+    if (performance.now() - started < (el ? 8000 : 4000)) frame = requestAnimationFrame(tick);
+    else stop();
   };
+  for (const e of ["wheel", "touchstart", "keydown"]) window.addEventListener(e, stop, { passive: true });
   frame = requestAnimationFrame(tick);
-  return () => cancelAnimationFrame(frame);
+  return stop;
 }
 
 const NEXT_THEME: Record<ThemeChoice, ThemeChoice> = { system: "light", light: "dark", dark: "system" };

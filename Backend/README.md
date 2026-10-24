@@ -17,6 +17,7 @@ The web frontend is built separately and consumes the committed JSON artifacts u
 | **Forecast for all 351 towns** (modeled: population share of zone × zone Monte Carlo, same rolling horizon) | `backend/towns/build.py` | `data/build/towns_metrics.json` |
 | **Live data, refreshed daily**: EIA-930 grid load + Open-Meteo temperature + EIA-861M, verified (G-LIVE), then every model rebuilt and gated; GitHub Actions commits only when all pass | `backend/live/`, `.github/workflows/refresh-data.yml` | `data/build/grid_daily.csv`, `live_status.json` |
 | **Future regime** for homes (next 6 months; tested gap forecast where it beats the long-run odds) | `backend/regimes/build.py` | `regimes.json` → `forecast`, `outlook` |
+| **Climate Impact Portfolio API** (`POST /api/climate/dashboard`, FastAPI `app.py`): a household's CO₂, 24-hour load shifting + battery LP, abatement cost curve, 20-year grid-decarbonization Monte Carlo, solar / battery real options | `backend/climate/` | live API; `backend/climate/build.py` saves its answers for the site's 30 household scenarios to `data/build/climate_dashboard.json` |
 
 ## Data
 
@@ -42,6 +43,9 @@ python3 -m backend.live.verify_live                # G-LIVE: live inputs complet
 python3 tests/backend/make_test_charts.py          # charts of the test results -> docs/img/tests/
 # refresh everything from the live sources (what CI runs daily): python3 -m backend.live.update
 # rebuild only: python3 -m backend.regimes.build, then python3 -m backend.forecast.mc, then python3 -m backend.towns.build
+python3 -m pytest tests/climate -q                 # Climate API (needs scipy, fastapi, httpx, pytest-asyncio; see pyproject.toml)
+python3 -m backend.climate.build                   # the Climate section's scenarios -> data/build/climate_dashboard.json (~1 min)
+uvicorn app:app --port 8000                        # the Climate API itself (the site can call it: Frontend/README.md#climate)
 # frontend contract (what the site reads): docs/FRONTEND_CONTRACT.md
 ```
 
