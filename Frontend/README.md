@@ -18,6 +18,14 @@ npm run preview    # serve dist/ locally
 Requires Node 22+ (the tests run TypeScript directly through Node's type stripping).
 `dist/` uses relative paths, so it can be served from any sub-path (GitHub Pages, S3, a file share).
 
+## Deploy
+
+Vercel builds this folder: `vercel.json` pins the Vite preset, `npm ci`, `npm run build` and the
+`dist/` output. In the Vercel project settings, **Root Directory** must be `Frontend` and
+"Include files outside the root directory in the Build Step" must stay on (the build reads
+`../Backend/data`). No environment variables are needed. Any other static host works the same way:
+build, then upload `dist/`.
+
 ## Sections
 
 | Tab | What it shows | Backend inputs |
@@ -56,6 +64,8 @@ src/
 ## Design notes
 
 - Colours are CSS custom properties with separate, validated light and dark sets (`src/styles.css`).
+- Type: Public Sans for body text, Bricolage Grotesque for headings and headline numbers, both
+  self-hosted from `@fontsource-variable/*` (bundled into `dist/`, no font CDN).
   Regimes always pair colour with a shape (▼ ● ▲) and a word: Low / Mid / High for the level model
   (`hmm_regimes.json`), Below / Within / Above range for the usual-range model (`regimes.json`).
 - Every chart has a Table view, keyboard reading (arrow keys) where it is a time series, and a
