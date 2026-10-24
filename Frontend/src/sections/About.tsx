@@ -9,9 +9,9 @@ export default function About() {
     <>
       <div className="page-head">
         <div>
-          <h1 className="page-title">About FairWatt</h1>
+          <h1 className="page-title">About Watt If</h1>
           <p className="page-lede">
-            FairWatt is a free, public dashboard about Massachusetts residential electricity: what homes use, what they pay, what basic
+            Watt If is a free, public dashboard about Massachusetts residential electricity: what homes use, what they pay, what basic
             service costs, and whether use is running above or below its usual range.
           </p>
         </div>
@@ -46,7 +46,7 @@ export default function About() {
         <Card className="span-6" title="How it works">
           <div className="prose">
             <p>
-              The dashboard reads the backend's files directly, so it always shows exactly what the backend produced. The “Ask FairWatt”
+              The dashboard reads the backend's files directly, so it always shows exactly what the backend produced. The “Ask Watt If”
               assistant answers from a knowledge base built from the same files.
             </p>
             <p>

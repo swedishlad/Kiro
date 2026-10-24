@@ -19,7 +19,7 @@ async function readBody(req: IncomingMessage): Promise<string> {
  */
 function chatApiDev(): Plugin {
   return {
-    name: "fairwatt-chat-api-dev",
+    name: "watt-if-chat-api-dev",
     apply: "serve",
     configureServer(server) {
       for (const [k, v] of Object.entries(loadEnv(server.config.mode, server.config.root, ["GEMINI_", "GOOGLE_API_KEY"]))) process.env[k] ??= v;
